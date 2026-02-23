@@ -158,44 +158,47 @@ export default function Deploy() {
         )}
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {[1, 2].map(i => <div key={i} className="h-72 rounded-xl animate-pulse" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }} />)}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-xl animate-pulse" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }} />)}
           </div>
         ) : (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 ${!hasCoins ? "opacity-40 pointer-events-none select-none" : ""}`}>
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ${!hasCoins ? "opacity-40 pointer-events-none select-none" : ""}`}>
             {bots.map((bot) => (
               <button key={bot.id} data-testid={`card-bot-${bot.id}`} onClick={() => hasCoins && handleSelectBot(bot)}
-                className="text-left group rounded-2xl overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.99]"
+                className="text-left group rounded-xl overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.99] flex flex-row sm:flex-col"
                 style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
-                <div className="relative w-full h-44 overflow-hidden" style={{ borderBottom: "1px solid rgba(74,222,128,0.1)" }}>
-                  <img src={bot.logo} alt={bot.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                  <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.7) 100%)" }} />
-                  <div className="absolute bottom-3 left-3">
-                    <span className="text-[9px] text-primary font-mono px-2 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(74,222,128,0.3)" }}>{bot.category}</span>
+                {/* Image — horizontal on mobile, stacked on sm+ */}
+                <div className="relative w-24 sm:w-full flex-shrink-0 h-auto sm:h-32 overflow-hidden border-r sm:border-r-0 sm:border-b" style={{ borderColor: "rgba(74,222,128,0.12)" }}>
+                  <img src={bot.logo} alt={bot.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 min-h-full"
+                    onError={e => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = "none";
+                      const el = img.parentElement!;
+                      el.innerHTML = `<div style="width:100%;height:100%;min-height:80px;display:flex;align-items:center;justify-content:center;background:rgba(74,222,128,0.07)"><span style="color:hsl(142 76% 42%);font-size:26px;font-weight:900;">${bot.name[0]}</span></div>`;
+                    }} />
+                  <div className="absolute inset-0 sm:flex hidden" style={{ background: "linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.6) 100%)" }} />
+                  <div className="absolute bottom-2 left-2 hidden sm:block">
+                    <span className="text-[8px] text-primary font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(74,222,128,0.3)" }}>{bot.category}</span>
                   </div>
                 </div>
-                <div className="p-4 sm:p-5">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="font-display font-bold text-white text-base sm:text-lg leading-tight">{bot.name}</h3>
-                    <ArrowUpRight className="w-4 h-4 text-primary/50 group-hover:text-primary transition-colors flex-shrink-0 mt-0.5" />
+                {/* Content */}
+                <div className="p-3 flex-1 flex flex-col min-w-0">
+                  <div className="flex items-start justify-between gap-1 mb-1">
+                    <h3 className="font-display font-bold text-white text-sm leading-tight">{bot.name}</h3>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-primary/50 group-hover:text-primary transition-colors flex-shrink-0 mt-0.5" />
                   </div>
-                  <p className="text-[11px] sm:text-xs text-gray-400 font-mono leading-relaxed mb-4 line-clamp-3">{bot.description}</p>
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {bot.keywords.slice(0, 4).map(k => (
-                      <span key={k} className="text-[9px] text-gray-600 font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }}>{k}</span>
+                  <p className="text-[10px] text-gray-400 font-mono leading-relaxed mb-2 line-clamp-2 flex-1">{bot.description}</p>
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {bot.keywords.slice(0, 3).map(k => (
+                      <span key={k} className="text-[8px] text-gray-600 font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }}>{k}</span>
                     ))}
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] text-gray-600 font-mono mb-3 truncate">
-                    <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{bot.repository.replace("https://github.com/", "")}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: "rgba(74,222,128,0.7)" }}>
-                      <Coins className="w-3 h-3" /> costs {COINS_PER_BOT} coins
+                  <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(74,222,128,0.08)" }}>
+                    <div className="flex items-center gap-1 text-[9px] font-mono" style={{ color: "rgba(74,222,128,0.6)" }}>
+                      <Coins className="w-2.5 h-2.5" /> {COINS_PER_BOT} coins
                     </div>
-                    <div className="py-1.5 px-3 rounded-lg font-mono text-xs font-bold text-primary flex items-center gap-1.5" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}>
-                      <Rocket className="w-3 h-3" /> Deploy
+                    <div className="py-1 px-2.5 rounded-lg font-mono text-[9px] font-bold text-primary flex items-center gap-1" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}>
+                      <Rocket className="w-2.5 h-2.5" /> Deploy
                     </div>
                   </div>
                 </div>

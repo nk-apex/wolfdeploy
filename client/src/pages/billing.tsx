@@ -87,7 +87,7 @@ interface ModalProps {
   country: typeof COUNTRIES[0];
   email: string;
   onClose: () => void;
-  onPay: (method: string, email: string) => void;
+  onPay: (method: string, email: string, phone?: string) => void;
   paying: boolean;
   t: ReturnType<typeof getThemeTokens>;
 }
@@ -95,7 +95,9 @@ interface ModalProps {
 function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, t }: ModalProps) {
   const [method, setMethod] = useState(country.methods[0]);
   const [email, setEmail] = useState(initEmail);
+  const [phone, setPhone] = useState("");
   const [visible, setVisible] = useState(false);
+  const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
   const totalCoins = pkg.coins + pkg.bonus;
@@ -202,6 +204,27 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
             </div>
           </div>
 
+          {/* Phone number — mobile money STK push */}
+          {isMobileMoney && (
+            <div>
+              <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>
+                <Smartphone className="w-3 h-3 inline mr-1" />Phone number (STK push)
+              </label>
+              <input
+                data-testid="input-billing-phone"
+                type="tel"
+                placeholder="+254712345678"
+                value={phone}
+                onChange={e => setPhone(e.target.value)}
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none transition-all"
+                style={{ background: t.accentFaded(0.08), border: `1px solid ${t.accentFaded(0.3)}` }}
+              />
+              <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
+                Include country code · A payment prompt will be sent to this number
+              </p>
+            </div>
+          )}
+
           {/* Email */}
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>Billing email</label>
@@ -211,7 +234,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
           </div>
 
           {/* Pay button */}
-          <button data-testid="button-pay-now" disabled={paying || !email} onClick={() => onPay(method, email)}
+          <button data-testid="button-pay-now" disabled={paying || !email || (isMobileMoney && !phone)} onClick={() => onPay(method, email, isMobileMoney ? phone : undefined)}
             className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
             style={{ background: paying ? t.accentFaded(0.15) : t.accent, color: paying ? t.accent : "#000", border: `1px solid ${t.accent}`, boxShadow: paying ? "none" : `0 0 24px ${t.accentFaded(0.35)}`, opacity: !email ? 0.5 : 1 }}>
             {paying
@@ -399,7 +422,7 @@ export default function Billing() {
     openModal(pkg.coins, pkg.bonus, pkg.label, pkg.icon);
   }
 
-  async function handlePay(method: string, email: string) {
+  async function handlePay(method: string, email: string, phone?: string) {
     if (!modalState || !publicKey || !user?.id) return;
     const price = coinsToPrice(modalState.coins, selectedCountry.currency);
     const amountMinor = Math.round(price * 100);
@@ -413,7 +436,8 @@ export default function Billing() {
       currency: selectedCountry.currency,
       channels: [method],
       ref: `WOLF-${Date.now()}-c${modalState.coins}`,
-      metadata: { coins: totalCoins, userId: user.id },
+      ...(phone ? { phone } : {}),
+      metadata: { coins: totalCoins, userId: user.id, ...(phone ? { phone } : {}) },
       callback: async (response: { reference: string }) => {
         setPaying(false);
         setModalState(null);

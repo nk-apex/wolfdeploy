@@ -23,7 +23,7 @@ const BOTS: Bot[] = [
     name: "Silent WolfBot",
     description: "Professional WhatsApp Bot with auto-session authentication. Powered by Baileys with support for media, commands, auto-reply and more.",
     repository: "https://github.com/7silent-wolf/silentwolf.git",
-    logo: "https://raw.githubusercontent.com/SuhailTechInfo/Suhail-Md/main/src/logo.jpg",
+    logo: "https://avatars.githubusercontent.com/u/256216610?v=4",
     keywords: ["whatsapp", "bot", "wolfbot", "baileys", "session"],
     category: "WhatsApp Bot",
     stars: 0,
