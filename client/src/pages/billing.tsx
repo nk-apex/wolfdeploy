@@ -35,21 +35,23 @@ const PACKAGES = [
   { id: "power",   coins: 100, bots: 10, bonus: 10, label: "Power Pack",   icon: Star,    popular: true,  tagline: "10 bots + 10 bonus coins" },
 ];
 
-type MobileProvider = { id: string; name: string };
+/* directCharge: true  = Paystack Charge API works (Ghana, Rwanda, Uganda)
+   directCharge: false = Must use Paystack checkout form (Kenya M-PESA, etc.) */
+type MobileProvider = { id: string; name: string; directCharge: boolean };
 const COUNTRIES = [
   { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", dialCode: "234", methods: ["card", "bank_transfer", "ussd"], providers: [] as MobileProvider[] },
-  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "vodafone", name: "Vodafone" }, { id: "airteltigo", name: "AirtelTigo" }] },
-  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA" }] },
+  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: true }, { id: "vodafone", name: "Vodafone", directCharge: true }, { id: "airteltigo", name: "AirtelTigo", directCharge: true }] },
+  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA", directCharge: false }] },
   { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", dialCode: "27",  methods: ["card"], providers: [] as MobileProvider[] },
-  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }] },
-  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA" }, { id: "tigopesa", name: "Tigo" }, { id: "airtel", name: "Airtel" }, { id: "halopesa", name: "Halotel" }] },
-  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", dialCode: "256", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "airtel", name: "Airtel" }] },
-  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", dialCode: "225", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "moov", name: "Moov" }, { id: "wave", name: "Wave" }] },
-  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", dialCode: "237", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "orange", name: "Orange" }] },
-  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", dialCode: "260", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "airtel", name: "Airtel" }, { id: "zamtel", name: "Zamtel" }] },
+  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: true }] },
+  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA", directCharge: false }, { id: "tigopesa", name: "Tigo", directCharge: false }, { id: "airtel", name: "Airtel", directCharge: false }, { id: "halopesa", name: "Halotel", directCharge: false }] },
+  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", dialCode: "256", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: true }, { id: "airtel", name: "Airtel", directCharge: true }] },
+  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", dialCode: "225", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: false }, { id: "moov", name: "Moov", directCharge: false }, { id: "wave", name: "Wave", directCharge: false }] },
+  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", dialCode: "237", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: false }, { id: "orange", name: "Orange", directCharge: false }] },
+  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", dialCode: "260", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: false }, { id: "airtel", name: "Airtel", directCharge: false }, { id: "zamtel", name: "Zamtel", directCharge: false }] },
   { code: "EG", name: "Egypt",          currency: "EGP", symbol: "E£",   flag: "🇪🇬", dialCode: "20",  methods: ["card"], providers: [] as MobileProvider[] },
   { code: "ET", name: "Ethiopia",       currency: "ETB", symbol: "Br",   flag: "🇪🇹", dialCode: "251", methods: ["card"], providers: [] as MobileProvider[] },
-  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", dialCode: "221", methods: ["card", "mobile_money"], providers: [{ id: "wave", name: "Wave" }, { id: "orange", name: "Orange Money" }, { id: "free", name: "Free Money" }] },
+  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", dialCode: "221", methods: ["card", "mobile_money"], providers: [{ id: "wave", name: "Wave", directCharge: false }, { id: "orange", name: "Orange Money", directCharge: false }, { id: "free", name: "Free Money", directCharge: false }] },
   { code: "XX", name: "Others (USD)",   currency: "USD", symbol: "$",    flag: "🌐",  dialCode: "1",   methods: ["card"], providers: [] as MobileProvider[] },
 ];
 
@@ -105,6 +107,8 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   const [stkText, setStkText] = useState("");
   const [pollCount, setPollCount] = useState(0);
   const isMobileMoney = method === "mobile_money";
+  const selectedProvider = country.providers.find(p => p.id === provider);
+  const useDirectCharge = isMobileMoney && (selectedProvider?.directCharge ?? false);
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
   const totalCoins = pkg.coins + pkg.bonus;
@@ -182,8 +186,8 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
 
     setLoading(true);
     try {
-      if (isMobileMoney) {
-        /* ── Paystack Charge API: directly triggers STK push ── */
+      if (useDirectCharge) {
+        /* ── Paystack Charge API: directly triggers STK push (Ghana, Rwanda, Uganda) ── */
         const chargeRes = await fetch("/api/payments/mobile-charge", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -205,20 +209,23 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
         setStkSent(true);
         setPollCount(0);
       } else {
-        /* ── Card / USSD / bank: Initialize and show iframe ── */
+        /* ── Initialize + Paystack iframe (Kenya M-PESA, card, USSD, bank) ── */
         const ref = `WOLF-${Date.now()}-c${totalCoins}`;
+        const initBody: Record<string, unknown> = {
+          email: isMobileMoney ? `${localPhone}@wolfdeploy.app` : email,
+          amount: amountMinor,
+          currency: country.currency,
+          channels: [method],
+          reference: ref,
+          userId,
+          coins: totalCoins,
+        };
+        /* Pass phone so Paystack pre-fills the M-PESA number in their form */
+        if (isMobileMoney) initBody.phone = `+${country.dialCode}${digits}`;
         const initRes = await fetch("/api/payments/initialize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            amount: amountMinor,
-            currency: country.currency,
-            channels: [method],
-            reference: ref,
-            userId,
-            coins: totalCoins,
-          }),
+          body: JSON.stringify(initBody),
         });
         const initData = await initRes.json() as { authorizationUrl?: string; error?: string };
         if (!initRes.ok || !initData.authorizationUrl) {
@@ -326,8 +333,9 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     );
   }
 
-  /* ── Card / USSD / Bank — Paystack iframe overlay ── */
+  /* ── Card / USSD / Bank / M-PESA — Paystack iframe overlay ── */
   if (paystackUrl) {
+    const isMpesa = isMobileMoney && !useDirectCharge;
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center px-2 py-4"
         style={{ zIndex: 10000, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(8px)" }}>
@@ -335,10 +343,17 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           style={{ background: "#fff", maxHeight: "calc(100vh - 32px)" }}>
           <div className="flex items-center justify-between px-4 py-2.5"
             style={{ background: "#f8f8f8", borderBottom: "1px solid #e5e5e5" }}>
-            <span className="text-xs font-mono text-gray-500">Secure checkout · Paystack</span>
+            <div>
+              <span className="text-xs font-mono text-gray-500">Secure checkout · Paystack</span>
+              {isMpesa && (
+                <p className="text-[10px] text-green-600 font-mono mt-0.5">
+                  📱 Your number is pre-filled — just tap Pay to send the STK push
+                </p>
+              )}
+            </div>
             {!verifying && (
               <button data-testid="button-cancel-payment" onClick={() => { setPaystackUrl(""); setPayRef(""); }}
-                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded">
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded flex-shrink-0 ml-2">
                 Cancel
               </button>
             )}
@@ -534,8 +549,10 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           >
             {loading ? (
               <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Connecting…</>
-            ) : isMobileMoney
+            ) : useDirectCharge
               ? <><Smartphone className="w-4 h-4" /> Send STK Push · {country.symbol}{price.toLocaleString()}</>
+              : isMobileMoney
+              ? <><Smartphone className="w-4 h-4" /> Pay {country.symbol}{price.toLocaleString()} via {selectedProvider?.name}</>
               : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
           </button>
 

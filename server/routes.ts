@@ -169,18 +169,16 @@ export async function registerRoutes(
     }
 
     try {
+      const chargeBody = { email, amount, currency, mobile_money: { phone, provider } };
+      console.log("[mobile-charge] Sending to Paystack:", JSON.stringify(chargeBody));
+
       const paystackRes = await fetch("https://api.paystack.co/charge", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${secretKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          email,
-          amount,
-          currency,
-          mobile_money: { phone, provider },
-        }),
+        body: JSON.stringify(chargeBody),
       });
 
       const data = await paystackRes.json() as {
