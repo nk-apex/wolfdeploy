@@ -57,6 +57,7 @@ const PLANS = [
 const BOTS = [
   { name: "Silent WolfBot", repo: "7silent-wolf/silentwolf", badge: "Popular" },
   { name: "JUNE-X", repo: "Vinpink2/JUNE-X", badge: "New" },
+  { name: "DAVE-X", repo: "Davex-254/DAVE-X", badge: "⭐ 56" },
 ];
 
 export default function Landing() {

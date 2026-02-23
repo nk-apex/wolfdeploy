@@ -62,6 +62,28 @@ const BOTS: Bot[] = [
       },
     },
   },
+  {
+    id: "davex",
+    name: "DAVE-X",
+    description: "Dave Tech bot — a friendly, feature-packed WhatsApp assistant built by Gifted Dave. Supports media, group management, auto-reply, and more. Hostable on any platform.",
+    repository: "https://github.com/Davex-254/DAVE-X.git",
+    logo: "https://avatars.githubusercontent.com/u/217832615?v=4",
+    keywords: ["whatsapp", "bot", "dave-x", "baileys", "nodejs"],
+    category: "WhatsApp Bot",
+    stars: 56,
+    env: {
+      SESSION_ID: {
+        description: "Your session ID. Must begin with 'DAVE-AI:~'",
+        required: true,
+        placeholder: "DAVE-AI:~xxxxxxxxxxxx",
+      },
+      PHONE_NUMBER: {
+        description: "Your WhatsApp phone number with country code (e.g. +254712345678)",
+        required: true,
+        placeholder: "+254712345678",
+      },
+    },
+  },
 ];
 
 const BASE_DIR = join(tmpdir(), "botforge-deployments");
