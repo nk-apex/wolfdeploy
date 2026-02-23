@@ -1,0 +1,43 @@
+~/workspace$ git push --force
+Enumerating objects: 213, done.
+Counting objects: 100% (213/213), done.
+Delta compression using up to 8 threads
+Compressing objects: 100% (187/187), done.
+Writing objects: 100% (189/189), 332.45 KiB | 13.30 MiB/s, done.
+Total 189 (delta 161), reused 0 (delta 0), pack-reused 0 (from 0)
+remote: Resolving deltas: 100% (161/161), completed with 15 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote: 
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote: 
+remote:     - Push cannot contain secrets
+remote: 
+remote:     
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:     
+remote:     
+remote:       —— Stripe API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: e2b6f0723610d7b5ca8ba70f99782dd28bad0efc
+remote:            path: environments.txt:5
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/nk-apex/wolfdeploy/security/secret-scanning/unblock-secret/3A5ROQy9xxBxvFAaYgqzSRlL8nI
+remote:     
+remote:     
+remote:       —— Stripe API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: 0a8cb92b26d0542eff9d7107f429510a5da0a4b1
+remote:            path: environments.txt:5
+remote:     
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/nk-apex/wolfdeploy/security/secret-scanning/unblock-secret/3A5ROUOLE3extXiRZ88pfUl9LR7
+remote:     
+remote: 
+remote: 
+To https://github.com/nk-apex/wolfdeploy
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to 
