@@ -94,9 +94,13 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   const [visible, setVisible] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  /* For card/USSD/bank — show Paystack iframe */
   const [paystackUrl, setPaystackUrl] = useState("");
   const [payRef, setPayRef] = useState("");
   const [verifying, setVerifying] = useState(false);
+  /* For mobile money — show our own waiting screen + poll */
+  const [stkSent, setStkSent] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
   const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
@@ -108,29 +112,55 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     return () => cancelAnimationFrame(r);
   }, []);
 
-  /* Listen for Paystack postMessage events from the iframe */
+  /* Poll for STK push result every 4 seconds (mobile money only) */
+  useEffect(() => {
+    if (!stkSent || verifying || !payRef) return;
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/payments/check/${payRef}`);
+        const data = await res.json() as { status: string };
+        if (data.status === "success") {
+          doVerify(payRef);
+        } else if (data.status === "failed" || data.status === "abandoned") {
+          setStkSent(false);
+          setPayRef("");
+          setErrMsg("Payment was not completed. Please try again.");
+        } else {
+          /* still pending — increment to re-trigger effect */
+          setPollCount(c => c + 1);
+        }
+      } catch {
+        setPollCount(c => c + 1);
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [stkSent, payRef, pollCount, verifying]);
+
+  /* Listen for postMessage from Paystack iframe (card/USSD/bank) */
   useEffect(() => {
     if (!paystackUrl) return;
     function onMessage(e: MessageEvent) {
       try {
         const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-        if (
-          d?.event === "successful" ||
-          d?.data?.event === "success" ||
-          d?.type === "paystack:payment:success"
-        ) {
-          handleVerify(payRef);
+        if (d?.event === "successful" || d?.data?.event === "success" || d?.type === "paystack:payment:success") {
+          doVerify(payRef);
         }
-      } catch { /* ignore parse errors */ }
+      } catch { /* ignore */ }
     }
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, [paystackUrl, payRef]);
 
   function handleClose() {
-    if (loading || paystackUrl) return;
+    if (loading || paystackUrl || stkSent) return;
     setVisible(false);
     setTimeout(onClose, 220);
+  }
+
+  function cancelStk() {
+    setStkSent(false);
+    setPayRef("");
+    setErrMsg("");
   }
 
   async function handlePay() {
@@ -156,13 +186,20 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           coins: totalCoins,
         }),
       });
-      const initData = await initRes.json() as { authorizationUrl?: string; accessCode?: string; error?: string };
+      const initData = await initRes.json() as { authorizationUrl?: string; error?: string };
       if (!initRes.ok || !initData.authorizationUrl) {
         setErrMsg(initData.error || "Failed to initialise payment. Try again.");
         return;
       }
       setPayRef(ref);
-      setPaystackUrl(initData.authorizationUrl);
+      if (isMobileMoney) {
+        /* STK push was sent — show waiting screen, start polling */
+        setStkSent(true);
+        setPollCount(0);
+      } else {
+        /* Card / USSD / bank — show Paystack iframe */
+        setPaystackUrl(initData.authorizationUrl);
+      }
     } catch {
       setErrMsg("Could not connect to payment server. Check your network and try again.");
     } finally {
@@ -170,7 +207,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     }
   }
 
-  async function handleVerify(ref: string) {
+  async function doVerify(ref: string) {
     setVerifying(true);
     try {
       const verRes = await fetch("/api/payments/verify", {
@@ -180,23 +217,86 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
       });
       const verData = await verRes.json() as { success?: boolean; error?: string };
       if (verRes.ok && verData.success) {
+        setStkSent(false);
         setPaystackUrl("");
         onSuccess(totalCoins, ref);
       } else {
         setVerifying(false);
-        setErrMsg(verData.error || "Payment not confirmed yet. If charged, contact support.");
+        setStkSent(false);
         setPaystackUrl("");
+        setErrMsg(verData.error || "Payment not confirmed yet. If charged, contact support.");
       }
     } catch {
       setVerifying(false);
-      setErrMsg("Verification failed. Contact support if you were charged.");
+      setStkSent(false);
       setPaystackUrl("");
+      setErrMsg("Verification failed. Contact support if you were charged.");
     }
   }
 
   const canPay = isMobileMoney ? !!phone.trim() : !!email.trim();
 
-  /* Paystack checkout iframe overlay */
+  /* ── Mobile money STK waiting screen ── */
+  if (stkSent) {
+    const fullPhone = `+${country.dialCode}${phone}`;
+    return (
+      <div className="fixed inset-0 flex items-center justify-center px-4 py-8"
+        style={{ zIndex: 10000, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
+        <div className="w-full max-w-sm rounded-2xl overflow-hidden"
+          style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0a0a0a", border: `1px solid ${t.accentFaded(0.3)}`, boxShadow: `0 0 80px ${t.accentFaded(0.15)}` }}>
+          <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: `1px solid ${t.accentFaded(0.12)}`, background: t.accentFaded(0.04) }}>
+            <Smartphone className="w-4 h-4 flex-shrink-0" style={{ color: t.accent }} />
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: t.textMuted }}>STK Push Sent</p>
+              <p className="text-sm font-bold text-white font-mono">{fullPhone}</p>
+            </div>
+          </div>
+          <div className="p-6 text-center">
+            {verifying ? (
+              <>
+                <div className="w-14 h-14 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.3)}` }}>
+                  <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: `${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accent}` }} />
+                </div>
+                <p className="text-white font-bold font-mono text-sm mb-1">Confirming payment…</p>
+                <p className="text-xs font-mono" style={{ color: t.textMuted }}>Please wait</p>
+              </>
+            ) : (
+              <>
+                {/* Pulsing phone icon */}
+                <div className="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center text-3xl animate-pulse"
+                  style={{ background: t.accentFaded(0.08), border: `2px solid ${t.accentFaded(0.35)}`, boxShadow: `0 0 30px ${t.accentFaded(0.2)}` }}>
+                  📲
+                </div>
+                <p className="text-white font-bold font-mono text-base mb-1">Check your phone</p>
+                <p className="text-xs font-mono mb-1" style={{ color: t.textMuted }}>Enter your PIN to approve</p>
+                <p className="text-xs font-mono mb-6 font-bold" style={{ color: t.accent }}>
+                  {country.symbol}{price.toLocaleString()} {country.currency}
+                </p>
+                {/* Subtle polling indicator */}
+                <div className="flex items-center justify-center gap-1.5 mb-6">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full animate-bounce"
+                      style={{ background: t.accentFaded(0.5), animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                  <span className="text-[10px] font-mono ml-1" style={{ color: t.textMuted }}>Waiting for approval</span>
+                </div>
+                <button
+                  data-testid="button-cancel-payment"
+                  onClick={cancelStk}
+                  className="w-full py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all"
+                  style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "rgba(239,68,68,0.7)" }}
+                >
+                  Cancel
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Card / USSD / Bank — Paystack iframe overlay ── */
   if (paystackUrl) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center px-2 py-4"
@@ -207,11 +307,8 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             style={{ background: "#f8f8f8", borderBottom: "1px solid #e5e5e5" }}>
             <span className="text-xs font-mono text-gray-500">Secure checkout · Paystack</span>
             {!verifying && (
-              <button
-                data-testid="button-cancel-payment"
-                onClick={() => { setPaystackUrl(""); setPayRef(""); }}
-                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded"
-              >
+              <button data-testid="button-cancel-payment" onClick={() => { setPaystackUrl(""); setPayRef(""); }}
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded">
                 Cancel
               </button>
             )}
@@ -223,22 +320,14 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             </div>
           ) : (
             <>
-              <iframe
-                data-testid="paystack-iframe"
-                src={paystackUrl}
-                className="w-full flex-1 border-0"
-                style={{ minHeight: "500px" }}
-                allow="payment"
-                title="Paystack Checkout"
-              />
+              <iframe data-testid="paystack-iframe" src={paystackUrl}
+                className="w-full flex-1 border-0" style={{ minHeight: "500px" }}
+                allow="payment" title="Paystack Checkout" />
               <div className="px-4 py-3 flex items-center gap-3"
                 style={{ background: "#f8f8f8", borderTop: "1px solid #e5e5e5" }}>
-                <button
-                  data-testid="button-confirm-payment"
-                  onClick={() => handleVerify(payRef)}
+                <button data-testid="button-confirm-payment" onClick={() => doVerify(payRef)}
                   className="flex-1 py-2 rounded-lg text-xs font-mono font-bold text-white transition-all"
-                  style={{ background: t.accent }}
-                >
+                  style={{ background: t.accent }}>
                   I've completed payment
                 </button>
               </div>

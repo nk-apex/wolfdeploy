@@ -158,6 +158,20 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/payments/check/:reference", async (req, res) => {
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!secretKey) return res.status(500).json({ status: "error" });
+    try {
+      const r = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(req.params.reference)}`, {
+        headers: { Authorization: `Bearer ${secretKey}` },
+      });
+      const data = await r.json() as { status: boolean; data?: { status: string } };
+      res.json({ status: data.data?.status ?? "pending" });
+    } catch {
+      res.json({ status: "pending" });
+    }
+  });
+
   /* ── Coin endpoints ─────────────────────────────────────── */
   app.get("/api/coins/:userId", async (req, res) => {
     try {
