@@ -1,7 +1,7 @@
 import { type Bot, type Deployment, type DeploymentStatus } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { spawn, type ChildProcess } from "child_process";
-import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
+import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync, symlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -168,6 +168,20 @@ class MemStorage implements IStorage {
     await this.addDeploymentLog(id, "info", "Installing Node.js dependencies...");
     await this.spawnStep(id, "npm", ["install", "--legacy-peer-deps", "--no-audit", "--prefer-offline"], { cwd: deployDir });
     await this.addDeploymentLog(id, "info", "Dependencies installed.");
+
+    // ── Step 2b: expose node_modules to /tmp so downloaded plugins find them ──
+    // Bots like WolfBot download plugins (n7-main) into /tmp/.xxx/ and import
+    // packages like dotenv from there. Node.js traverses up to /tmp/node_modules
+    // during resolution, so we symlink there to make the bot's deps available.
+    try {
+      const tmpNodeModules = "/tmp/node_modules";
+      const botNodeModules = join(deployDir, "node_modules");
+      try { unlinkSync(tmpNodeModules); } catch { /* ok if not a symlink */ }
+      try { rmSync(tmpNodeModules, { recursive: true, force: true }); } catch { /* ok */ }
+      symlinkSync(botNodeModules, tmpNodeModules);
+    } catch (e) {
+      await this.addDeploymentLog(id, "warn", `Could not create /tmp/node_modules symlink: ${e}`);
+    }
 
     // ── Step 3: write .env file + build process env ───────────────────────────
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
