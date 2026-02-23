@@ -38,11 +38,6 @@ const BOTS: Bot[] = [
         required: true,
         placeholder: "+254712345678",
       },
-      DATABASE_URL: {
-        description: "PostgreSQL connection URL. Get a free one at neon.tech or railway.app",
-        required: true,
-        placeholder: "postgresql://user:password@host:5432/dbname",
-      },
     },
   },
   {
@@ -64,11 +59,6 @@ const BOTS: Bot[] = [
         description: "Your WhatsApp phone number with country code (e.g. +254712345678)",
         required: true,
         placeholder: "+254712345678",
-      },
-      DATABASE_URL: {
-        description: "PostgreSQL connection URL. Get a free one at neon.tech or railway.app",
-        required: true,
-        placeholder: "postgresql://user:password@host:5432/dbname",
       },
     },
   },
@@ -160,18 +150,31 @@ class MemStorage implements IStorage {
     // ── Step 3: write .env file + build process env ───────────────────────────
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
 
-    // Write a real .env file into the deploy dir so dotenv picks everything up
-    const envFileContent = Object.entries(envVars)
-      .map(([k, v]) => `${k}="${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
-      .join("\n") + '\nNODE_ENV="production"\n';
+    // Automatically inject the platform's shared PostgreSQL database
+    const platformDb = process.env.DATABASE_URL;
+    const fullEnv: Record<string, string> = {
+      ...envVars,
+      NODE_ENV: "production",
+    };
+    if (platformDb) {
+      fullEnv.DATABASE_URL = platformDb;
+      await this.addDeploymentLog(id, "info", "Database: Provisioned automatically by BotForge.");
+    } else {
+      await this.addDeploymentLog(id, "warn", "DATABASE_URL not found on platform — bot may fail if it needs a database.");
+    }
+
+    // Write a real .env file so dotenv picks everything up too
+    const quote = (v: string) => `"${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`;
+    const envFileContent = Object.entries(fullEnv)
+      .map(([k, v]) => `${k}=${quote(v)}`)
+      .join("\n") + "\n";
     writeFileSync(join(deployDir, ".env"), envFileContent, "utf-8");
-    await this.addDeploymentLog(id, "info", `Written .env with ${Object.keys(envVars).length} variable(s).`);
+    await this.addDeploymentLog(id, "info", `Environment ready (${Object.keys(fullEnv).length} variables).`);
     await this.addDeploymentLog(id, "info", "Starting bot process...");
 
     const botEnv: NodeJS.ProcessEnv = {
       ...process.env,
-      ...envVars,
-      NODE_ENV: "production",
+      ...fullEnv,
     };
 
     const botProcess = spawn("node", ["index.js"], {
