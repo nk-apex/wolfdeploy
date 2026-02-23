@@ -92,11 +92,21 @@ interface ModalProps {
   t: ReturnType<typeof getThemeTokens>;
 }
 
+/* ── STK Push step definitions ── */
+const STK_STEPS = [
+  { id: "init",    label: "Initiating payment",           desc: "Connecting to Paystack…",                  icon: "⚡" },
+  { id: "push",    label: "Pushing STK to your phone",    desc: "A payment prompt is being sent now…",      icon: "📲" },
+  { id: "pushed",  label: "STK push sent!",               desc: "Check your phone and enter your PIN.",     icon: "✅" },
+  { id: "waiting", label: "Waiting for PIN entry",        desc: "Approve the payment on your phone…",       icon: "🔐" },
+  { id: "confirm", label: "Confirming payment",           desc: "Verifying with your mobile network…",      icon: "🔄" },
+];
+
 function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, t }: ModalProps) {
   const [method, setMethod] = useState(country.methods[0]);
   const [email, setEmail] = useState(initEmail);
   const [phone, setPhone] = useState("");
   const [visible, setVisible] = useState(false);
+  const [stkStep, setStkStep] = useState(0);
   const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
@@ -108,11 +118,151 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
     return () => cancelAnimationFrame(r);
   }, []);
 
+  /* Advance through STK steps automatically when paying via mobile money */
+  useEffect(() => {
+    if (!paying || !isMobileMoney) { setStkStep(0); return; }
+    setStkStep(0);
+    const timers: ReturnType<typeof setTimeout>[] = [
+      setTimeout(() => setStkStep(1), 900),
+      setTimeout(() => setStkStep(2), 2800),
+      setTimeout(() => setStkStep(3), 5000),
+      setTimeout(() => setStkStep(4), 12000),
+    ];
+    return () => timers.forEach(clearTimeout);
+  }, [paying, isMobileMoney]);
+
   function handleClose() {
+    if (paying) return; /* Don't close mid-payment without cancel */
     setVisible(false);
     setTimeout(onClose, 220);
   }
 
+  function handleCancel() {
+    setVisible(false);
+    setTimeout(onClose, 220);
+  }
+
+  /* ── STK push progress screen (shown when paying via mobile money) ── */
+  if (paying && isMobileMoney) {
+    const step = STK_STEPS[stkStep] ?? STK_STEPS[STK_STEPS.length - 1];
+    const formattedPhone = phone.startsWith("+") ? phone : `+${phone}`;
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center px-4 py-8"
+        style={{ zIndex: 10000, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}
+      >
+        <div
+          data-testid="stk-progress-modal"
+          className="w-full max-w-sm rounded-2xl overflow-hidden"
+          style={{
+            background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0a0a0a",
+            border: `1px solid ${t.accentFaded(0.3)}`,
+            boxShadow: `0 0 80px ${t.accentFaded(0.18)}, 0 24px 80px rgba(0,0,0,0.7)`,
+          }}
+        >
+          {/* Title bar */}
+          <div className="px-5 py-4 flex items-center gap-3" style={{ borderBottom: `1px solid ${t.accentFaded(0.12)}`, background: t.accentFaded(0.04) }}>
+            <Smartphone className="w-4 h-4" style={{ color: t.accent }} />
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: t.textMuted }}>Mobile Money</p>
+              <p className="text-sm font-bold text-white font-mono">{formattedPhone}</p>
+            </div>
+          </div>
+
+          <div className="p-6">
+            {/* Pulsing phone icon */}
+            <div className="flex justify-center mb-6">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl"
+                style={{ background: t.accentFaded(0.08), border: `2px solid ${t.accentFaded(stkStep >= 2 ? 0.5 : 0.2)}`, boxShadow: stkStep >= 2 ? `0 0 30px ${t.accentFaded(0.25)}` : "none", transition: "all 0.5s ease" }}
+              >
+                {step.icon}
+              </div>
+            </div>
+
+            {/* Current step label */}
+            <p className="text-center text-white font-bold text-base mb-1 font-mono">{step.label}</p>
+            <p className="text-center text-xs font-mono mb-6" style={{ color: t.textMuted }}>{step.desc}</p>
+
+            {/* Step progress track */}
+            <div className="space-y-2.5 mb-6">
+              {STK_STEPS.map((s, i) => {
+                const done = i < stkStep;
+                const active = i === stkStep;
+                const future = i > stkStep;
+                return (
+                  <div key={s.id} className="flex items-center gap-3">
+                    {/* Dot */}
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                      style={{
+                        background: done ? t.accent : active ? t.accentFaded(0.2) : t.accentFaded(0.05),
+                        border: `1.5px solid ${done ? t.accent : active ? t.accentFaded(0.6) : t.accentFaded(0.2)}`,
+                        boxShadow: active ? `0 0 10px ${t.accentFaded(0.4)}` : "none",
+                      }}
+                    >
+                      {done
+                        ? <span style={{ color: "#000", fontSize: "10px", fontWeight: 900 }}>✓</span>
+                        : active
+                          ? <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: t.accent }} />
+                          : null}
+                    </div>
+                    {/* Label */}
+                    <span
+                      className="text-xs font-mono transition-all duration-300"
+                      style={{ color: done ? t.accent : active ? "white" : t.accentFaded(0.3), fontWeight: active || done ? 700 : 400 }}
+                    >
+                      {s.label}
+                      {active && <span className="ml-1 animate-pulse">…</span>}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Amount reminder */}
+            <div className="rounded-xl px-4 py-3 mb-5 flex items-center justify-between" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.15)}` }}>
+              <div className="flex items-center gap-2">
+                <Coins className="w-3.5 h-3.5" style={{ color: t.accent }} />
+                <span className="text-xs font-mono text-white">{totalCoins} coins</span>
+              </div>
+              <span className="text-xs font-mono font-bold text-white">{country.symbol}{price.toLocaleString()} <span style={{ color: t.textMuted }}>{country.currency}</span></span>
+            </div>
+
+            {/* Cancel */}
+            <button
+              data-testid="button-cancel-payment"
+              onClick={handleCancel}
+              className="w-full py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all"
+              style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "rgba(239,68,68,0.7)" }}
+            >
+              Cancel Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Standard (card / USSD / bank) processing overlay ── */
+  if (paying) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center px-4 py-8" style={{ zIndex: 10000, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
+        <div className="w-full max-w-sm rounded-2xl p-8 text-center" style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0a0a0a", border: `1px solid ${t.accentFaded(0.3)}` }}>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.3)}` }}>
+            <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: `${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accent}` }} />
+          </div>
+          <p className="text-white font-bold font-mono text-sm mb-1">Processing Payment</p>
+          <p className="text-xs font-mono mb-5" style={{ color: t.textMuted }}>Complete the payment in the Paystack window</p>
+          <button data-testid="button-cancel-payment" onClick={handleCancel} className="text-xs font-mono underline" style={{ color: t.textMuted }}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  /* ── Form view (default) ── */
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 py-8"
@@ -219,8 +369,9 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
                 className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none transition-all"
                 style={{ background: t.accentFaded(0.08), border: `1px solid ${t.accentFaded(0.3)}` }}
               />
-              <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
-                Include country code · A payment prompt will be sent to this number
+              <p className="text-[9px] font-mono mt-1 flex items-center gap-1" style={{ color: t.textMuted }}>
+                <Smartphone className="w-2.5 h-2.5 flex-shrink-0" />
+                Include country code — payment prompt sent directly to this number
               </p>
             </div>
           )}
@@ -234,11 +385,21 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
           </div>
 
           {/* Pay button */}
-          <button data-testid="button-pay-now" disabled={paying || !email || (isMobileMoney && !phone)} onClick={() => onPay(method, email, isMobileMoney ? phone : undefined)}
+          <button
+            data-testid="button-pay-now"
+            disabled={!email || (isMobileMoney && !phone)}
+            onClick={() => onPay(method, email, isMobileMoney ? phone : undefined)}
             className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
-            style={{ background: paying ? t.accentFaded(0.15) : t.accent, color: paying ? t.accent : "#000", border: `1px solid ${t.accent}`, boxShadow: paying ? "none" : `0 0 24px ${t.accentFaded(0.35)}`, opacity: !email ? 0.5 : 1 }}>
-            {paying
-              ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Processing…</>
+            style={{
+              background: t.accent,
+              color: "#000",
+              border: `1px solid ${t.accent}`,
+              boxShadow: `0 0 24px ${t.accentFaded(0.35)}`,
+              opacity: (!email || (isMobileMoney && !phone)) ? 0.45 : 1,
+            }}
+          >
+            {isMobileMoney
+              ? <><Smartphone className="w-4 h-4" /> Send STK Push · {country.symbol}{price.toLocaleString()}</>
               : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
           </button>
 
@@ -428,6 +589,9 @@ export default function Billing() {
     const amountMinor = Math.round(price * 100);
     const totalCoins = modalState.coins + modalState.bonus;
 
+    /* Paystack expects phone without '+' prefix */
+    const formattedPhone = phone ? phone.replace(/^\+/, "").replace(/\s+/g, "") : undefined;
+
     setPaying(true);
     const handler = window.PaystackPop.setup({
       key: publicKey,
@@ -436,8 +600,8 @@ export default function Billing() {
       currency: selectedCountry.currency,
       channels: [method],
       ref: `WOLF-${Date.now()}-c${modalState.coins}`,
-      ...(phone ? { phone } : {}),
-      metadata: { coins: totalCoins, userId: user.id, ...(phone ? { phone } : {}) },
+      ...(formattedPhone ? { phone: formattedPhone } : {}),
+      metadata: { coins: totalCoins, userId: user.id, ...(formattedPhone ? { phone: formattedPhone } : {}) },
       callback: async (response: { reference: string }) => {
         setPaying(false);
         setModalState(null);
