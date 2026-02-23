@@ -150,15 +150,15 @@ class MemStorage implements IStorage {
     // ── Step 3: write .env file + build process env ───────────────────────────
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
 
-    // Automatically inject the platform's shared PostgreSQL database
-    const platformDb = process.env.DATABASE_URL;
+    // Automatically inject the Supabase PostgreSQL database
+    const platformDb = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
     const fullEnv: Record<string, string> = {
       ...envVars,
       NODE_ENV: "production",
     };
     if (platformDb) {
       fullEnv.DATABASE_URL = platformDb;
-      await this.addDeploymentLog(id, "info", "Database: Provisioned automatically by BotForge.");
+      await this.addDeploymentLog(id, "info", "Database: Supabase PostgreSQL provisioned automatically.");
     } else {
       await this.addDeploymentLog(id, "warn", "DATABASE_URL not found on platform — bot may fail if it needs a database.");
     }
@@ -202,28 +202,40 @@ class MemStorage implements IStorage {
       }
     });
 
-    // Pipe real stderr → warn/error logs
+    // Pipe real stderr → warn/error logs (single handler, accumulated for flush)
+    let stderrBuf = "";
     botProcess.stderr?.on("data", (chunk: Buffer) => {
-      const lines = chunk.toString().split("\n").filter(l => l.trim());
-      for (const line of lines) {
+      stderrBuf += chunk.toString();
+      const lines = stderrBuf.split("\n");
+      // Keep last incomplete line in buffer
+      stderrBuf = lines.pop() ?? "";
+      for (const line of lines.filter(l => l.trim())) {
         const lower = line.toLowerCase();
         const level = lower.includes("error") || lower.includes("fatal") ? "error" : "warn";
         this.addDeploymentLog(id, level, line.trim());
       }
     });
 
-    // Handle process exit
+    // Handle process exit — wait 600ms for any remaining stdio data to flush through
     botProcess.on("exit", (code, signal) => {
       this.processes.delete(id);
-      const dep = this.deployments.get(id);
-      if (!dep || dep.status === "stopped") return;
-      if (code === 0) {
-        this.addDeploymentLog(id, "info", `Process exited cleanly (code 0).`);
-        this.updateDeploymentStatus(id, "stopped");
-      } else {
-        this.addDeploymentLog(id, "error", `Process exited with code ${code ?? signal}. Bot crashed.`);
-        this.updateDeploymentStatus(id, "failed");
-      }
+      setTimeout(async () => {
+        // Flush any remaining buffered stderr
+        if (stderrBuf.trim()) {
+          const lower = stderrBuf.toLowerCase();
+          const level = lower.includes("error") || lower.includes("fatal") ? "error" : "warn";
+          await this.addDeploymentLog(id, level, stderrBuf.trim());
+        }
+        const dep = this.deployments.get(id);
+        if (!dep || dep.status === "stopped") return;
+        if (code === 0) {
+          await this.addDeploymentLog(id, "info", `Process exited cleanly (code 0).`);
+          await this.updateDeploymentStatus(id, "stopped");
+        } else {
+          await this.addDeploymentLog(id, "error", `Process exited with code ${code ?? signal}. Bot crashed.`);
+          await this.updateDeploymentStatus(id, "failed");
+        }
+      }, 600);
     });
 
     botProcess.on("error", (err) => {
