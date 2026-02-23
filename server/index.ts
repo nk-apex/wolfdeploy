@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import { db } from "./db";
+import { adminUsers } from "@shared/schema";
 
 const app = express();
 const httpServer = createServer(app);
@@ -60,6 +62,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Auto-seed admin users from ADMIN_USER_IDS env var (comma-separated UUIDs)
+  const adminIds = process.env.ADMIN_USER_IDS?.split(",").map(s => s.trim()).filter(Boolean) ?? [];
+  for (const userId of adminIds) {
+    await db.insert(adminUsers).values({ userId }).onConflictDoNothing();
+  }
+  if (adminIds.length > 0) {
+    console.log(`[admin] Seeded ${adminIds.length} admin user(s) from ADMIN_USER_IDS`);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
