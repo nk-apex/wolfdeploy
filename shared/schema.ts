@@ -136,3 +136,51 @@ export const paymentTransactions = pgTable("payment_transactions", {
 });
 
 export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
+
+export const botRegistrations = pgTable("bot_registrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  name: varchar("name").notNull(),
+  description: text("description").notNull(),
+  repository: varchar("repository").notNull(),
+  logo: varchar("logo"),
+  keywords: text("keywords").array().notNull().default(sql`'{}'::text[]`),
+  category: varchar("category").default("WhatsApp Bot"),
+  env: jsonb("env").notNull().default(sql`'{}'::jsonb`),
+  status: varchar("status").notNull().default("pending"),
+  rewardClaimed: boolean("reward_claimed").default(false),
+  rewardExpiresAt: timestamp("reward_expires_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+export type BotRegistration = typeof botRegistrations.$inferSelect;
+
+export const userComments = pgTable("user_comments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  subject: varchar("subject"),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type UserComment = typeof userComments.$inferSelect;
+
+export const chatMessages = pgTable("chat_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  username: varchar("username").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+
+export const platformSettings = pgTable("platform_settings", {
+  key: varchar("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type PlatformSetting = typeof platformSettings.$inferSelect;

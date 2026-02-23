@@ -19,6 +19,8 @@ import Settings from "@/pages/settings";
 import Referrals from "@/pages/referrals";
 import Admin from "@/pages/admin";
 import Verify from "@/pages/verify";
+import RegisterBot from "@/pages/register-bot";
+import Community from "@/pages/community";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider, useTheme, getThemeTokens } from "@/lib/theme";
 import { useEffect } from "react";
@@ -105,6 +107,8 @@ function AppShell() {
               <Route path="/billing" component={Billing} />
               <Route path="/settings" component={Settings} />
               <Route path="/referrals" component={Referrals} />
+              <Route path="/register-bot" component={RegisterBot} />
+              <Route path="/community" component={Community} />
               <Route path="/wolf" component={Admin} />
               <Route path="/verify" component={Verify} />
               <Route component={NotFound} />

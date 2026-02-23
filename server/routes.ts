@@ -8,10 +8,15 @@ import {
   platformBots,
   notifications,
   paymentTransactions,
+  botRegistrations,
+  userComments,
+  chatMessages,
+  platformSettings,
 } from "@shared/schema";
 import { deployRequestSchema } from "@shared/schema";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and, gt } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import rateLimit from "express-rate-limit";
 
 const COINS_PER_BOT = 10;
 
@@ -629,6 +634,253 @@ export async function registerRoutes(
     if (!(await requireAdmin(req, res))) return;
     await db.delete(notifications).where(eq(notifications.id, req.params.id));
     res.json({ success: true });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     BOT REGISTRATION
+  ════════════════════════════════════════════════════════════ */
+
+  const botRegLimiter = rateLimit({ windowMs: 24 * 60 * 60 * 1000, max: 5, message: { error: "Bot registration limit reached for today." } });
+
+  /* Submit a bot registration — costs 10 coins, grants 5-coin reward expiring in 7 days */
+  app.post("/api/bot-registrations", botRegLimiter, async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+
+    const { name, description, repository, logo, keywords, category, env } = req.body;
+    if (!name || !description || !repository) {
+      return res.status(400).json({ error: "name, description, and repository are required" });
+    }
+    if (!/^https?:\/\/.+/.test(repository)) {
+      return res.status(400).json({ error: "repository must be a valid URL" });
+    }
+
+    const deductResult = await deductCoins(uid, 10);
+    if (!deductResult.ok) {
+      return res.status(402).json({ error: "Insufficient coins. You need 10 coins to register a bot.", balance: deductResult.balance, required: 10 });
+    }
+
+    const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const [reg] = await db.insert(botRegistrations).values({
+      userId: uid,
+      name: name.trim().slice(0, 100),
+      description: description.trim().slice(0, 1000),
+      repository: repository.trim().slice(0, 500),
+      logo: logo?.trim().slice(0, 500) || null,
+      keywords: Array.isArray(keywords) ? keywords.slice(0, 10).map((k: string) => String(k).slice(0, 50)) : [],
+      category: category || "WhatsApp Bot",
+      env: env || {},
+      status: "pending",
+      rewardClaimed: false,
+      rewardExpiresAt,
+    }).returning();
+
+    res.status(201).json(reg);
+  });
+
+  /* Get current user's bot registrations */
+  app.get("/api/bot-registrations", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+    const regs = await db.select().from(botRegistrations)
+      .where(eq(botRegistrations.userId, uid))
+      .orderBy(desc(botRegistrations.createdAt));
+    res.json(regs);
+  });
+
+  /* Redeem the 5-coin reward for an approved registration */
+  app.post("/api/bot-registrations/:id/redeem", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+
+    const [reg] = await db.select().from(botRegistrations)
+      .where(and(eq(botRegistrations.id, req.params.id), eq(botRegistrations.userId, uid)));
+
+    if (!reg) return res.status(404).json({ error: "Registration not found" });
+    if (reg.status !== "approved") return res.status(400).json({ error: "Bot must be approved before claiming reward" });
+    if (reg.rewardClaimed) return res.status(400).json({ error: "Reward already claimed" });
+    if (reg.rewardExpiresAt && new Date() > reg.rewardExpiresAt) {
+      return res.status(410).json({ error: "Reward has expired" });
+    }
+
+    const balance = await creditCoins(uid, 5);
+    await db.update(botRegistrations).set({ rewardClaimed: true }).where(eq(botRegistrations.id, reg.id));
+
+    res.json({ success: true, coinsEarned: 5, balance });
+  });
+
+  /* ── Admin: Bot Registrations ────────────────────────────── */
+  app.get("/api/admin/bot-registrations", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const regs = await db.select().from(botRegistrations).orderBy(desc(botRegistrations.createdAt));
+    res.json(regs);
+  });
+
+  app.put("/api/admin/bot-registrations/:id", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const { status, reviewNotes } = req.body;
+    if (!["pending", "approved", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status" });
+    }
+
+    const [reg] = await db.update(botRegistrations)
+      .set({ status, reviewNotes: reviewNotes || null, reviewedAt: new Date() })
+      .where(eq(botRegistrations.id, req.params.id))
+      .returning();
+
+    if (!reg) return res.status(404).json({ error: "Registration not found" });
+
+    if (status === "approved") {
+      const exists = await db.select().from(platformBots).where(eq(platformBots.id, reg.id));
+      if (exists.length === 0) {
+        await db.insert(platformBots).values({
+          id: reg.id,
+          name: reg.name,
+          description: reg.description,
+          repository: reg.repository,
+          logo: reg.logo || null,
+          keywords: reg.keywords,
+          category: reg.category || "WhatsApp Bot",
+          stars: 0,
+          env: (reg.env as any) || {},
+          active: true,
+        }).onConflictDoNothing();
+      }
+    }
+
+    res.json(reg);
+  });
+
+  app.delete("/api/admin/bot-registrations/:id", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    await db.delete(botRegistrations).where(eq(botRegistrations.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     USER COMMENTS (private — admin-only visible)
+  ════════════════════════════════════════════════════════════ */
+
+  const commentLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 10, message: { error: "Comment limit reached. Try again in an hour." } });
+
+  app.post("/api/comments", commentLimiter, async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+
+    const { subject, message } = req.body;
+    if (!message || String(message).trim().length < 5) {
+      return res.status(400).json({ error: "Message must be at least 5 characters" });
+    }
+
+    const [comment] = await db.insert(userComments).values({
+      userId: uid,
+      subject: subject ? String(subject).trim().slice(0, 200) : null,
+      message: String(message).trim().slice(0, 2000),
+    }).returning();
+
+    res.status(201).json(comment);
+  });
+
+  app.get("/api/admin/comments", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const comments = await db.select().from(userComments).orderBy(desc(userComments.createdAt));
+    res.json(comments);
+  });
+
+  app.delete("/api/admin/comments/:id", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    await db.delete(userComments).where(eq(userComments.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     PUBLIC CHAT (toggleable by admin)
+  ════════════════════════════════════════════════════════════ */
+
+  async function isChatEnabled(): Promise<boolean> {
+    const rows = await db.select().from(platformSettings).where(eq(platformSettings.key, "chat_enabled"));
+    return rows[0]?.value !== "false";
+  }
+
+  const chatLimiter = rateLimit({ windowMs: 60 * 1000, max: 15, message: { error: "Sending messages too fast. Please slow down." } });
+
+  app.get("/api/chat/status", async (_req, res) => {
+    res.json({ enabled: await isChatEnabled() });
+  });
+
+  app.get("/api/chat/messages", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+    if (!(await isChatEnabled())) return res.json({ messages: [], enabled: false });
+
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const since = req.query.since ? new Date(String(req.query.since)) : null;
+
+    const rows = since
+      ? await db.select().from(chatMessages)
+          .where(gt(chatMessages.createdAt, since))
+          .orderBy(desc(chatMessages.createdAt))
+          .limit(limit)
+      : await db.select().from(chatMessages)
+          .orderBy(desc(chatMessages.createdAt))
+          .limit(limit);
+
+    res.json({ messages: rows.reverse(), enabled: true });
+  });
+
+  app.post("/api/chat/messages", chatLimiter, async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+    if (!(await isChatEnabled())) return res.status(403).json({ error: "Public chat is currently disabled" });
+
+    const { message, username } = req.body;
+    if (!message || String(message).trim().length < 1) {
+      return res.status(400).json({ error: "Message cannot be empty" });
+    }
+    if (String(message).trim().length > 500) {
+      return res.status(400).json({ error: "Message too long (max 500 chars)" });
+    }
+
+    const [msg] = await db.insert(chatMessages).values({
+      userId: uid,
+      username: String(username || "Anonymous").trim().slice(0, 50),
+      message: String(message).trim(),
+    }).returning();
+
+    res.status(201).json(msg);
+  });
+
+  app.delete("/api/admin/chat/messages/:id", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    await db.delete(chatMessages).where(eq(chatMessages.id, req.params.id));
+    res.json({ success: true });
+  });
+
+  app.post("/api/admin/chat/clear", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    await db.delete(chatMessages);
+    res.json({ success: true });
+  });
+
+  /* ── Platform settings ───────────────────────────────────── */
+  app.get("/api/admin/settings", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const settings = await db.select().from(platformSettings);
+    const map: Record<string, string> = {};
+    settings.forEach(s => { map[s.key] = s.value; });
+    res.json(map);
+  });
+
+  app.put("/api/admin/settings/:key", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const { value } = req.body;
+    if (value === undefined) return res.status(400).json({ error: "value is required" });
+
+    await db.insert(platformSettings)
+      .values({ key: req.params.key, value: String(value) })
+      .onConflictDoUpdate({ target: platformSettings.key, set: { value: String(value), updatedAt: new Date() } });
+
+    res.json({ key: req.params.key, value: String(value) });
   });
 
   return httpServer;

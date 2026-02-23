@@ -11,7 +11,8 @@ import {
   Shield, Trash2, Plus, Power, PowerOff, Star, ChevronDown,
   ChevronUp, CheckCircle, XCircle, Clock, AlertTriangle,
   Coins, TrendingUp, Activity, RefreshCw, Edit, X, Check,
-  UserCheck, UserX, Eye, EyeOff
+  UserCheck, UserX, Eye, EyeOff, Package, MessageSquare, Globe,
+  Lock, ToggleLeft, ToggleRight, ExternalLink
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,12 +87,45 @@ type Deployment = {
   updatedAt: string;
 };
 
+type BotRegistration = {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  repository: string;
+  status: string;
+  rewardClaimed: boolean;
+  rewardExpiresAt: string | null;
+  reviewNotes: string | null;
+  createdAt: string | null;
+  reviewedAt: string | null;
+};
+
+type UserComment = {
+  id: string;
+  userId: string;
+  subject: string | null;
+  message: string;
+  createdAt: string | null;
+};
+
+type ChatMsg = {
+  id: string;
+  userId: string;
+  username: string;
+  message: string;
+  createdAt: string;
+};
+
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "users", label: "Users", icon: Users },
   { id: "bots", label: "Bot Catalog", icon: Bot },
+  { id: "registrations", label: "Bot Registrations", icon: Package },
   { id: "deployments", label: "Deployments", icon: Rocket },
   { id: "payments", label: "Payments", icon: CreditCard },
+  { id: "comments", label: "Feedback", icon: Lock },
+  { id: "chat", label: "Chat", icon: Globe },
   { id: "notifications", label: "Notifications", icon: Bell },
 ];
 
@@ -178,6 +212,35 @@ export default function AdminPage() {
   const { data: notifs = [], isLoading: notifsLoading } = useQuery<Notification[]>({
     queryKey: ["/api/admin/notifications"],
     enabled: activeTab === "notifications" && !!adminCheck?.isAdmin,
+  });
+
+  const { data: registrations = [], isLoading: regsLoading } = useQuery<BotRegistration[]>({
+    queryKey: ["/api/admin/bot-registrations"],
+    enabled: activeTab === "registrations" && !!adminCheck?.isAdmin,
+    refetchInterval: 15000,
+  });
+
+  const { data: comments = [], isLoading: commentsLoading } = useQuery<UserComment[]>({
+    queryKey: ["/api/admin/comments"],
+    enabled: activeTab === "comments" && !!adminCheck?.isAdmin,
+    refetchInterval: 15000,
+  });
+
+  const { data: chatData } = useQuery<{ messages: ChatMsg[]; enabled: boolean }>({
+    queryKey: ["/api/chat/messages"],
+    enabled: activeTab === "chat" && !!adminCheck?.isAdmin,
+    refetchInterval: 5000,
+  });
+
+  const { data: chatStatus } = useQuery<{ enabled: boolean }>({
+    queryKey: ["/api/chat/status"],
+    enabled: !!adminCheck?.isAdmin,
+    refetchInterval: 10000,
+  });
+
+  const { data: platformSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/admin/settings"],
+    enabled: !!adminCheck?.isAdmin,
   });
 
   // Mutations
@@ -280,6 +343,48 @@ export default function AdminPage() {
     },
     onError: () => toast({ title: "Failed to publish notification", variant: "destructive" }),
   });
+
+  const reviewRegMutation = useMutation({
+    mutationFn: ({ id, status, reviewNotes }: { id: string; status: string; reviewNotes?: string }) =>
+      apiRequest("PUT", `/api/admin/bot-registrations/${id}`, { status, reviewNotes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/bot-registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bots"] });
+      toast({ title: "Registration updated" });
+    },
+    onError: () => toast({ title: "Failed to update registration", variant: "destructive" }),
+  });
+
+  const deleteRegMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/bot-registrations/${id}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/bot-registrations"] }); toast({ title: "Registration deleted" }); },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/comments/${id}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/comments"] }); toast({ title: "Comment deleted" }); },
+  });
+
+  const deleteChatMsgMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/chat/messages/${id}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] }); },
+  });
+
+  const clearChatMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/chat/clear", {}),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/chat/messages"] }); toast({ title: "Chat cleared" }); },
+  });
+
+  const toggleChatMutation = useMutation({
+    mutationFn: (enabled: boolean) => apiRequest("PUT", "/api/admin/settings/chat_enabled", { value: String(enabled) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/chat/status"] });
+      toast({ title: "Chat setting updated" });
+    },
+  });
+
+  const [regNotes, setRegNotes] = useState<Record<string, string>>({});
 
   // Coin adjust inline state
   const [coinInputs, setCoinInputs] = useState<Record<string, string>>({});
@@ -749,6 +854,182 @@ export default function AdminPage() {
                         {tx.createdAt && <span>{new Date(tx.createdAt).toLocaleDateString()}</span>}
                       </div>
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── BOT REGISTRATIONS ─────────────────────────────── */}
+        {activeTab === "registrations" && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
+              Bot Registrations ({registrations.length})
+            </h3>
+            {regsLoading ? (
+              <div className="text-gray-500 text-sm flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Loading…</div>
+            ) : registrations.length === 0 ? (
+              <div className="text-gray-600 text-sm">No registrations yet.</div>
+            ) : (
+              <div className="space-y-3">
+                {registrations.map(reg => {
+                  const statusColors: Record<string, string> = { pending: "text-yellow-400 border-yellow-500/30 bg-yellow-500/10", approved: "text-green-400 border-green-500/30 bg-green-500/10", rejected: "text-red-400 border-red-500/30 bg-red-500/10" };
+                  return (
+                    <div key={reg.id} data-testid={`row-registration-${reg.id}`} className={`${bg} ${border} rounded-xl p-4`}>
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-white">{reg.name}</span>
+                            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border capitalize ${statusColors[reg.status] ?? "text-gray-400"}`}>{reg.status}</span>
+                            {reg.rewardClaimed && <span className="text-[10px] font-mono px-2 py-0.5 rounded-full border text-blue-400 border-blue-500/30 bg-blue-500/10">Reward claimed</span>}
+                          </div>
+                          <p className="text-[10px] text-gray-500 font-mono mt-0.5">by {reg.userId.slice(0, 12)}… · {reg.createdAt ? new Date(reg.createdAt).toLocaleDateString() : ""}</p>
+                          <p className="text-xs text-gray-400 mt-2">{reg.description}</p>
+                          <a href={reg.repository} target="_blank" rel="noopener noreferrer" className="text-[10px] font-mono flex items-center gap-1 mt-1 hover:underline" style={{ color: t.accent }}>
+                            <ExternalLink size={10} /> {reg.repository}
+                          </a>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Input
+                          data-testid={`input-reg-notes-${reg.id}`}
+                          placeholder="Review notes (optional)"
+                          value={regNotes[reg.id] ?? reg.reviewNotes ?? ""}
+                          onChange={e => setRegNotes(p => ({ ...p, [reg.id]: e.target.value }))}
+                          className="bg-white/5 border-white/10 text-xs font-mono h-7"
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            data-testid={`button-approve-reg-${reg.id}`}
+                            size="sm"
+                            disabled={reviewRegMutation.isPending || reg.status === "approved"}
+                            onClick={() => reviewRegMutation.mutate({ id: reg.id, status: "approved", reviewNotes: regNotes[reg.id] })}
+                            className="text-xs font-mono h-7"
+                            style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", border: "1px solid rgba(16,185,129,0.3)" }}
+                          >
+                            <CheckCircle size={11} className="mr-1" /> Approve
+                          </Button>
+                          <Button
+                            data-testid={`button-reject-reg-${reg.id}`}
+                            size="sm"
+                            disabled={reviewRegMutation.isPending || reg.status === "rejected"}
+                            onClick={() => reviewRegMutation.mutate({ id: reg.id, status: "rejected", reviewNotes: regNotes[reg.id] })}
+                            className="text-xs font-mono h-7"
+                            style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}
+                          >
+                            <XCircle size={11} className="mr-1" /> Reject
+                          </Button>
+                          <Button
+                            data-testid={`button-delete-reg-${reg.id}`}
+                            size="sm" variant="ghost"
+                            className="h-7 w-7 p-0 text-red-400 hover:text-red-300 ml-auto"
+                            onClick={() => { if (confirm("Delete this registration?")) deleteRegMutation.mutate(reg.id); }}
+                          >
+                            <Trash2 size={12} />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── USER FEEDBACK / COMMENTS ─────────────────────── */}
+        {activeTab === "comments" && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-3">
+              Private Feedback ({comments.length})
+            </h3>
+            {commentsLoading ? (
+              <div className="text-gray-500 text-sm flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Loading…</div>
+            ) : comments.length === 0 ? (
+              <div className="text-gray-600 text-sm">No feedback messages yet.</div>
+            ) : (
+              <div className="space-y-3">
+                {comments.map(c => (
+                  <div key={c.id} data-testid={`row-comment-${c.id}`} className={`${bg} ${border} rounded-xl p-4`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          {c.subject && <span className="font-semibold text-sm text-white">{c.subject}</span>}
+                          <span className="text-[9px] font-mono text-gray-600">{c.userId.slice(0, 12)}…</span>
+                          {c.createdAt && <span className="text-[9px] font-mono text-gray-600">{new Date(c.createdAt).toLocaleString()}</span>}
+                        </div>
+                        <p className="text-xs text-gray-300 whitespace-pre-wrap">{c.message}</p>
+                      </div>
+                      <Button
+                        data-testid={`button-delete-comment-${c.id}`}
+                        size="sm" variant="ghost"
+                        className="h-7 w-7 p-0 text-red-400 hover:text-red-300 flex-shrink-0"
+                        onClick={() => { if (confirm("Delete this feedback?")) deleteCommentMutation.mutate(c.id); }}
+                      >
+                        <Trash2 size={12} />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── PUBLIC CHAT MODERATION ────────────────────────── */}
+        {activeTab === "chat" && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest">
+                Public Chat ({chatData?.messages?.length ?? 0} messages)
+              </h3>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono text-gray-500">Chat:</span>
+                <button
+                  data-testid="button-toggle-chat"
+                  onClick={() => toggleChatMutation.mutate(chatStatus?.enabled === false ? true : !(platformSettings?.chat_enabled !== "false"))}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors"
+                  style={{
+                    background: chatStatus?.enabled !== false ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                    border: chatStatus?.enabled !== false ? "1px solid rgba(16,185,129,0.3)" : "1px solid rgba(239,68,68,0.3)",
+                    color: chatStatus?.enabled !== false ? "#10b981" : "#ef4444",
+                  }}
+                >
+                  {chatStatus?.enabled !== false ? <ToggleRight size={14} /> : <ToggleLeft size={14} />}
+                  {chatStatus?.enabled !== false ? "Enabled" : "Disabled"}
+                </button>
+                <Button
+                  data-testid="button-clear-chat"
+                  size="sm" variant="ghost"
+                  className="text-red-400 hover:text-red-300 text-xs font-mono h-7"
+                  onClick={() => { if (confirm("Clear all chat messages?")) clearChatMutation.mutate(); }}
+                >
+                  <Trash2 size={11} className="mr-1" /> Clear All
+                </Button>
+              </div>
+            </div>
+            {!chatData?.messages?.length ? (
+              <div className="text-gray-600 text-sm">No chat messages.</div>
+            ) : (
+              <div className="space-y-1.5">
+                {[...(chatData?.messages ?? [])].reverse().map(msg => (
+                  <div key={msg.id} data-testid={`row-chat-${msg.id}`} className={`${bg} ${border} rounded-xl px-4 py-2.5 flex items-start gap-3`}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-xs font-mono font-bold" style={{ color: t.accent }}>{msg.username}</span>
+                        <span className="text-[9px] font-mono text-gray-600">{new Date(msg.createdAt).toLocaleTimeString()}</span>
+                      </div>
+                      <p className="text-xs text-gray-300 break-words">{msg.message}</p>
+                    </div>
+                    <Button
+                      data-testid={`button-delete-chat-msg-${msg.id}`}
+                      size="sm" variant="ghost"
+                      className="h-6 w-6 p-0 text-red-400 hover:text-red-300 flex-shrink-0"
+                      onClick={() => deleteChatMsgMutation.mutate(msg.id)}
+                    >
+                      <Trash2 size={10} />
+                    </Button>
                   </div>
                 ))}
               </div>

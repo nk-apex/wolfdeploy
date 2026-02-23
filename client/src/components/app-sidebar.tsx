@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut, Circle, Shield } from "lucide-react";
+import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut, Circle, Shield, Package, MessageSquare } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Deployment } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
@@ -20,6 +20,8 @@ const navItems = [
   { title: "Command Center", url: "/", icon: LayoutDashboard },
   { title: "My Bots", url: "/bots", icon: Bot },
   { title: "Deploy Bot", url: "/deploy", icon: Rocket },
+  { title: "Register Bot", url: "/register-bot", icon: Package },
+  { title: "Community", url: "/community", icon: MessageSquare },
   { title: "Referrals", url: "/referrals", icon: Users },
   { title: "Billing", url: "/billing", icon: Wallet },
   { title: "Settings", url: "/settings", icon: Settings },
