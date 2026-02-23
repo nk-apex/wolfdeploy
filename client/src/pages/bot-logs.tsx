@@ -1,8 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useParams, Link, useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Deployment } from "@shared/schema";
@@ -24,10 +21,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useEffect, useRef } from "react";
-import { useLocation } from "wouter";
 
 const LOG_COLORS: Record<string, string> = {
-  info: "text-muted-foreground",
+  info: "text-gray-400",
   warn: "text-yellow-400",
   error: "text-red-400",
   success: "text-primary",
@@ -93,95 +89,91 @@ export default function BotLogs() {
 
   if (isLoading) {
     return (
-      <div className="p-6 max-w-5xl mx-auto space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-32 rounded-md" />
-        <Skeleton className="h-64 rounded-md" />
+      <div className="p-4 sm:p-6 space-y-4">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-24 rounded-xl bg-black/30 border border-primary/10 animate-pulse" />
+        ))}
       </div>
     );
   }
 
   if (!deployment) {
     return (
-      <div className="p-6 text-center py-24">
-        <p className="text-sm text-muted-foreground">Deployment not found.</p>
+      <div className="p-4 sm:p-6 text-center py-24">
+        <p className="text-sm text-gray-500 font-mono">Deployment not found.</p>
         <Link href="/bots">
-          <Button variant="outline" className="mt-4 text-xs tracking-wider">Back to My Bots</Button>
+          <button className="mt-4 px-4 py-2 bg-primary/10 border border-primary/30 rounded-lg text-xs font-mono text-primary hover:bg-primary/20 transition-all">
+            Back to My Bots
+          </button>
         </Link>
       </div>
     );
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-5">
+    <div className="space-y-4 sm:space-y-5 p-4 sm:p-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
+      <div className="mb-4 sm:mb-6 flex flex-wrap items-start gap-3">
         <Link href="/bots">
           <button
             data-testid="button-back"
-            className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded border border-border"
+            className="p-2 bg-primary/10 border border-primary/30 rounded-lg hover:bg-primary/20 transition-all text-primary"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
         </Link>
         <div className="flex-1">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-lg font-bold text-primary tracking-wider flex items-center gap-2">
-              <ScrollText className="w-5 h-5" />
+          <div className="flex items-center flex-wrap gap-3 mb-1">
+            <h1 className="text-xl sm:text-2xl font-display font-bold text-white flex items-center gap-2">
+              <ScrollText className="w-5 h-5 text-primary" />
               {deployment.botName}
             </h1>
             <StatusBadge status={deployment.status} />
           </div>
-          <p className="text-[10px] text-muted-foreground font-mono mt-0.5">ID: {deployment.id}</p>
+          <p className="text-[10px] text-gray-600 font-mono">ID: {deployment.id}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
+        <div className="flex items-center gap-2 flex-wrap">
+          <button
             data-testid="button-refresh"
             onClick={() => queryClient.invalidateQueries({ queryKey: ["/api/deployments", id] })}
-            className="gap-1.5 text-[9px] tracking-widest uppercase h-7 px-2"
+            className="flex items-center gap-1.5 text-[9px] text-gray-400 font-mono px-2.5 py-1.5 border border-primary/20 rounded-lg hover:border-primary/40 transition-all"
           >
             <RefreshCw className="w-3 h-3" />
             Refresh
-          </Button>
+          </button>
           {deployment.status === "running" && (
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               data-testid="button-stop"
               onClick={() => stopMutation.mutate()}
               disabled={stopMutation.isPending}
-              className="gap-1.5 text-[9px] tracking-widest uppercase h-7 px-2 text-yellow-500 border-yellow-500/30"
+              className="flex items-center gap-1.5 text-[9px] text-yellow-400 font-mono px-2.5 py-1.5 border border-yellow-500/20 rounded-lg hover:border-yellow-500/40 transition-all disabled:opacity-50"
             >
               <StopCircle className="w-3 h-3" />
               Stop
-            </Button>
+            </button>
           )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="outline"
+              <button
                 data-testid="button-delete"
-                className="gap-1.5 text-[9px] tracking-widest uppercase h-7 px-2 text-red-400 border-red-400/30"
+                className="flex items-center gap-1.5 text-[9px] text-red-400 font-mono px-2.5 py-1.5 border border-red-500/20 rounded-lg hover:border-red-500/40 transition-all"
               >
                 <Trash2 className="w-3 h-3" />
                 Delete
-              </Button>
+              </button>
             </AlertDialogTrigger>
-            <AlertDialogContent className="bg-card border-card-border">
+            <AlertDialogContent className="bg-black/90 border-primary/20 backdrop-blur-sm">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-sm tracking-wide">Delete Deployment</AlertDialogTitle>
-                <AlertDialogDescription className="text-xs text-muted-foreground">
-                  This will permanently delete the deployment. This cannot be undone.
+                <AlertDialogTitle className="text-white font-display">Delete Deployment</AlertDialogTitle>
+                <AlertDialogDescription className="text-gray-500 font-mono text-xs">
+                  This will permanently delete the deployment. Cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="text-xs">Cancel</AlertDialogCancel>
+                <AlertDialogCancel className="border-primary/20 text-gray-400 font-mono text-xs bg-transparent">Cancel</AlertDialogCancel>
                 <AlertDialogAction
                   onClick={() => deleteMutation.mutate()}
-                  className="bg-destructive text-destructive-foreground text-xs"
+                  className="bg-red-500/10 border border-red-500/30 text-red-400 font-mono text-xs"
                 >
                   Delete
                 </AlertDialogAction>
@@ -192,72 +184,57 @@ export default function BotLogs() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4">
         {[
-          {
-            label: "URL",
-            value: deployment.url ? (
-              <a href={deployment.url} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-1 text-primary">
-                <ExternalLink className="w-3 h-3" />
-                <span className="truncate">{deployment.url.replace("https://", "")}</span>
-              </a>
-            ) : "—",
-            icon: Bot,
-          },
-          {
-            label: "CREATED",
-            value: formatDistanceToNow(new Date(deployment.createdAt), { addSuffix: true }),
-            icon: Clock,
-          },
-          {
-            label: "CPU",
-            value: deployment.metrics ? deployment.metrics.cpu.toFixed(1) + "%" : "—",
-            icon: Cpu,
-          },
-          {
-            label: "MEMORY",
-            value: deployment.metrics ? deployment.metrics.memory.toFixed(0) + " MB" : "—",
-            icon: MemoryStick,
-          },
+          { label: "URL", value: deployment.url?.replace("https://", "") || "—", icon: ExternalLink, href: deployment.url },
+          { label: "Created", value: formatDistanceToNow(new Date(deployment.createdAt), { addSuffix: true }), icon: Clock },
+          { label: "CPU", value: deployment.metrics ? deployment.metrics.cpu.toFixed(1) + "%" : "—", icon: Cpu },
+          { label: "Memory", value: deployment.metrics ? deployment.metrics.memory.toFixed(0) + " MB" : "—", icon: MemoryStick },
         ].map((item) => (
-          <Card key={item.label} className="p-3 border-card-border bg-card">
-            <div className="flex items-center gap-1.5 mb-1">
-              <item.icon className="w-3 h-3 text-muted-foreground" />
-              <p className="text-[9px] text-muted-foreground tracking-widest uppercase">{item.label}</p>
+          <div key={item.label} className="p-3 sm:p-4 rounded-xl border border-primary/20 bg-black/30 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 mb-1.5">
+              <item.icon className="w-3 h-3 text-gray-600" />
+              <p className="text-[9px] text-gray-500 font-mono uppercase tracking-widest">{item.label}</p>
             </div>
-            <div className="text-[11px] text-foreground font-mono font-bold truncate">{item.value}</div>
-          </Card>
+            {item.href ? (
+              <a href={item.href} target="_blank" rel="noopener noreferrer"
+                className="text-[10px] sm:text-xs text-primary font-mono font-bold truncate block hover:underline">
+                {item.value}
+              </a>
+            ) : (
+              <p className="text-[10px] sm:text-xs text-white font-display font-bold truncate">{item.value}</p>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Logs Terminal */}
-      <Card className="border-card-border bg-card">
-        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+      {/* Terminal Logs */}
+      <div className="rounded-xl border border-primary/20 bg-black/30 backdrop-blur-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-primary/10">
           <div className="flex items-center gap-2">
             <Terminal className="w-3.5 h-3.5 text-primary" />
-            <span className="text-[10px] font-bold tracking-widest uppercase text-foreground">Deployment Logs</span>
-            <span className="text-[9px] text-muted-foreground">({deployment.logs.length} entries)</span>
+            <span className="text-xs font-mono text-white font-bold">Deployment Logs</span>
+            <span className="text-[9px] text-gray-600 font-mono">({deployment.logs.length} entries)</span>
           </div>
           {(deployment.status === "deploying" || deployment.status === "queued") && (
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[9px] text-primary tracking-wider uppercase">Live</span>
+              <span className="text-[9px] text-primary font-mono uppercase tracking-wider">Live</span>
             </div>
           )}
         </div>
 
-        <div className="h-80 overflow-y-auto bg-background/60 p-4 font-mono">
+        <div className="h-72 sm:h-80 overflow-y-auto p-4 bg-black/50 font-mono">
           {deployment.logs.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-[11px] text-muted-foreground">
+            <div className="flex items-center justify-center h-full">
+              <p className="text-[11px] text-gray-600 font-mono">
                 {deployment.status === "queued" ? "Waiting for deployment to start..." : "No logs yet."}
               </p>
             </div>
           ) : (
             deployment.logs.map((log, i) => (
-              <div key={i} className="flex items-start gap-3 mb-1 group">
-                <span className="text-[9px] text-muted-foreground/60 flex-shrink-0 mt-0.5 tracking-wide">
+              <div key={i} className="flex items-start gap-3 mb-1">
+                <span className="text-[9px] text-gray-700 flex-shrink-0 mt-0.5">
                   {format(new Date(log.timestamp), "HH:mm:ss")}
                 </span>
                 <span className={`text-[10px] flex-shrink-0 font-bold ${LOG_COLORS[log.level]}`}>
@@ -277,27 +254,25 @@ export default function BotLogs() {
           )}
           <div ref={logEndRef} />
         </div>
-      </Card>
+      </div>
 
-      {/* Env vars (masked) */}
-      <Card className="border-card-border bg-card p-4">
-        <h3 className="text-[10px] font-bold tracking-widest uppercase text-foreground mb-3 flex items-center gap-2">
+      {/* Config vars */}
+      <div className="p-4 sm:p-5 rounded-xl border border-primary/20 bg-black/30 backdrop-blur-sm">
+        <h3 className="text-xs font-bold text-white font-mono mb-3 flex items-center gap-2">
           <Bot className="w-3.5 h-3.5 text-primary" />
           Config Variables
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {Object.entries(deployment.envVars).map(([key, value]) => (
-            <div key={key} className="flex items-center gap-3 bg-background/50 rounded px-2.5 py-2 border border-border">
-              <span className="text-[10px] text-muted-foreground font-bold tracking-wider flex-shrink-0">{key}</span>
-              <span className="text-[10px] font-mono text-muted-foreground/60 truncate flex-1">
-                {key.includes("KEY") || key.includes("SECRET")
-                  ? "••••••••••••"
-                  : value}
+            <div key={key} className="flex items-center gap-3 bg-black/20 rounded-lg px-3 py-2 border border-primary/10">
+              <span className="text-[9px] text-gray-500 font-mono font-bold uppercase tracking-widest flex-shrink-0">{key}</span>
+              <span className="text-[10px] font-mono text-gray-600 truncate flex-1">
+                {key.includes("KEY") || key.includes("SECRET") ? "••••••••••••" : value}
               </span>
             </div>
           ))}
         </div>
-      </Card>
+      </div>
     </div>
   );
 }

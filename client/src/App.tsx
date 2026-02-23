@@ -40,9 +40,20 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <SidebarProvider style={style as React.CSSProperties} defaultOpen={true}>
-          <div className="flex h-screen w-full overflow-hidden bg-background">
+          <div className="flex h-screen w-full overflow-hidden" style={{ background: "#080808" }}>
+            {/* Subtle grid background */}
+            <div
+              className="fixed inset-0 pointer-events-none"
+              style={{
+                backgroundImage: `
+                  linear-gradient(rgba(74,222,128,0.02) 1px, transparent 1px),
+                  linear-gradient(90deg, rgba(74,222,128,0.02) 1px, transparent 1px)
+                `,
+                backgroundSize: "40px 40px",
+              }}
+            />
             <AppSidebar />
-            <div className="flex flex-col flex-1 min-w-0">
+            <div className="flex flex-col flex-1 min-w-0 relative z-10">
               <TopBar />
               <main className="flex-1 overflow-y-auto">
                 <Router />
