@@ -158,6 +158,51 @@ export async function registerRoutes(
     }
   });
 
+  /* ── Direct mobile money STK push via Paystack Charge API ── */
+  app.post("/api/payments/mobile-charge", async (req, res) => {
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!secretKey) return res.status(500).json({ error: "Payment not configured on server" });
+
+    const { email, amount, currency, phone, provider } = req.body;
+    if (!email || !amount || !currency || !phone || !provider) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+      const paystackRes = await fetch("https://api.paystack.co/charge", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          amount,
+          currency,
+          mobile_money: { phone, provider },
+        }),
+      });
+
+      const data = await paystackRes.json() as {
+        status: boolean;
+        message: string;
+        data?: { reference: string; status: string; display_text?: string };
+      };
+
+      if (!data.status || !data.data) {
+        return res.status(400).json({ error: data.message || "Failed to initiate charge" });
+      }
+
+      res.json({
+        reference: data.data.reference,
+        status: data.data.status,
+        displayText: data.data.display_text || "Enter your mobile money PIN on your phone",
+      });
+    } catch {
+      res.status(500).json({ error: "Could not reach payment gateway. Try again." });
+    }
+  });
+
   app.get("/api/payments/check/:reference", async (req, res) => {
     const secretKey = process.env.PAYSTACK_SECRET_KEY;
     if (!secretKey) return res.status(500).json({ status: "error" });

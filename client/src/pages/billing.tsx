@@ -35,21 +35,22 @@ const PACKAGES = [
   { id: "power",   coins: 100, bots: 10, bonus: 10, label: "Power Pack",   icon: Star,    popular: true,  tagline: "10 bots + 10 bonus coins" },
 ];
 
+type MobileProvider = { id: string; name: string };
 const COUNTRIES = [
-  { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", dialCode: "234", methods: ["card", "bank_transfer", "ussd"] },
-  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"] },
-  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"] },
-  { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", dialCode: "27",  methods: ["card"] },
-  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"] },
-  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"] },
-  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", dialCode: "256", methods: ["card", "mobile_money"] },
-  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", dialCode: "225", methods: ["card", "mobile_money"] },
-  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", dialCode: "237", methods: ["card", "mobile_money"] },
-  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", dialCode: "260", methods: ["card", "mobile_money"] },
-  { code: "EG", name: "Egypt",          currency: "EGP", symbol: "E£",   flag: "🇪🇬", dialCode: "20",  methods: ["card"] },
-  { code: "ET", name: "Ethiopia",       currency: "ETB", symbol: "Br",   flag: "🇪🇹", dialCode: "251", methods: ["card"] },
-  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", dialCode: "221", methods: ["card", "mobile_money"] },
-  { code: "XX", name: "Others (USD)",   currency: "USD", symbol: "$",    flag: "🌐",  dialCode: "1",   methods: ["card"] },
+  { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", dialCode: "234", methods: ["card", "bank_transfer", "ussd"], providers: [] as MobileProvider[] },
+  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "vodafone", name: "Vodafone" }, { id: "airteltigo", name: "AirtelTigo" }] },
+  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA" }] },
+  { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", dialCode: "27",  methods: ["card"], providers: [] as MobileProvider[] },
+  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }] },
+  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA" }, { id: "tigopesa", name: "Tigo" }, { id: "airtel", name: "Airtel" }, { id: "halopesa", name: "Halotel" }] },
+  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", dialCode: "256", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "airtel", name: "Airtel" }] },
+  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", dialCode: "225", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "moov", name: "Moov" }, { id: "wave", name: "Wave" }] },
+  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", dialCode: "237", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "orange", name: "Orange" }] },
+  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", dialCode: "260", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN" }, { id: "airtel", name: "Airtel" }, { id: "zamtel", name: "Zamtel" }] },
+  { code: "EG", name: "Egypt",          currency: "EGP", symbol: "E£",   flag: "🇪🇬", dialCode: "20",  methods: ["card"], providers: [] as MobileProvider[] },
+  { code: "ET", name: "Ethiopia",       currency: "ETB", symbol: "Br",   flag: "🇪🇹", dialCode: "251", methods: ["card"], providers: [] as MobileProvider[] },
+  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", dialCode: "221", methods: ["card", "mobile_money"], providers: [{ id: "wave", name: "Wave" }, { id: "orange", name: "Orange Money" }, { id: "free", name: "Free Money" }] },
+  { code: "XX", name: "Others (USD)",   currency: "USD", symbol: "$",    flag: "🌐",  dialCode: "1",   methods: ["card"], providers: [] as MobileProvider[] },
 ];
 
 const METHOD_META: Record<string, { label: string; desc: string; icon: typeof CreditCard }> = {
@@ -89,6 +90,7 @@ interface ModalProps {
 
 function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }: ModalProps) {
   const [method, setMethod] = useState(country.methods[0]);
+  const [provider, setProvider] = useState(country.providers[0]?.id ?? "");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
   const [visible, setVisible] = useState(false);
@@ -100,6 +102,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   const [verifying, setVerifying] = useState(false);
   /* For mobile money — show our own waiting screen + poll */
   const [stkSent, setStkSent] = useState(false);
+  const [stkText, setStkText] = useState("");
   const [pollCount, setPollCount] = useState(0);
   const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
@@ -111,6 +114,13 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     const r = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(r);
   }, []);
+
+  /* Reset provider when method changes */
+  useEffect(() => {
+    if (method === "mobile_money") {
+      setProvider(country.providers[0]?.id ?? "");
+    }
+  }, [method]);
 
   /* Poll for STK push result every 4 seconds (mobile money only) */
   useEffect(() => {
@@ -165,39 +175,55 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
 
   async function handlePay() {
     setErrMsg("");
-    const ref = `WOLF-${Date.now()}-c${totalCoins}`;
-    const cleanPhone = isMobileMoney ? `${country.dialCode}${phone.replace(/\D/g, "")}` : undefined;
+    const cleanPhone = `${country.dialCode}${phone.replace(/\D/g, "")}`;
     const amountMinor = Math.round(price * 100);
-    const payEmail = isMobileMoney ? `${cleanPhone}@wolfdeploy.app` : email;
 
     setLoading(true);
     try {
-      const initRes = await fetch("/api/payments/initialize", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: payEmail,
-          amount: amountMinor,
-          currency: country.currency,
-          channels: [method],
-          phone: cleanPhone,
-          reference: ref,
-          userId,
-          coins: totalCoins,
-        }),
-      });
-      const initData = await initRes.json() as { authorizationUrl?: string; error?: string };
-      if (!initRes.ok || !initData.authorizationUrl) {
-        setErrMsg(initData.error || "Failed to initialise payment. Try again.");
-        return;
-      }
-      setPayRef(ref);
       if (isMobileMoney) {
-        /* STK push was sent — show waiting screen, start polling */
+        /* ── Paystack Charge API: directly triggers STK push ── */
+        const chargeRes = await fetch("/api/payments/mobile-charge", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: `${cleanPhone}@wolfdeploy.app`,
+            amount: amountMinor,
+            currency: country.currency,
+            phone: cleanPhone,
+            provider,
+          }),
+        });
+        const chargeData = await chargeRes.json() as { reference?: string; status?: string; displayText?: string; error?: string };
+        if (!chargeRes.ok || !chargeData.reference) {
+          setErrMsg(chargeData.error || "Failed to initiate payment. Try again.");
+          return;
+        }
+        setPayRef(chargeData.reference);
+        setStkText(chargeData.displayText || "Enter your mobile money PIN on your phone");
         setStkSent(true);
         setPollCount(0);
       } else {
-        /* Card / USSD / bank — show Paystack iframe */
+        /* ── Card / USSD / bank: Initialize and show iframe ── */
+        const ref = `WOLF-${Date.now()}-c${totalCoins}`;
+        const initRes = await fetch("/api/payments/initialize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            amount: amountMinor,
+            currency: country.currency,
+            channels: [method],
+            reference: ref,
+            userId,
+            coins: totalCoins,
+          }),
+        });
+        const initData = await initRes.json() as { authorizationUrl?: string; error?: string };
+        if (!initRes.ok || !initData.authorizationUrl) {
+          setErrMsg(initData.error || "Failed to initialise payment. Try again.");
+          return;
+        }
+        setPayRef(ref);
         setPaystackUrl(initData.authorizationUrl);
       }
     } catch {
@@ -234,7 +260,9 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     }
   }
 
-  const canPay = isMobileMoney ? !!phone.trim() : !!email.trim();
+  const canPay = isMobileMoney
+    ? !!phone.trim() && !!provider
+    : !!email.trim();
 
   /* ── Mobile money STK waiting screen ── */
   if (stkSent) {
@@ -268,7 +296,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                   📲
                 </div>
                 <p className="text-white font-bold font-mono text-base mb-1">Check your phone</p>
-                <p className="text-xs font-mono mb-1" style={{ color: t.textMuted }}>Enter your PIN to approve</p>
+                <p className="text-xs font-mono mb-1" style={{ color: t.textMuted }}>{stkText || "Enter your PIN to approve"}</p>
                 <p className="text-xs font-mono mb-6 font-bold" style={{ color: t.accent }}>
                   {country.symbol}{price.toLocaleString()} {country.currency}
                 </p>
@@ -429,6 +457,30 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             </div>
           </div>
 
+          {/* Provider — mobile money only, when country has multiple */}
+          {isMobileMoney && country.providers.length > 1 && (
+            <div>
+              <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>Network / Provider</label>
+              <div className="grid grid-cols-3 gap-2">
+                {country.providers.map(p => (
+                  <button
+                    key={p.id}
+                    data-testid={`button-provider-${p.id}`}
+                    onClick={() => setProvider(p.id)}
+                    className="py-2 px-2 rounded-xl text-xs font-mono font-bold transition-all text-center"
+                    style={{
+                      background: provider === p.id ? t.accentFaded(0.15) : t.accentFaded(0.04),
+                      border: `1px solid ${provider === p.id ? t.accent : t.accentFaded(0.15)}`,
+                      color: provider === p.id ? t.accent : t.textMuted,
+                    }}
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Phone — mobile money only */}
           {isMobileMoney && (
             <div>
@@ -447,7 +499,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                 />
               </div>
               <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
-                Enter digits only — STK push sent to {country.dialCode}{phone || "XXXXXXXXX"}
+                Digits only · STK push to +{country.dialCode}{phone || "XXXXXXXXX"}
               </p>
             </div>
           )}
