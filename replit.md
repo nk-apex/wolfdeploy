@@ -1,7 +1,7 @@
 # WolfDeploy - WhatsApp Bot Deployment Platform
 
 ## Overview
-A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs.
+A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs. Coin-based billing via Paystack (10 coins = 1 deployment).
 
 ## UI Style & Theming
 Multi-theme system stored in localStorage, toggled via Settings → Appearance:
@@ -16,9 +16,10 @@ Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `ge
 - `/deploy` — Deploy Bot
 - `/bots` — My Bots
 - `/bots/:id/logs` — Bot Logs
-- `/billing` — Billing (Paystack, 13 countries, local currency)
+- `/billing` — Billing (Paystack, 13+ countries, local currency + mobile money)
 - `/settings` — Settings (Profile, Appearance/Theme, Notifications, Security)
 - `/referrals` — Referral Program (tiers, share link)
+- `/admin` — Admin Dashboard (admin-only, manage bots/users/payments/notifications/deployments)
 
 ## Architecture
 
@@ -27,39 +28,86 @@ Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `ge
 - Wouter for routing
 - TanStack Query for data fetching (refetch intervals for live data)
 - Shadcn UI components
-- Pages: Dashboard (`/`), Deploy (`/deploy`, `/deploy/:botId`), My Bots (`/bots`), Bot Logs (`/bots/:id/logs`)
-- Components: AppSidebar, TopBar, StatusBadge
+- `x-user-id` header sent automatically via `setCurrentUserId()` in queryClient
 
 ### Backend
 - Express.js REST API
-- In-memory storage (MemStorage)
-- Simulated deployment pipeline with realistic log sequences and timing
+- PostgreSQL via Drizzle ORM (Supabase instance)
+- In-memory deployment storage (MemStorage) for active processes
+- Bot catalog stored in `platform_bots` DB table
 
-### API Routes
-- `GET /api/bots` - List all available bot templates
-- `GET /api/bots/:id` - Get specific bot
-- `GET /api/bots/:id/app.json` - Bot config file
-- `GET /api/deployments` - List all deployments
-- `GET /api/deployments/:id` - Get specific deployment
-- `GET /api/deployments/:id/logs` - Get deployment logs
-- `POST /api/deploy` - Create new deployment
-- `POST /api/deployments/:id/stop` - Stop deployment
-- `DELETE /api/deployments/:id` - Delete deployment
+### Authentication
+- Supabase Auth (email/password)
+- Admin access controlled via `admin_users` table
+- First-run admin claim: `POST /api/admin/promote` (only works if no admins exist)
 
-## Available Bot Templates
-1. WhatsApp Assistant (Productivity)
-2. Group Manager Bot (Management)
-3. eCommerce Sales Bot (Business)
-4. News & Alerts Bot (Notifications)
-5. Crypto Price Tracker (Finance)
-6. Customer Support Bot (Business)
+## Database Tables
+- `user_coins` — userId → coin balance
+- `admin_users` — userId → admin grant records
+- `platform_bots` — bot catalog (id, name, description, repository, env, etc.)
+- `notifications` — platform-wide announcements (title, message, type, active)
+- `payment_transactions` — Paystack transaction history (userId, amount, currency, coins, status, reference)
 
-## Deployment Simulation
-Each deployment goes through: queued → deploying → running
-With realistic log messages and ~8 second total deployment time.
+## Bot Catalog
+1. **WolfBot** — Professional multi-feature WhatsApp bot (id: wolfbot)
+2. **JUNE-X** — Friendly WhatsApp assistant (id: junex)
+3. **DAVE-X** — Dave Tech multipurpose bot (id: davex)
+4. **TRUTH-MD** — Multi-device WhatsApp bot (id: truthmd)
+
+## Admin Dashboard Tabs
+- **Overview**: Platform stats (users, coins, deployments, revenue, bots)
+- **Users**: All users with coin balances; adjust coins, grant/revoke admin, delete user
+- **Bot Catalog**: Add, toggle visibility, delete bots from catalog
+- **Deployments**: All deployments across all users; stop/delete
+- **Payments**: All Paystack transaction records
+- **Notifications**: Create/toggle/delete platform notifications
+
+## API Routes
+
+### Public / User Routes
+- `GET /api/config` — Supabase public config
+- `GET /api/bots` — Bot catalog (from DB)
+- `GET /api/bots/:id` — Single bot
+- `GET /api/deployments` — User deployments (in memory)
+- `POST /api/deploy` — Create deployment (deducts 10 coins)
+- `POST /api/deployments/:id/stop` — Stop deployment
+- `DELETE /api/deployments/:id` — Delete deployment
+- `GET /api/coins/:userId` — Coin balance
+- `POST /api/coins/credit` — Credit coins
+- `POST /api/payments/initialize` — Paystack checkout
+- `POST /api/payments/verify` — Verify + credit coins (persists to DB)
+- `POST /api/payments/mobile-charge` — Direct mobile money STK push
+- `GET /api/payments/check/:reference` — Poll Paystack status
+- `GET /api/notifications` — Active public notifications
+
+### Admin Routes (require `x-user-id` header + admin_users entry)
+- `GET /api/admin/check` — Is current user admin?
+- `POST /api/admin/promote` — Self-promote (only if no admins exist)
+- `GET /api/admin/stats` — Platform overview stats
+- `GET /api/admin/users` — All users with metadata
+- `DELETE /api/admin/users/:id` — Delete user + their deployments
+- `POST /api/admin/users/:id/grant-admin` — Grant admin role
+- `DELETE /api/admin/users/:id/revoke-admin` — Revoke admin role
+- `POST /api/admin/users/:id/adjust-coins` — Adjust user coin balance
+- `GET/POST /api/admin/bots` — List/create bots
+- `PUT/DELETE /api/admin/bots/:id` — Update/delete bot
+- `GET /api/admin/payments` — All payment transactions
+- `GET /api/admin/deployments` — All deployments (all users)
+- `POST /api/admin/deployments/:id/stop` — Admin force-stop
+- `DELETE /api/admin/deployments/:id` — Admin force-delete
+- `GET/POST /api/admin/notifications` — List/create notifications
+- `PUT/DELETE /api/admin/notifications/:id` — Update/delete notification
+
+## Paystack Payment
+- Initialize: card, bank transfer, USSD, mobile money
+- Direct Charge API (STK push): Ghana (MTN/Vodafone/AirtelTigo), Rwanda (MTN), Uganda (MTN/Airtel)
+- Kenya M-PESA: uses Initialize API with pre-filled phone
+- Phone format: international with + prefix (e.g. +254712345678)
+- Transactions persisted to `payment_transactions` table on verify
 
 ## Key Design Decisions
-- Dark mode forced by default (document.documentElement.classList.add("dark"))
+- Dark mode forced by default (`document.documentElement.classList.add("dark")`)
 - Monospace font everywhere for terminal feel
 - Green neon glow effects via `terminal-glow` and `neon-text` CSS utilities
-- In-memory storage since no DB integration was requested
+- Bot catalog in PostgreSQL (seeded on first deploy) for admin manageability
+- Admin auth via `x-user-id` header (set automatically by queryClient from Supabase session)

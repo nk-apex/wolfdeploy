@@ -1,5 +1,5 @@
 import { Switch, Route, useLocation } from "wouter";
-import { queryClient } from "./lib/queryClient";
+import { queryClient, setCurrentUserId } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +17,7 @@ import Signup from "@/pages/signup";
 import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
 import Referrals from "@/pages/referrals";
+import Admin from "@/pages/admin";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider, useTheme, getThemeTokens } from "@/lib/theme";
 import { useEffect } from "react";
@@ -28,6 +29,10 @@ function AppShell() {
   const [location, navigate] = useLocation();
 
   const isPublicPage = location === "/" || location === "/login" || location === "/signup";
+
+  useEffect(() => {
+    setCurrentUserId(user?.id ?? "");
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user && !isPublicPage) {
@@ -99,6 +104,7 @@ function AppShell() {
               <Route path="/billing" component={Billing} />
               <Route path="/settings" component={Settings} />
               <Route path="/referrals" component={Referrals} />
+              <Route path="/admin" component={Admin} />
               <Route component={NotFound} />
             </Switch>
           </main>

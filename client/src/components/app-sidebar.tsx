@@ -10,7 +10,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut, Circle } from "lucide-react";
+import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut, Circle, Shield } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Deployment } from "@shared/schema";
 import { useAuth } from "@/lib/auth";
@@ -36,9 +36,61 @@ export function AppSidebar() {
     refetchInterval: 6000,
   });
 
+  const { data: adminCheck } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/check"],
+    staleTime: 60000,
+  });
+
   const runningCount = deployments.filter(d => d.status === "running").length;
   const username = user?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "wolf";
   const initial = username[0]?.toUpperCase() || "W";
+  const isAdmin = adminCheck?.isAdmin ?? false;
+
+  const renderNavItem = (item: { title: string; url: string; icon: any }) => {
+    const isActive =
+      item.url === "/"
+        ? location === "/"
+        : location.startsWith(item.url) && item.url !== "/";
+    return (
+      <SidebarMenuItem key={item.title}>
+        <SidebarMenuButton asChild>
+          <Link
+            href={item.url}
+            data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+            className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono tracking-wide transition-all cursor-pointer relative overflow-hidden"
+            style={
+              isActive
+                ? {
+                    background: t.accentFaded(0.08),
+                    border: `1px solid ${t.accentFaded(0.18)}`,
+                    color: t.accent,
+                    boxShadow: `inset 0 0 20px ${t.accentFaded(0.03)}`,
+                  }
+                : {
+                    border: "1px solid transparent",
+                    color: "rgba(107,114,128,1)",
+                  }
+            }
+          >
+            {isActive && (
+              <span
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full"
+                style={{ background: t.accentFaded(0.7) }}
+              />
+            )}
+            <item.icon
+              className="w-4 h-4 flex-shrink-0 transition-colors"
+              style={{ color: isActive ? t.accent : undefined }}
+            />
+            <span className="flex-1 leading-none">{item.title}</span>
+            {isActive && (
+              <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: t.accentFaded(0.8) }} />
+            )}
+          </Link>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
+  };
 
   return (
     <Sidebar
@@ -96,54 +148,22 @@ export function AppSidebar() {
           <p className="text-[9px] font-mono uppercase tracking-[0.18em] px-2 mb-2" style={{ color: t.accentFaded(0.35) }}>Navigation</p>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              {navItems.map((item) => {
-                const isActive =
-                  item.url === "/"
-                    ? location === "/"
-                    : location.startsWith(item.url) && item.url !== "/";
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <Link
-                        href={item.url}
-                        data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                        className="group flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-mono tracking-wide transition-all cursor-pointer relative overflow-hidden"
-                        style={
-                          isActive
-                            ? {
-                                background: t.accentFaded(0.08),
-                                border: `1px solid ${t.accentFaded(0.18)}`,
-                                color: t.accent,
-                                boxShadow: `inset 0 0 20px ${t.accentFaded(0.03)}`,
-                              }
-                            : {
-                                border: "1px solid transparent",
-                                color: "rgba(107,114,128,1)",
-                              }
-                        }
-                      >
-                        {isActive && (
-                          <span
-                            className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 rounded-r-full"
-                            style={{ background: t.accentFaded(0.7) }}
-                          />
-                        )}
-                        <item.icon
-                          className="w-4 h-4 flex-shrink-0 transition-colors"
-                          style={{ color: isActive ? t.accent : undefined }}
-                        />
-                        <span className="flex-1 leading-none">{item.title}</span>
-                        {isActive && (
-                          <div className="w-1 h-1 rounded-full flex-shrink-0" style={{ background: t.accentFaded(0.8) }} />
-                        )}
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {navItems.map(renderNavItem)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Admin section — only visible to admins */}
+        {isAdmin && (
+          <SidebarGroup className="mt-4">
+            <p className="text-[9px] font-mono uppercase tracking-[0.18em] px-2 mb-2" style={{ color: t.accentFaded(0.35) }}>Admin</p>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {renderNavItem({ title: "Admin Panel", url: "/admin", icon: Shield })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       {/* Footer */}
@@ -160,7 +180,9 @@ export function AppSidebar() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] text-white font-mono font-bold leading-tight truncate capitalize">{username}</p>
-            <p className="text-[9px] text-gray-600 font-mono leading-tight truncate">Free Plan</p>
+            <p className="text-[9px] font-mono leading-tight truncate" style={{ color: t.accentFaded(isAdmin ? 0.7 : 0.3) }}>
+              {isAdmin ? "Administrator" : "Free Plan"}
+            </p>
           </div>
           <Circle className="w-2 h-2 flex-shrink-0" style={{ color: t.accent, fill: t.accent }} />
         </div>

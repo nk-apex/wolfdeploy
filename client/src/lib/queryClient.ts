@@ -1,5 +1,11 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
+let currentUserId = "";
+
+export function setCurrentUserId(id: string) {
+  currentUserId = id;
+}
+
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
@@ -12,9 +18,13 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers: Record<string, string> = {};
+  if (data) headers["Content-Type"] = "application/json";
+  if (currentUserId) headers["x-user-id"] = currentUserId;
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -29,8 +39,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    const headers: Record<string, string> = {};
+    if (currentUserId) headers["x-user-id"] = currentUserId;
+
+    const res = await fetch((queryKey as string[]).join("/"), {
       credentials: "include",
+      headers,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { pgTable, varchar, integer } from "drizzle-orm/pg-core";
+import { pgTable, varchar, integer, text, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const botSchema = z.object({
   id: z.string(),
@@ -15,6 +16,7 @@ export const botSchema = z.object({
   })),
   stars: z.number().optional(),
   category: z.string().optional(),
+  active: z.boolean().optional(),
 });
 
 export type Bot = z.infer<typeof botSchema>;
@@ -26,6 +28,7 @@ export const deploymentSchema = z.object({
   id: z.string(),
   botId: z.string(),
   botName: z.string(),
+  userId: z.string().optional(),
   status: deploymentStatusSchema,
   envVars: z.record(z.string()),
   url: z.string().optional(),
@@ -65,3 +68,51 @@ export const userCoins = pgTable("user_coins", {
 });
 
 export type UserCoins = typeof userCoins.$inferSelect;
+
+export const adminUsers = pgTable("admin_users", {
+  userId: varchar("user_id").primaryKey(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type AdminUser = typeof adminUsers.$inferSelect;
+
+export const platformBots = pgTable("platform_bots", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name").notNull(),
+  description: text("description").notNull(),
+  repository: varchar("repository").notNull(),
+  logo: varchar("logo"),
+  keywords: text("keywords").array().notNull().default(sql`'{}'::text[]`),
+  category: varchar("category").default("WhatsApp Bot"),
+  stars: integer("stars").default(0),
+  env: jsonb("env").notNull().default(sql`'{}'::jsonb`),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PlatformBot = typeof platformBots.$inferSelect;
+
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  type: varchar("type").notNull().default("info"),
+  active: boolean("active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+
+export const paymentTransactions = pgTable("payment_transactions", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  amount: integer("amount").notNull(),
+  currency: varchar("currency").notNull(),
+  coins: integer("coins").notNull(),
+  status: varchar("status").notNull(),
+  reference: varchar("reference").notNull(),
+  provider: varchar("provider"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
