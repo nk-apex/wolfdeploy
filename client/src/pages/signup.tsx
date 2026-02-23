@@ -1,7 +1,24 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle2, ChevronDown, Globe } from "lucide-react";
+
+const COUNTRIES = [
+  { code: "NG", name: "Nigeria", currency: "NGN", symbol: "₦", flag: "🇳🇬" },
+  { code: "GH", name: "Ghana", currency: "GHS", symbol: "₵", flag: "🇬🇭" },
+  { code: "KE", name: "Kenya", currency: "KES", symbol: "KSh", flag: "🇰🇪" },
+  { code: "ZA", name: "South Africa", currency: "ZAR", symbol: "R", flag: "🇿🇦" },
+  { code: "RW", name: "Rwanda", currency: "RWF", symbol: "FRw", flag: "🇷🇼" },
+  { code: "TZ", name: "Tanzania", currency: "TZS", symbol: "TSh", flag: "🇹🇿" },
+  { code: "UG", name: "Uganda", currency: "UGX", symbol: "USh", flag: "🇺🇬" },
+  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA", flag: "🇨🇮" },
+  { code: "CM", name: "Cameroon", currency: "XAF", symbol: "FCFA", flag: "🇨🇲" },
+  { code: "ZM", name: "Zambia", currency: "ZMW", symbol: "ZK", flag: "🇿🇲" },
+  { code: "EG", name: "Egypt", currency: "EGP", symbol: "E£", flag: "🇪🇬" },
+  { code: "ET", name: "Ethiopia", currency: "ETB", symbol: "Br", flag: "🇪🇹" },
+  { code: "SN", name: "Senegal", currency: "XOF", symbol: "CFA", flag: "🇸🇳" },
+  { code: "XX", name: "Others (USD)", currency: "USD", symbol: "$", flag: "🌐" },
+];
 
 export default function Signup() {
   const { signUp } = useAuth();
@@ -10,6 +27,8 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
+  const [country, setCountry] = useState(COUNTRIES[0]);
+  const [showDrop, setShowDrop] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -22,7 +41,7 @@ export default function Signup() {
       return;
     }
     setLoading(true);
-    const { error: err } = await signUp(email, password, name);
+    const { error: err } = await signUp(email, password, name, country.code);
     setLoading(false);
     if (err) { setError(err); return; }
     setSuccess(true);
@@ -30,7 +49,7 @@ export default function Signup() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex items-center justify-center px-4 py-8"
       style={{ background: "#080808" }}
     >
       {/* Grid bg */}
@@ -123,6 +142,57 @@ export default function Signup() {
                   className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white placeholder:text-gray-700 outline-none transition-all"
                   style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
                 />
+              </div>
+
+              {/* Country */}
+              <div>
+                <label className="block text-[10px] text-gray-400 uppercase tracking-widest font-mono font-bold mb-2 flex items-center gap-1.5">
+                  <Globe className="w-3 h-3" /> Country / Currency
+                </label>
+                <div className="relative">
+                  <button
+                    data-testid="button-country-signup"
+                    type="button"
+                    onClick={() => setShowDrop(v => !v)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-mono text-white transition-all"
+                    style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <span>{country.flag}</span>
+                      <span>{country.name}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded font-bold" style={{ background: "rgba(74,222,128,0.1)", color: "hsl(142 76% 42%)" }}>
+                        {country.currency}
+                      </span>
+                    </span>
+                    <ChevronDown className={`w-4 h-4 transition-transform text-primary ${showDrop ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showDrop && (
+                    <div
+                      className="absolute top-full mt-1 left-0 right-0 rounded-xl overflow-hidden overflow-y-auto"
+                      style={{
+                        background: "#0a0a0a",
+                        border: "1px solid rgba(74,222,128,0.2)",
+                        maxHeight: "200px",
+                        zIndex: 9999,
+                      }}
+                    >
+                      {COUNTRIES.map(c => (
+                        <button
+                          key={c.code}
+                          type="button"
+                          data-testid={`option-signup-country-${c.code}`}
+                          onClick={() => { setCountry(c); setShowDrop(false); }}
+                          className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-white/5 transition-all"
+                        >
+                          <span>{c.flag}</span>
+                          <span className="font-mono text-xs text-white flex-1">{c.name}</span>
+                          <span className="text-[10px] font-mono font-bold" style={{ color: "hsl(142 76% 42%)" }}>{c.currency}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Password */}

@@ -7,9 +7,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, password: string, name: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, name: string, country?: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resendConfirmation: (email: string) => Promise<{ error: string | null }>;
+  updateUserCountry: (countryCode: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -46,18 +47,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null };
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, country?: string) => {
     const sb = await getSupabase();
     const redirectTo = `${window.location.origin}/login`;
     const { error } = await sb.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: name },
+        data: { full_name: name, country: country ?? "NG" },
         emailRedirectTo: redirectTo,
       },
     });
     return { error: error?.message ?? null };
+  };
+
+  const updateUserCountry = async (countryCode: string) => {
+    const sb = await getSupabase();
+    await sb.auth.updateUser({ data: { country: countryCode } });
   };
 
   const signOut = async () => {
@@ -77,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, resendConfirmation }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, resendConfirmation, updateUserCountry }}>
       {children}
     </AuthContext.Provider>
   );

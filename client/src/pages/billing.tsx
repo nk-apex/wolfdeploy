@@ -48,6 +48,7 @@ const COUNTRIES = [
   { code: "EG", name: "Egypt", currency: "EGP", symbol: "E£", flag: "🇪🇬", methods: ["card"] },
   { code: "ET", name: "Ethiopia", currency: "ETB", symbol: "Br", flag: "🇪🇹", methods: ["card"] },
   { code: "SN", name: "Senegal", currency: "XOF", symbol: "CFA", flag: "🇸🇳", methods: ["card", "mobile_money"] },
+  { code: "XX", name: "Others (USD)", currency: "USD", symbol: "$", flag: "🌐", methods: ["card"] },
 ];
 
 const METHOD_LABELS: Record<string, { label: string; icon: typeof CreditCard }> = {
@@ -65,16 +66,32 @@ declare global {
   }
 }
 
+function getInitialCountry(userId?: string, savedCode?: string) {
+  const code = savedCode
+    || (userId ? localStorage.getItem(`wolfdeploy_country_${userId}`) : null)
+    || "NG";
+  return COUNTRIES.find(c => c.code === code) ?? COUNTRIES[0];
+}
+
 export default function Billing() {
-  const { user } = useAuth();
+  const { user, updateUserCountry } = useAuth();
   const { theme } = useTheme();
   const t = getThemeTokens(theme);
   const { toast } = useToast();
 
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
+  const [selectedCountry, setSelectedCountry] = useState(() =>
+    getInitialCountry(user?.id, user?.user_metadata?.country)
+  );
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [showCountryDrop, setShowCountryDrop] = useState(false);
+
+  function handleCountryChange(c: typeof COUNTRIES[0]) {
+    setSelectedCountry(c);
+    setShowCountryDrop(false);
+    if (user?.id) localStorage.setItem(`wolfdeploy_country_${user.id}`, c.code);
+    updateUserCountry(c.code);
+  }
 
   const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
 
@@ -132,7 +149,10 @@ export default function Billing() {
       </div>
 
       {/* Country selector */}
-      <div className="rounded-xl p-4 sm:p-5" style={panelStyle}>
+      <div
+        className="rounded-xl p-4 sm:p-5"
+        style={{ ...panelStyle, position: "relative", zIndex: showCountryDrop ? 20 : "auto" }}
+      >
         <p className="text-xs font-mono uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: t.textMuted }}>
           <Globe className="w-3.5 h-3.5" /> Select Your Country
         </p>
@@ -154,14 +174,14 @@ export default function Billing() {
           </button>
           {showCountryDrop && (
             <div
-              className="absolute top-full mt-2 left-0 right-0 rounded-xl overflow-hidden z-50 max-h-72 overflow-y-auto"
-              style={{ background: t.glassEffect ? "rgba(8,15,40,0.95)" : "#0c0c0c", border: `1px solid ${t.accentFaded(0.2)}`, backdropFilter: t.backdropBlur }}
+              className="absolute top-full mt-2 left-0 right-0 rounded-xl overflow-hidden max-h-72 overflow-y-auto"
+              style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0c0c0c", border: `1px solid ${t.accentFaded(0.2)}`, backdropFilter: "blur(12px)", zIndex: 9999 }}
             >
               {COUNTRIES.map(c => (
                 <button
                   key={c.code}
                   data-testid={`option-country-${c.code}`}
-                  onClick={() => { setSelectedCountry(c); setShowCountryDrop(false); }}
+                  onClick={() => handleCountryChange(c)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:bg-white/5"
                 >
                   <span className="text-lg">{c.flag}</span>
