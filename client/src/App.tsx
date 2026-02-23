@@ -29,11 +29,10 @@ function AppShell() {
   const t = getThemeTokens(theme);
   const [location, navigate] = useLocation();
 
-  const isPublicPage = location === "/" || location === "/login" || location === "/signup";
+  const isPublicPage = location === "/" || location === "/login" || location === "/signup" || location === "/verify";
 
-  useEffect(() => {
-    setCurrentUserId(user?.id ?? "");
-  }, [user]);
+  // Set synchronously so queries fired during this render include the header
+  setCurrentUserId(user?.id ?? "");
 
   useEffect(() => {
     if (!loading && !user && !isPublicPage) {

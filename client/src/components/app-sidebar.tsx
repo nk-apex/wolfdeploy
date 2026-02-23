@@ -38,7 +38,9 @@ export function AppSidebar() {
 
   const { data: adminCheck } = useQuery<{ isAdmin: boolean }>({
     queryKey: ["/api/admin/check"],
-    staleTime: 60000,
+    staleTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const runningCount = deployments.filter(d => d.status === "running").length;
