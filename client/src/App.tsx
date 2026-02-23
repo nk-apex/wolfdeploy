@@ -18,6 +18,7 @@ import Billing from "@/pages/billing";
 import Settings from "@/pages/settings";
 import Referrals from "@/pages/referrals";
 import Admin from "@/pages/admin";
+import Verify from "@/pages/verify";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider, useTheme, getThemeTokens } from "@/lib/theme";
 import { useEffect } from "react";
@@ -60,6 +61,7 @@ function AppShell() {
   if (!user) {
     if (location === "/login") return <Login />;
     if (location === "/signup") return <Signup />;
+    if (location === "/verify") return <Verify />;
     return <Landing />;
   }
 
@@ -105,6 +107,7 @@ function AppShell() {
               <Route path="/settings" component={Settings} />
               <Route path="/referrals" component={Referrals} />
               <Route path="/wolf" component={Admin} />
+              <Route path="/verify" component={Verify} />
               <Route component={NotFound} />
             </Switch>
           </main>
