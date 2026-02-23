@@ -188,9 +188,14 @@ class MemStorage implements IStorage {
 
     // Automatically inject the Supabase PostgreSQL database
     const platformDb = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+    // Assign a random high port so bots don't conflict with WolfDeploy's port 5000.
+    // Bots like WolfBot spin up a health-check HTTP server using process.env.PORT.
+    const botPort = String(10000 + Math.floor(Math.random() * 50000));
+
     const fullEnv: Record<string, string> = {
       ...envVars,
       NODE_ENV: "production",
+      PORT: botPort,
     };
     if (platformDb) {
       fullEnv.DATABASE_URL = platformDb;
