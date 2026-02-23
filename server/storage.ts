@@ -22,6 +22,69 @@ export interface IStorage {
 
 const BASE_DIR = join(tmpdir(), "botforge-deployments");
 
+const DEFAULT_BOTS = [
+  {
+    id: "wolfbot",
+    name: "WolfBot",
+    description: "Professional WhatsApp Bot with auto-session authentication. Powered by Baileys with support for media, commands, auto-reply and more.",
+    repository: "https://github.com/7silent-wolf/silentwolf.git",
+    logo: "https://avatars.githubusercontent.com/u/256216610?v=4",
+    keywords: ["whatsapp", "bot", "wolfbot", "baileys", "session"],
+    category: "WhatsApp Bot",
+    stars: 0,
+    env: {
+      SESSION_ID: { required: true, description: "Your session ID. Must begin with 'WOLF-BOT'", placeholder: "WOLF-BOT_xxxxxxxxxxxx" },
+      PHONE_NUMBER: { required: true, description: "Your WhatsApp phone number with country code (e.g. +254712345678)", placeholder: "+254712345678" },
+    },
+    active: true,
+  },
+  {
+    id: "junex",
+    name: "JUNE-X",
+    description: "June-x, your friendly WhatsApp assistant! Feature-rich bot with media support, auto-reply, games, and more. Built on Baileys with container stack.",
+    repository: "https://github.com/Vinpink2/JUNE-X.git",
+    logo: "https://avatars.githubusercontent.com/u/166421298?v=4",
+    keywords: ["whatsapp", "bot", "june-x", "baileys", "assistant"],
+    category: "WhatsApp Bot",
+    stars: 0,
+    env: {
+      SESSION_ID: { required: true, description: "Your session ID. Must begin with 'JUNE-MD:~'", placeholder: "JUNE-MD:~xxxxxxxxxxxx" },
+      PHONE_NUMBER: { required: true, description: "Your WhatsApp phone number with country code (e.g. +254712345678)", placeholder: "+254712345678" },
+    },
+    active: true,
+  },
+  {
+    id: "davex",
+    name: "DAVE-X",
+    description: "Dave Tech bot — a friendly, feature-packed WhatsApp assistant built by Gifted Dave. Supports media, group management, auto-reply, and more. Hostable on any platform.",
+    repository: "https://github.com/Davex-254/DAVE-X.git",
+    logo: "https://avatars.githubusercontent.com/u/217832615?v=4",
+    keywords: ["whatsapp", "bot", "dave-x", "baileys", "nodejs"],
+    category: "WhatsApp Bot",
+    stars: 56,
+    env: {
+      SESSION_ID: { required: true, description: "Your session ID. Must begin with 'DAVE-AI:~'", placeholder: "DAVE-AI:~xxxxxxxxxxxx" },
+      PHONE_NUMBER: { required: true, description: "Your WhatsApp phone number with country code (e.g. +254712345678)", placeholder: "+254712345678" },
+    },
+    active: true,
+  },
+  {
+    id: "truthmd",
+    name: "TRUTH-MD",
+    description: "TRUTH-MD — a powerful multi-device WhatsApp bot with rich features including media, games, group management, auto-reply, and much more. Built on Baileys.",
+    repository: "https://github.com/Courtney250/TRUTH-MD.git",
+    logo: "https://avatars.githubusercontent.com/Courtney250",
+    keywords: ["whatsapp", "bot", "truth-md", "baileys", "multi-device"],
+    category: "WhatsApp Bot",
+    stars: 0,
+    env: {
+      SESSION_ID: { required: true, description: "Your session ID for TRUTH-MD", placeholder: "TRUTH-MD_xxxxxxxxxxxx" },
+      PHONE_NUMBER: { required: true, description: "Your WhatsApp phone number with country code (e.g. +254712345678)", placeholder: "+254712345678" },
+    },
+    active: true,
+  },
+];
+
 class MemStorage implements IStorage {
   private deployments: Map<string, Deployment>;
   private processes: Map<string, ChildProcess>;
@@ -33,7 +96,11 @@ class MemStorage implements IStorage {
   }
 
   async getBots(): Promise<Bot[]> {
-    const rows = await db.select().from(platformBots);
+    let rows = await db.select().from(platformBots);
+    if (rows.length === 0) {
+      await db.insert(platformBots).values(DEFAULT_BOTS).onConflictDoNothing();
+      rows = await db.select().from(platformBots);
+    }
     return rows
       .filter(r => r.active)
       .map(r => ({
