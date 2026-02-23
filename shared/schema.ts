@@ -1,18 +1,59 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const botSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  repository: z.string(),
+  logo: z.string().optional(),
+  keywords: z.array(z.string()),
+  env: z.record(z.object({
+    description: z.string(),
+    required: z.boolean(),
+    placeholder: z.string().optional(),
+  })),
+  stars: z.number().optional(),
+  category: z.string().optional(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export type Bot = z.infer<typeof botSchema>;
+
+export const deploymentStatusSchema = z.enum(["queued", "deploying", "running", "stopped", "failed"]);
+export type DeploymentStatus = z.infer<typeof deploymentStatusSchema>;
+
+export const deploymentSchema = z.object({
+  id: z.string(),
+  botId: z.string(),
+  botName: z.string(),
+  status: deploymentStatusSchema,
+  envVars: z.record(z.string()),
+  url: z.string().optional(),
+  port: z.number().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  logs: z.array(z.object({
+    timestamp: z.string(),
+    level: z.enum(["info", "warn", "error", "success"]),
+    message: z.string(),
+  })),
+  metrics: z.object({
+    cpu: z.number(),
+    memory: z.number(),
+    uptime: z.number(),
+    requests: z.number(),
+  }).optional(),
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export type Deployment = z.infer<typeof deploymentSchema>;
+
+export const deployRequestSchema = z.object({
+  botId: z.string(),
+  envVars: z.record(z.string()),
+});
+
+export type DeployRequest = z.infer<typeof deployRequestSchema>;
+
+export const users = {} as any;
+export type User = { id: string; username: string; password: string };
+export type InsertUser = Omit<User, "id">;
+export const insertUserSchema = z.object({ username: z.string(), password: z.string() });
