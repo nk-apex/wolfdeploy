@@ -83,6 +83,81 @@ export async function registerRoutes(
     res.json(deployment.logs);
   });
 
+  /* ── Paystack payment endpoints ─────────────────────────── */
+  app.post("/api/payments/initialize", async (req, res) => {
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!secretKey) return res.status(500).json({ error: "Payment not configured on server" });
+
+    const { email, amount, currency, channels, phone, reference, userId, coins } = req.body;
+    if (!email || !amount || !currency || !reference) {
+      return res.status(400).json({ error: "Missing required payment fields" });
+    }
+
+    try {
+      const body: Record<string, unknown> = {
+        email,
+        amount: Math.round(amount),
+        currency,
+        channels,
+        reference,
+        metadata: { userId, coins, phone },
+      };
+      if (phone) body.phone = phone;
+
+      const paystackRes = await fetch("https://api.paystack.co/transaction/initialize", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await paystackRes.json() as { status: boolean; message: string; data?: { authorization_url: string; access_code: string; reference: string } };
+      if (!data.status || !data.data) {
+        return res.status(400).json({ error: data.message || "Failed to initialize payment" });
+      }
+
+      res.json({
+        authorizationUrl: data.data.authorization_url,
+        accessCode: data.data.access_code,
+        reference: data.data.reference,
+      });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to reach payment gateway" });
+    }
+  });
+
+  app.post("/api/payments/verify", async (req, res) => {
+    const secretKey = process.env.PAYSTACK_SECRET_KEY;
+    if (!secretKey) return res.status(500).json({ error: "Payment not configured on server" });
+
+    const { reference, userId, coins } = req.body;
+    if (!reference || !userId || typeof coins !== "number") {
+      return res.status(400).json({ error: "Missing required verification fields" });
+    }
+
+    try {
+      const paystackRes = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`, {
+        headers: { Authorization: `Bearer ${secretKey}` },
+      });
+
+      const data = await paystackRes.json() as { status: boolean; data?: { status: string; amount: number } };
+      if (!data.status || !data.data) {
+        return res.status(400).json({ error: "Could not verify transaction" });
+      }
+
+      if (data.data.status !== "success") {
+        return res.status(402).json({ error: `Payment not completed. Status: ${data.data.status}` });
+      }
+
+      const balance = await creditCoins(userId, coins);
+      res.json({ success: true, balance });
+    } catch (err) {
+      res.status(500).json({ error: "Failed to verify payment" });
+    }
+  });
+
   /* ── Coin endpoints ─────────────────────────────────────── */
   app.get("/api/coins/:userId", async (req, res) => {
     try {
