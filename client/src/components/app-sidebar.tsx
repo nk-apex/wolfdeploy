@@ -10,15 +10,14 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut } from "lucide-react";
 
 const navItems = [
   { title: "Command Center", url: "/", icon: LayoutDashboard },
   { title: "My Bots", url: "/bots", icon: Bot },
   { title: "Deploy Bot", url: "/deploy", icon: Rocket },
-  { title: "Analytics", url: "/bots", icon: BarChart3 },
   { title: "Referrals", url: "/", icon: Users },
-  { title: "Wallet", url: "/", icon: Wallet },
+  { title: "Billing", url: "/", icon: Wallet },
   { title: "Settings", url: "/", icon: Settings },
 ];
 
@@ -26,43 +25,58 @@ export function AppSidebar() {
   const [location] = useLocation();
 
   return (
-    <Sidebar className="border-r border-primary/10 bg-black/60 backdrop-blur-sm">
-      <SidebarHeader className="p-4 border-b border-primary/10">
+    <Sidebar className="border-r border-primary/10" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}>
+      {/* Logo */}
+      <SidebarHeader className="px-4 py-4 border-b border-primary/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center flex-shrink-0">
-            <Bot className="w-4 h-4 text-primary" />
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 font-display font-black text-sm"
+            style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.3)", color: "hsl(142 76% 42%)" }}
+          >
+            W
           </div>
-          <div className="flex flex-col">
-            <span className="text-xs font-display font-bold tracking-widest text-primary uppercase">BotForge</span>
-            <span className="text-[9px] text-gray-600 tracking-wider uppercase font-mono">Deploy Platform</span>
-          </div>
+          <span className="font-display font-bold tracking-widest text-primary text-sm uppercase">
+            BotForge
+          </span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-3">
+      {/* Nav */}
+      <SidebarContent className="px-2 py-4">
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               {navItems.map((item) => {
-                const isActive = item.url === "/"
-                  ? location === "/"
-                  : location.startsWith(item.url) && item.url !== "/";
+                const isActive =
+                  item.url === "/"
+                    ? location === "/"
+                    : location.startsWith(item.url) && item.url !== "/";
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <Link
                         href={item.url}
                         data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs tracking-wider font-mono transition-all cursor-pointer ${
+                        className={`group flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-mono tracking-wide transition-all cursor-pointer ${
                           isActive
-                            ? "bg-primary/10 text-primary border border-primary/20"
-                            : "text-gray-500 hover:text-gray-300 hover:bg-white/5"
+                            ? "text-primary"
+                            : "text-gray-500 hover:text-gray-300"
                         }`}
+                        style={
+                          isActive
+                            ? {
+                                background: "rgba(74,222,128,0.08)",
+                                border: "1px solid rgba(74,222,128,0.2)",
+                              }
+                            : { border: "1px solid transparent" }
+                        }
                       >
-                        <item.icon className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-primary" : "text-gray-600"}`} />
-                        <span>{item.title}</span>
+                        <item.icon
+                          className={`w-4 h-4 flex-shrink-0 ${isActive ? "text-primary" : "text-gray-600 group-hover:text-gray-400"}`}
+                        />
+                        <span className="flex-1">{item.title}</span>
                         {isActive && (
-                          <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                          <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                         )}
                       </Link>
                     </SidebarMenuButton>
@@ -74,15 +88,15 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
+      {/* Footer */}
       <SidebarFooter className="p-4 border-t border-primary/10">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-          <span className="text-[9px] text-gray-600 tracking-wider uppercase font-mono">Logged in as</span>
-          <span className="text-[9px] text-white tracking-wider uppercase font-mono font-bold">user</span>
+        <div className="mb-2.5">
+          <span className="text-[9px] text-gray-600 font-mono uppercase tracking-widest">LOGGED IN AS</span>
+          <span className="text-[9px] text-white font-mono font-bold ml-2 tracking-widest">user</span>
         </div>
         <button
           data-testid="button-sign-out"
-          className="flex items-center gap-2 text-[9px] text-gray-600 tracking-wider uppercase font-mono cursor-pointer hover:text-gray-400 transition-colors"
+          className="flex items-center gap-1.5 text-[9px] text-gray-600 font-mono uppercase tracking-widest hover:text-gray-400 transition-colors cursor-pointer"
         >
           <LogOut className="w-3 h-3" />
           Sign Out

@@ -15,104 +15,41 @@ export interface IStorage {
 
 const AVAILABLE_BOTS: Bot[] = [
   {
-    id: "whatsapp-assistant",
-    name: "WhatsApp Assistant",
-    description: "A smart WhatsApp bot that answers questions, sets reminders and helps manage your daily tasks",
-    repository: "https://github.com/botforge/whatsapp-assistant",
-    keywords: ["assistant", "productivity", "ai"],
-    category: "Productivity",
-    stars: 1247,
+    id: "silentwolf",
+    name: "Silent WolfBot",
+    description: "Professional WhatsApp Bot with auto-session authentication. Powered by Baileys with support for media, commands, auto-reply and more.",
+    repository: "https://github.com/7silent-wolf/silentwolf.git",
+    logo: "https://raw.githubusercontent.com/SuhailTechInfo/Suhail-Md/main/src/logo.jpg",
+    keywords: ["whatsapp", "bot", "wolfbot", "baileys", "session"],
+    category: "WhatsApp Bot",
+    stars: 0,
     env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      OPENAI_API_KEY: { description: "OpenAI API key for AI responses", required: false, placeholder: "sk-..." },
-    },
-  },
-  {
-    id: "group-manager",
-    name: "Group Manager Bot",
-    description: "Automate WhatsApp group management — welcome messages, spam filtering, anti-link, and member controls",
-    repository: "https://github.com/botforge/group-manager",
-    keywords: ["groups", "moderation", "management"],
-    category: "Management",
-    stars: 892,
-    env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      ADMIN_NUMBER: { description: "Admin phone number for alerts", required: false, placeholder: "+1234567890" },
-    },
-  },
-  {
-    id: "ecommerce-bot",
-    name: "eCommerce Sales Bot",
-    description: "Turn WhatsApp into a sales channel — product catalog, order management, payment links and customer support",
-    repository: "https://github.com/botforge/ecommerce-bot",
-    keywords: ["ecommerce", "sales", "payments"],
-    category: "Business",
-    stars: 2103,
-    env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      STORE_NAME: { description: "Your store or business name", required: true, placeholder: "My Shop" },
-      CURRENCY: { description: "Currency code (USD, KES, NGN, etc)", required: false, placeholder: "USD" },
-    },
-  },
-  {
-    id: "news-bot",
-    name: "News & Alerts Bot",
-    description: "Subscribe contacts to news feeds, sports scores, weather updates and custom alerts delivered to WhatsApp",
-    repository: "https://github.com/botforge/news-bot",
-    keywords: ["news", "alerts", "notifications"],
-    category: "Notifications",
-    stars: 654,
-    env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      NEWS_API_KEY: { description: "NewsAPI.org API key", required: false, placeholder: "your_newsapi_key" },
-    },
-  },
-  {
-    id: "crypto-tracker",
-    name: "Crypto Price Tracker",
-    description: "Track crypto prices, set price alerts and get portfolio updates directly in WhatsApp",
-    repository: "https://github.com/botforge/crypto-tracker",
-    keywords: ["crypto", "finance", "alerts"],
-    category: "Finance",
-    stars: 1876,
-    env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      COINGECKO_API_KEY: { description: "CoinGecko API key (optional for higher rate limits)", required: false, placeholder: "CG-..." },
-    },
-  },
-  {
-    id: "customer-support",
-    name: "Customer Support Bot",
-    description: "AI-powered customer support bot with ticket routing, FAQ answering and live agent handoff via WhatsApp",
-    repository: "https://github.com/botforge/customer-support",
-    keywords: ["support", "helpdesk", "ai"],
-    category: "Business",
-    stars: 3241,
-    env: {
-      SESSION_ID: { description: "WhatsApp session ID for authentication", required: true, placeholder: "whatsapp_session_xxxxx" },
-      PHONE_NUMBER: { description: "Your WhatsApp phone number with country code", required: true, placeholder: "+1234567890" },
-      SUPPORT_EMAIL: { description: "Email for ticket escalations", required: true, placeholder: "support@company.com" },
-      BUSINESS_NAME: { description: "Your business name", required: true, placeholder: "Acme Corp" },
+      SESSION_ID: {
+        description: "Your session ID. Must begin with 'WOLF-BOT'",
+        required: true,
+        placeholder: "WOLF-BOT_xxxxxxxxxxxx",
+      },
+      PHONE_NUMBER: {
+        description: "Your WhatsApp phone number with country code (e.g. +1234567890)",
+        required: true,
+        placeholder: "+1234567890",
+      },
     },
   },
 ];
 
-const DEPLOY_LOG_SEQUENCES: string[][] = [
-  [
-    "Initializing deployment pipeline...",
-    "Pulling repository from GitHub...",
-    "Installing Node.js dependencies...",
-    "Building Docker image...",
-    "Configuring environment variables...",
-    "Starting container on port {PORT}...",
-    "Running health checks...",
-    "Bot is online and ready to receive messages",
-  ],
+const DEPLOY_LOG_SEQUENCE = [
+  "Cloning repository from GitHub...",
+  "Repository cloned successfully.",
+  "Installing Node.js dependencies (npm install)...",
+  "Dependencies installed.",
+  "Setting environment variables...",
+  "Building Docker image...",
+  "Docker image built successfully.",
+  "Starting container on port {PORT}...",
+  "Running health checks...",
+  "Health checks passed.",
+  "Bot is online and ready to receive WhatsApp messages",
 ];
 
 class MemStorage implements IStorage {
@@ -151,7 +88,7 @@ class MemStorage implements IStorage {
       botName,
       status: "queued",
       envVars,
-      url: `https://${botId}-${id.slice(0, 8)}.botforge.app`,
+      url: `https://silentwolf-${id.slice(0, 8)}.botforge.app`,
       port,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -164,21 +101,25 @@ class MemStorage implements IStorage {
   }
 
   private async simulateDeploy(id: string, port: number) {
-    const sequence = DEPLOY_LOG_SEQUENCES[0];
-    await this.sleep(500);
+    await this.sleep(600);
     await this.updateDeploymentStatus(id, "deploying");
 
-    for (let i = 0; i < sequence.length; i++) {
-      await this.sleep(800 + Math.random() * 700);
-      const msg = sequence[i].replace("{PORT}", String(port));
-      const isLast = i === sequence.length - 1;
+    for (let i = 0; i < DEPLOY_LOG_SEQUENCE.length; i++) {
+      await this.sleep(700 + Math.random() * 800);
+      const msg = DEPLOY_LOG_SEQUENCE[i].replace("{PORT}", String(port));
+      const isLast = i === DEPLOY_LOG_SEQUENCE.length - 1;
       await this.addDeploymentLog(id, isLast ? "success" : "info", msg);
     }
 
     await this.updateDeploymentStatus(id, "running");
     const dep = this.deployments.get(id);
     if (dep) {
-      dep.metrics = { cpu: 0.2 + Math.random() * 2, memory: 80 + Math.random() * 60, uptime: 0, requests: 0 };
+      dep.metrics = {
+        cpu: 0.3 + Math.random() * 2.5,
+        memory: 90 + Math.random() * 80,
+        uptime: 0,
+        requests: 0,
+      };
       this.deployments.set(id, dep);
     }
   }
@@ -206,8 +147,8 @@ class MemStorage implements IStorage {
 
   async stopDeployment(id: string): Promise<Deployment | undefined> {
     await this.addDeploymentLog(id, "warn", "Received stop signal. Gracefully shutting down container...");
-    await this.sleep(300);
-    await this.addDeploymentLog(id, "info", "Container stopped.");
+    await this.sleep(400);
+    await this.addDeploymentLog(id, "info", "Container stopped successfully.");
     return this.updateDeploymentStatus(id, "stopped");
   }
 
