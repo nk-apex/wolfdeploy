@@ -59,13 +59,6 @@ const METHOD_META: Record<string, { label: string; desc: string; icon: typeof Cr
   ussd:          { label: "USSD",          desc: "*737#, *919# & more",  icon: Smartphone },
 };
 
-declare global {
-  interface Window {
-    PaystackPop: {
-      setup: (opts: Record<string, unknown>) => { openIframe: () => void };
-    };
-  }
-}
 
 function getInitialCountry(userId?: string, savedCode?: string) {
   const code = savedCode
@@ -99,8 +92,11 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
   const [visible, setVisible] = useState(false);
-  const [paying, setPaying] = useState(false);
   const [errMsg, setErrMsg] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [paystackUrl, setPaystackUrl] = useState("");
+  const [payRef, setPayRef] = useState("");
+  const [verifying, setVerifying] = useState(false);
   const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
@@ -112,8 +108,27 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     return () => cancelAnimationFrame(r);
   }, []);
 
+  /* Listen for Paystack postMessage events from the iframe */
+  useEffect(() => {
+    if (!paystackUrl) return;
+    function onMessage(e: MessageEvent) {
+      try {
+        const d = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+        if (
+          d?.event === "successful" ||
+          d?.data?.event === "success" ||
+          d?.type === "paystack:payment:success"
+        ) {
+          handleVerify(payRef);
+        }
+      } catch { /* ignore parse errors */ }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [paystackUrl, payRef]);
+
   function handleClose() {
-    if (paying) return;
+    if (loading || paystackUrl) return;
     setVisible(false);
     setTimeout(onClose, 220);
   }
@@ -125,7 +140,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
     const amountMinor = Math.round(price * 100);
     const payEmail = isMobileMoney ? `${cleanPhone}@wolfdeploy.app` : email;
 
-    setPaying(true);
+    setLoading(true);
     try {
       const initRes = await fetch("/api/payments/initialize", {
         method: "POST",
@@ -141,57 +156,94 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           coins: totalCoins,
         }),
       });
-      const initData = await initRes.json() as { accessCode?: string; error?: string };
-      if (!initRes.ok || !initData.accessCode) {
-        setPaying(false);
+      const initData = await initRes.json() as { authorizationUrl?: string; accessCode?: string; error?: string };
+      if (!initRes.ok || !initData.authorizationUrl) {
         setErrMsg(initData.error || "Failed to initialise payment. Try again.");
         return;
       }
-
-      /* Open Paystack payment form inline on this page using the access code */
-      window.PaystackPop.setup({
-        accessCode: initData.accessCode,
-        callback: async (response: { reference: string }) => {
-          setPaying(false);
-          try {
-            const verRes = await fetch("/api/payments/verify", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ reference: response.reference, userId, coins: totalCoins }),
-            });
-            const verData = await verRes.json() as { success?: boolean; error?: string };
-            if (verRes.ok && verData.success) {
-              onSuccess(totalCoins, response.reference);
-            } else {
-              setErrMsg(verData.error || "Payment received but coins not credited. Contact support.");
-            }
-          } catch {
-            setErrMsg("Could not verify payment. Contact support if amount was deducted.");
-          }
-        },
-        onClose: () => setPaying(false),
-      }).openIframe();
+      setPayRef(ref);
+      setPaystackUrl(initData.authorizationUrl);
     } catch {
-      setPaying(false);
-      setErrMsg("Network error. Please check your connection and try again.");
+      setErrMsg("Could not connect to payment server. Check your network and try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleVerify(ref: string) {
+    setVerifying(true);
+    try {
+      const verRes = await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: ref, userId, coins: totalCoins }),
+      });
+      const verData = await verRes.json() as { success?: boolean; error?: string };
+      if (verRes.ok && verData.success) {
+        setPaystackUrl("");
+        onSuccess(totalCoins, ref);
+      } else {
+        setVerifying(false);
+        setErrMsg(verData.error || "Payment not confirmed yet. If charged, contact support.");
+        setPaystackUrl("");
+      }
+    } catch {
+      setVerifying(false);
+      setErrMsg("Verification failed. Contact support if you were charged.");
+      setPaystackUrl("");
     }
   }
 
   const canPay = isMobileMoney ? !!phone.trim() : !!email.trim();
 
-  /* Processing overlay */
-  if (paying) {
+  /* Paystack checkout iframe overlay */
+  if (paystackUrl) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center px-4 py-8" style={{ zIndex: 10000, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
-        <div className="w-full max-w-sm rounded-2xl p-8 text-center" style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0a0a0a", border: `1px solid ${t.accentFaded(0.3)}` }}>
-          <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.3)}` }}>
-            <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: `${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accent}` }} />
+      <div className="fixed inset-0 flex flex-col items-center justify-center px-2 py-4"
+        style={{ zIndex: 10000, background: "rgba(0,0,0,0.92)", backdropFilter: "blur(8px)" }}>
+        <div className="w-full max-w-md flex flex-col rounded-2xl overflow-hidden"
+          style={{ background: "#fff", maxHeight: "calc(100vh - 32px)" }}>
+          <div className="flex items-center justify-between px-4 py-2.5"
+            style={{ background: "#f8f8f8", borderBottom: "1px solid #e5e5e5" }}>
+            <span className="text-xs font-mono text-gray-500">Secure checkout · Paystack</span>
+            {!verifying && (
+              <button
+                data-testid="button-cancel-payment"
+                onClick={() => { setPaystackUrl(""); setPayRef(""); }}
+                className="text-xs text-gray-400 hover:text-gray-700 transition-colors px-2 py-1 rounded"
+              >
+                Cancel
+              </button>
+            )}
           </div>
-          <p className="text-white font-bold font-mono text-sm mb-1">Processing Payment</p>
-          <p className="text-xs font-mono mb-5" style={{ color: t.textMuted }}>Complete the payment in the Paystack window</p>
-          <button data-testid="button-cancel-payment" onClick={() => setPaying(false)} className="text-xs font-mono underline" style={{ color: t.textMuted }}>
-            Cancel
-          </button>
+          {verifying ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <div className="w-8 h-8 border-2 border-gray-200 border-t-green-500 rounded-full animate-spin" />
+              <p className="text-sm text-gray-600 font-mono">Verifying payment…</p>
+            </div>
+          ) : (
+            <>
+              <iframe
+                data-testid="paystack-iframe"
+                src={paystackUrl}
+                className="w-full flex-1 border-0"
+                style={{ minHeight: "500px" }}
+                allow="payment"
+                title="Paystack Checkout"
+              />
+              <div className="px-4 py-3 flex items-center gap-3"
+                style={{ background: "#f8f8f8", borderTop: "1px solid #e5e5e5" }}>
+                <button
+                  data-testid="button-confirm-payment"
+                  onClick={() => handleVerify(payRef)}
+                  className="flex-1 py-2 rounded-lg text-xs font-mono font-bold text-white transition-all"
+                  style={{ background: t.accent }}
+                >
+                  I've completed payment
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -332,12 +384,14 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           {/* Pay button */}
           <button
             data-testid="button-pay-now"
-            disabled={!canPay}
+            disabled={!canPay || loading}
             onClick={handlePay}
             className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
-            style={{ background: t.accent, color: "#000", border: `1px solid ${t.accent}`, boxShadow: `0 0 24px ${t.accentFaded(0.35)}`, opacity: canPay ? 1 : 0.45 }}
+            style={{ background: t.accent, color: "#000", border: `1px solid ${t.accent}`, boxShadow: `0 0 24px ${t.accentFaded(0.35)}`, opacity: (canPay && !loading) ? 1 : 0.45 }}
           >
-            {isMobileMoney
+            {loading ? (
+              <><div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> Connecting…</>
+            ) : isMobileMoney
               ? <><Smartphone className="w-4 h-4" /> Send STK Push · {country.symbol}{price.toLocaleString()}</>
               : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
           </button>
