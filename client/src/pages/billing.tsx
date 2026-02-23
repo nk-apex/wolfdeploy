@@ -63,7 +63,6 @@ declare global {
   interface Window {
     PaystackPop: {
       setup: (opts: Record<string, unknown>) => { openIframe: () => void };
-      resumeTransaction: (accessCode: string, callbacks: { callback?: (r: { reference: string }) => void; onClose?: () => void }) => void;
     };
   }
 }
@@ -149,8 +148,9 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
         return;
       }
 
-      /* Open Paystack payment form inline on this page (no new window) */
-      window.PaystackPop.resumeTransaction(initData.accessCode, {
+      /* Open Paystack payment form inline on this page using the access code */
+      window.PaystackPop.setup({
+        accessCode: initData.accessCode,
         callback: async (response: { reference: string }) => {
           setPaying(false);
           try {
@@ -170,7 +170,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           }
         },
         onClose: () => setPaying(false),
-      });
+      }).openIframe();
     } catch {
       setPaying(false);
       setErrMsg("Network error. Please check your connection and try again.");

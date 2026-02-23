@@ -84,6 +84,28 @@ const BOTS: Bot[] = [
       },
     },
   },
+  {
+    id: "truthmd",
+    name: "TRUTH-MD",
+    description: "TRUTH-MD — a powerful multi-device WhatsApp bot with rich features including media, games, group management, auto-reply, and much more. Built on Baileys.",
+    repository: "https://github.com/Courtney250/TRUTH-MD.git",
+    logo: "https://avatars.githubusercontent.com/Courtney250",
+    keywords: ["whatsapp", "bot", "truth-md", "baileys", "multi-device"],
+    category: "WhatsApp Bot",
+    stars: 0,
+    env: {
+      SESSION_ID: {
+        description: "Your session ID for TRUTH-MD",
+        required: true,
+        placeholder: "TRUTH-MD_xxxxxxxxxxxx",
+      },
+      PHONE_NUMBER: {
+        description: "Your WhatsApp phone number with country code (e.g. +254712345678)",
+        required: true,
+        placeholder: "+254712345678",
+      },
+    },
+  },
 ];
 
 const BASE_DIR = join(tmpdir(), "botforge-deployments");
