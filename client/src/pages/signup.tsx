@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export default function Signup() {
-  const [, navigate] = useLocation();
   const { signUp } = useAuth();
 
   const [name, setName] = useState("");
@@ -27,7 +26,6 @@ export default function Signup() {
     setLoading(false);
     if (err) { setError(err); return; }
     setSuccess(true);
-    setTimeout(() => navigate("/"), 2500);
   };
 
   return (
@@ -71,10 +69,24 @@ export default function Signup() {
         >
           {success ? (
             <div className="text-center py-6">
-              <CheckCircle2 className="w-12 h-12 text-primary mx-auto mb-4" />
-              <h3 className="font-display font-bold text-white mb-2">Account created!</h3>
-              <p className="text-xs text-gray-400 font-mono">
-                Check your email to confirm your account, then you'll be redirected to the dashboard.
+              <div
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.25)" }}
+              >
+                <CheckCircle2 className="w-7 h-7 text-primary" />
+              </div>
+              <h3 className="font-mono font-bold text-white text-base mb-2">Account created!</h3>
+              <p className="text-[11px] text-gray-500 font-mono mb-3 leading-relaxed">
+                We sent a verification email to:
+              </p>
+              <div
+                className="px-3 py-2 rounded-lg mb-4 text-[12px] font-mono font-bold text-primary break-all"
+                style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+              >
+                {email}
+              </div>
+              <p className="text-[10px] text-gray-600 font-mono leading-relaxed">
+                Click the link in that email to activate your account, then come back here to sign in.
               </p>
             </div>
           ) : (

@@ -55,6 +55,12 @@ function AppShell() {
     return <Landing />;
   }
 
+  // Logged-in user landed on a public page (e.g. after email confirmation redirect to /login)
+  if (location === "/login" || location === "/signup") {
+    navigate("/");
+    return null;
+  }
+
   // Authenticated app shell
   return (
     <SidebarProvider
