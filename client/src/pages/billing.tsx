@@ -36,20 +36,20 @@ const PACKAGES = [
 ];
 
 const COUNTRIES = [
-  { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", methods: ["card", "bank_transfer", "ussd"] },
-  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", methods: ["card", "mobile_money"] },
-  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", methods: ["card", "mobile_money"] },
-  { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", methods: ["card"] },
-  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", methods: ["card", "mobile_money"] },
-  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", methods: ["card", "mobile_money"] },
-  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", methods: ["card", "mobile_money"] },
-  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", methods: ["card", "mobile_money"] },
-  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", methods: ["card", "mobile_money"] },
-  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", methods: ["card", "mobile_money"] },
-  { code: "EG", name: "Egypt",          currency: "EGP", symbol: "E£",   flag: "🇪🇬", methods: ["card"] },
-  { code: "ET", name: "Ethiopia",       currency: "ETB", symbol: "Br",   flag: "🇪🇹", methods: ["card"] },
-  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", methods: ["card", "mobile_money"] },
-  { code: "XX", name: "Others (USD)",   currency: "USD", symbol: "$",    flag: "🌐", methods: ["card"] },
+  { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", dialCode: "234", methods: ["card", "bank_transfer", "ussd"] },
+  { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"] },
+  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"] },
+  { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", dialCode: "27",  methods: ["card"] },
+  { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"] },
+  { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"] },
+  { code: "UG", name: "Uganda",         currency: "UGX", symbol: "USh",  flag: "🇺🇬", dialCode: "256", methods: ["card", "mobile_money"] },
+  { code: "CI", name: "Côte d'Ivoire", currency: "XOF", symbol: "CFA",  flag: "🇨🇮", dialCode: "225", methods: ["card", "mobile_money"] },
+  { code: "CM", name: "Cameroon",       currency: "XAF", symbol: "FCFA", flag: "🇨🇲", dialCode: "237", methods: ["card", "mobile_money"] },
+  { code: "ZM", name: "Zambia",         currency: "ZMW", symbol: "ZK",   flag: "🇿🇲", dialCode: "260", methods: ["card", "mobile_money"] },
+  { code: "EG", name: "Egypt",          currency: "EGP", symbol: "E£",   flag: "🇪🇬", dialCode: "20",  methods: ["card"] },
+  { code: "ET", name: "Ethiopia",       currency: "ETB", symbol: "Br",   flag: "🇪🇹", dialCode: "251", methods: ["card"] },
+  { code: "SN", name: "Senegal",        currency: "XOF", symbol: "CFA",  flag: "🇸🇳", dialCode: "221", methods: ["card", "mobile_money"] },
+  { code: "XX", name: "Others (USD)",   currency: "USD", symbol: "$",    flag: "🌐",  dialCode: "1",   methods: ["card"] },
 ];
 
 const METHOD_META: Record<string, { label: string; desc: string; icon: typeof CreditCard }> = {
@@ -121,7 +121,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   async function handlePay() {
     setErrMsg("");
     const ref = `WOLF-${Date.now()}-c${totalCoins}`;
-    const cleanPhone = isMobileMoney ? `254${phone.replace(/\D/g, "")}` : undefined;
+    const cleanPhone = isMobileMoney ? `${country.dialCode}${phone.replace(/\D/g, "")}` : undefined;
     const amountMinor = Math.round(price * 100);
     const payEmail = isMobileMoney ? `${cleanPhone}@wolfdeploy.app` : email;
 
@@ -295,7 +295,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                 Phone number (STK push)
               </label>
               <div className="flex items-center rounded-xl overflow-hidden" style={{ border: `1px solid ${t.accentFaded(0.3)}`, background: t.accentFaded(0.08) }}>
-                <span className="px-3 py-2.5 text-sm font-mono font-bold border-r" style={{ color: t.accent, borderColor: t.accentFaded(0.2), background: t.accentFaded(0.05) }}>254</span>
+                <span className="px-3 py-2.5 text-sm font-mono font-bold border-r whitespace-nowrap" style={{ color: t.accent, borderColor: t.accentFaded(0.2), background: t.accentFaded(0.05) }}>+{country.dialCode}</span>
                 <input
                   data-testid="input-billing-phone"
                   type="tel"
@@ -306,7 +306,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                 />
               </div>
               <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
-                Enter digits only — STK push sent to 254{phone || "XXXXXXXXX"}
+                Enter digits only — STK push sent to {country.dialCode}{phone || "XXXXXXXXX"}
               </p>
             </div>
           )}
