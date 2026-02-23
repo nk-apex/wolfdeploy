@@ -1,81 +1,38 @@
 import { useState, useEffect } from "react";
-import { Wallet, CreditCard, Smartphone, Globe, ChevronDown, Lock, X, ArrowRight, ShieldCheck, Banknote, Coins, Bot, Zap, Star } from "lucide-react";
+import { Wallet, CreditCard, Smartphone, Globe, ChevronDown, Lock, X, ArrowRight, ShieldCheck, Banknote, Coins, Bot, Zap, Star, Calculator, AlertCircle } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { useTheme, getThemeTokens } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
-/* ── Exchange rates (1 KES = N units of each currency) ── */
+/* ── Exchange rates: 1 KES = N units of each currency ── */
 const KES_RATES: Record<string, number> = {
-  KES: 1,
-  NGN: 8.55,
-  GHS: 0.118,
-  ZAR: 0.138,
-  RWF: 9.5,
-  TZS: 20.5,
-  UGX: 36.5,
-  XOF: 5.4,
-  XAF: 5.4,
-  ZMW: 0.077,
-  EGP: 0.36,
-  ETB: 0.42,
-  USD: 0.0077,
+  KES: 1, NGN: 8.55, GHS: 0.118, ZAR: 0.138,
+  RWF: 9.5, TZS: 20.5, UGX: 36.5, XOF: 5.4,
+  XAF: 5.4, ZMW: 0.077, EGP: 0.36, ETB: 0.42, USD: 0.0077,
 };
 
-/* Base: 10 coins = 70 KES → 7 KES per coin */
-const KES_PER_COIN = 7;
+const KES_PER_COIN = 7; /* Base: 10 coins = 70 KES */
 
 function coinsToPrice(coins: number, currency: string): number {
   const rate = KES_RATES[currency] ?? KES_RATES.USD;
   const raw = coins * KES_PER_COIN * rate;
-  /* Round to a clean number */
   if (raw >= 1000) return Math.round(raw / 50) * 50;
-  if (raw >= 100)  return Math.round(raw / 5) * 5;
-  if (raw >= 10)   return Math.round(raw);
+  if (raw >= 100) return Math.round(raw / 5) * 5;
+  if (raw >= 10) return Math.round(raw);
   return parseFloat(raw.toFixed(2));
 }
 
-/* ── Coin packages ── */
+function priceToCoins(price: number, currency: string): number {
+  const rate = KES_RATES[currency] ?? KES_RATES.USD;
+  return Math.floor(price / (KES_PER_COIN * rate));
+}
+
 const PACKAGES = [
-  {
-    id: "mini",
-    coins: 10,
-    bots: 1,
-    bonus: 0,
-    label: "Mini Pack",
-    icon: Bot,
-    popular: false,
-    tagline: "Perfect to get started",
-  },
-  {
-    id: "starter",
-    coins: 50,
-    bots: 5,
-    bonus: 0,
-    label: "Starter Pack",
-    icon: Zap,
-    popular: false,
-    tagline: "Run 5 bots at once",
-  },
-  {
-    id: "power",
-    coins: 100,
-    bots: 10,
-    bonus: 10,
-    label: "Power Pack",
-    icon: Star,
-    popular: true,
-    tagline: "10 bots + 10 bonus coins",
-  },
-  {
-    id: "mega",
-    coins: 500,
-    bots: 50,
-    bonus: 75,
-    label: "Mega Pack",
-    icon: Coins,
-    popular: false,
-    tagline: "50 bots + 75 bonus coins",
-  },
+  { id: "mini",    coins: 10,  bots: 1,  bonus: 0,  label: "Mini Pack",    icon: Bot,     popular: false, tagline: "Get started with 1 bot" },
+  { id: "starter", coins: 50,  bots: 5,  bonus: 0,  label: "Starter Pack", icon: Zap,     popular: false, tagline: "Run up to 5 bots" },
+  { id: "power",   coins: 100, bots: 10, bonus: 10, label: "Power Pack",   icon: Star,    popular: true,  tagline: "10 bots + 10 bonus coins" },
 ];
 
 const COUNTRIES = [
@@ -118,8 +75,15 @@ function getInitialCountry(userId?: string, savedCode?: string) {
 /* ──────────────────────────────────────────────────────────
    Payment Modal
 ────────────────────────────────────────────────────────── */
+interface ModalState {
+  coins: number;
+  bonus: number;
+  label: string;
+  icon: typeof Bot;
+}
+
 interface ModalProps {
-  pkg: typeof PACKAGES[0];
+  pkg: ModalState;
   country: typeof COUNTRIES[0];
   email: string;
   onClose: () => void;
@@ -135,6 +99,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
   const totalCoins = pkg.coins + pkg.bonus;
+  const bots = Math.floor(totalCoins / 10);
 
   useEffect(() => {
     const r = requestAnimationFrame(() => setVisible(true));
@@ -149,12 +114,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 py-8"
-      style={{
-        zIndex: 10000,
-        background: visible ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0)",
-        backdropFilter: visible ? "blur(6px)" : "blur(0px)",
-        transition: "background 220ms ease, backdrop-filter 220ms ease",
-      }}
+      style={{ zIndex: 10000, background: visible ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0)", backdropFilter: visible ? "blur(6px)" : "blur(0px)", transition: "background 220ms ease, backdrop-filter 220ms ease" }}
       onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
@@ -177,7 +137,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
             </div>
             <div>
               <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: t.textMuted }}>Purchasing</p>
-              <p className="font-bold text-white text-sm leading-tight">{pkg.label}</p>
+              <p className="font-bold text-white text-sm">{pkg.label}</p>
             </div>
           </div>
           <button data-testid="button-close-modal" onClick={handleClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-all" style={{ color: t.textMuted }}>
@@ -196,9 +156,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
                   <span className="text-2xl font-black text-white font-mono">{totalCoins}</span>
                   <span className="text-sm font-mono" style={{ color: t.textMuted }}>coins</span>
                   {pkg.bonus > 0 && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold" style={{ background: t.accentFaded(0.2), color: t.accent }}>
-                      +{pkg.bonus} bonus
-                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold" style={{ background: t.accentFaded(0.2), color: t.accent }}>+{pkg.bonus} bonus</span>
                   )}
                 </div>
               </div>
@@ -206,7 +164,7 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
                 <p className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: t.textMuted }}>Supports</p>
                 <div className="flex items-center gap-1.5 justify-end">
                   <Bot className="w-4 h-4" style={{ color: t.accent }} />
-                  <span className="text-sm font-bold text-white font-mono">{pkg.bots} bot{pkg.bots > 1 ? "s" : ""}</span>
+                  <span className="text-sm font-bold text-white font-mono">{bots} bot{bots !== 1 ? "s" : ""}</span>
                 </div>
               </div>
             </div>
@@ -228,17 +186,8 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
                 const MethodIcon = meta.icon;
                 const active = method === m;
                 return (
-                  <button
-                    key={m}
-                    data-testid={`method-${m}`}
-                    onClick={() => setMethod(m)}
-                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
-                    style={{
-                      background: active ? t.accentFaded(0.12) : t.accentFaded(0.04),
-                      border: `1px solid ${active ? t.accentFaded(0.45) : t.accentFaded(0.12)}`,
-                      boxShadow: active ? `0 0 0 1px ${t.accentFaded(0.2)}` : "none",
-                    }}
-                  >
+                  <button key={m} data-testid={`method-${m}`} onClick={() => setMethod(m)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{ background: active ? t.accentFaded(0.12) : t.accentFaded(0.04), border: `1px solid ${active ? t.accentFaded(0.45) : t.accentFaded(0.12)}` }}>
                     <div className="p-1.5 rounded-lg flex-shrink-0" style={{ background: active ? t.accentFaded(0.2) : t.accentFaded(0.08) }}>
                       <MethodIcon className="w-3.5 h-3.5" style={{ color: active ? t.accent : t.textMuted }} />
                     </div>
@@ -256,37 +205,20 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
           {/* Email */}
           <div>
             <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>Billing email</label>
-            <input
-              data-testid="input-billing-email"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
+            <input data-testid="input-billing-email" type="email" value={email} onChange={e => setEmail(e.target.value)}
               className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none transition-all"
-              style={{ background: t.accentFaded(0.05), border: `1px solid ${t.accentFaded(0.2)}` }}
-            />
+              style={{ background: t.accentFaded(0.05), border: `1px solid ${t.accentFaded(0.2)}` }} />
           </div>
 
           {/* Pay button */}
-          <button
-            data-testid="button-pay-now"
-            disabled={paying || !email}
-            onClick={() => onPay(method, email)}
+          <button data-testid="button-pay-now" disabled={paying || !email} onClick={() => onPay(method, email)}
             className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
-            style={{
-              background: paying ? t.accentFaded(0.15) : t.accent,
-              color: paying ? t.accent : "#000",
-              border: `1px solid ${t.accent}`,
-              boxShadow: paying ? "none" : `0 0 24px ${t.accentFaded(0.35)}`,
-              opacity: !email ? 0.5 : 1,
-            }}
-          >
+            style={{ background: paying ? t.accentFaded(0.15) : t.accent, color: paying ? t.accent : "#000", border: `1px solid ${t.accent}`, boxShadow: paying ? "none" : `0 0 24px ${t.accentFaded(0.35)}`, opacity: !email ? 0.5 : 1 }}>
             {paying
               ? <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Processing…</>
-              : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>
-            }
+              : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
           </button>
 
-          {/* Trust */}
           <div className="flex items-center justify-center gap-4">
             <span className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: t.textMuted }}>
               <ShieldCheck className="w-3 h-3" style={{ color: t.accent }} /> SSL Secured
@@ -297,6 +229,125 @@ function PaymentModal({ pkg, country, email: initEmail, onClose, onPay, paying, 
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────
+   Custom Pack Calculator
+────────────────────────────────────────────────────────── */
+interface CustomPackProps {
+  country: typeof COUNTRIES[0];
+  t: ReturnType<typeof getThemeTokens>;
+  onBuy: (coins: number, bonus: number, label: string) => void;
+}
+
+function CustomPackCalculator({ country, t, onBuy }: CustomPackProps) {
+  const [mode, setMode] = useState<"coins" | "amount">("coins");
+  const [coinsInput, setCoinsInput] = useState("");
+  const [amountInput, setAmountInput] = useState("");
+
+  const coins = mode === "coins"
+    ? Math.max(0, parseInt(coinsInput) || 0)
+    : priceToCoins(parseFloat(amountInput) || 0, country.currency);
+
+  const price = mode === "amount"
+    ? parseFloat(amountInput) || 0
+    : coinsToPrice(coins, country.currency);
+
+  const bots = Math.floor(coins / 10);
+  const valid = coins >= 10;
+
+  return (
+    <div className="rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", border: `2px dashed ${t.accentFaded(0.25)}` }}>
+      <div className="flex items-center gap-2 mb-4">
+        <div className="p-2 rounded-xl" style={{ background: t.accentFaded(0.1) }}>
+          <Calculator className="w-4 h-4" style={{ color: t.accent }} />
+        </div>
+        <div>
+          <p className="font-bold text-white text-sm font-mono">Custom Pack</p>
+          <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>Enter coins or amount — we calculate the rest</p>
+        </div>
+      </div>
+
+      {/* Mode toggle */}
+      <div className="flex gap-2 mb-4">
+        {(["coins", "amount"] as const).map(m => (
+          <button key={m} onClick={() => setMode(m)}
+            className="flex-1 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider transition-all"
+            style={{ background: mode === m ? t.accentFaded(0.15) : t.accentFaded(0.05), border: `1px solid ${mode === m ? t.accentFaded(0.4) : t.accentFaded(0.12)}`, color: mode === m ? t.accent : t.textMuted }}>
+            {m === "coins" ? "Enter Coins" : `Enter ${country.currency}`}
+          </button>
+        ))}
+      </div>
+
+      {/* Inputs */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>
+            <Coins className="w-3 h-3 inline mr-1" />Coins
+          </label>
+          <input
+            data-testid="input-custom-coins"
+            type="number"
+            min={10}
+            placeholder="e.g. 30"
+            value={mode === "coins" ? coinsInput : coins || ""}
+            onChange={e => { setMode("coins"); setCoinsInput(e.target.value); }}
+            className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none"
+            style={{ background: mode === "coins" ? t.accentFaded(0.08) : t.accentFaded(0.03), border: `1px solid ${mode === "coins" ? t.accentFaded(0.35) : t.accentFaded(0.15)}` }}
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>
+            <Wallet className="w-3 h-3 inline mr-1" />{country.currency} Amount
+          </label>
+          <input
+            data-testid="input-custom-amount"
+            type="number"
+            min={1}
+            placeholder={`e.g. ${coinsToPrice(30, country.currency)}`}
+            value={mode === "amount" ? amountInput : price > 0 ? price : ""}
+            onChange={e => { setMode("amount"); setAmountInput(e.target.value); }}
+            className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none"
+            style={{ background: mode === "amount" ? t.accentFaded(0.08) : t.accentFaded(0.03), border: `1px solid ${mode === "amount" ? t.accentFaded(0.35) : t.accentFaded(0.15)}` }}
+          />
+        </div>
+      </div>
+
+      {/* Calculated result */}
+      {coins > 0 && (
+        <div className="rounded-xl p-3 mb-4 flex items-center justify-between" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.15)}` }}>
+          <div className="flex items-center gap-3">
+            <Coins className="w-4 h-4" style={{ color: t.accent }} />
+            <div>
+              <p className="text-xs font-mono font-bold text-white">{coins} coins</p>
+              <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>
+                supports <span style={{ color: t.accent }}>{bots} bot{bots !== 1 ? "s" : ""}</span>
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-sm font-black text-white font-mono">{country.symbol}{coinsToPrice(coins, country.currency).toLocaleString()}</p>
+            <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>{country.currency}</p>
+          </div>
+        </div>
+      )}
+
+      {!valid && coins > 0 && (
+        <p className="text-[10px] font-mono mb-3 flex items-center gap-1.5" style={{ color: "#f97316" }}>
+          <AlertCircle className="w-3 h-3" /> Minimum is 10 coins (1 bot)
+        </p>
+      )}
+
+      <button
+        data-testid="button-buy-custom"
+        disabled={!valid}
+        onClick={() => onBuy(coins, 0, `${coins} Coins`)}
+        className="w-full py-2.5 rounded-xl font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-all"
+        style={{ background: valid ? t.accentFaded(0.12) : t.accentFaded(0.04), color: valid ? t.accent : t.textMuted, border: `1px solid ${valid ? t.accentFaded(0.3) : t.accentFaded(0.1)}`, opacity: valid ? 1 : 0.5 }}>
+        <Coins className="w-3.5 h-3.5" /> Buy {coins > 0 ? `${coins} Coins` : "Coins"}
+      </button>
     </div>
   );
 }
@@ -314,10 +365,20 @@ export default function Billing() {
     getInitialCountry(user?.id, user?.user_metadata?.country)
   );
   const [showCountryDrop, setShowCountryDrop] = useState(false);
-  const [modalPkg, setModalPkg] = useState<typeof PACKAGES[0] | null>(null);
+  const [modalState, setModalState] = useState<ModalState | null>(null);
   const [paying, setPaying] = useState(false);
 
   const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
+
+  const { data: coinData, refetch: refetchCoins } = useQuery<{ balance: number }>({
+    queryKey: ["/api/coins", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch(`/api/coins/${user!.id}`);
+      return res.json();
+    },
+  });
+  const balance = coinData?.balance ?? 0;
 
   function handleCountryChange(c: typeof COUNTRIES[0]) {
     setSelectedCountry(c);
@@ -326,19 +387,23 @@ export default function Billing() {
     updateUserCountry(c.code);
   }
 
-  function openModal(pkgId: string) {
+  function openModal(coins: number, bonus: number, label: string, icon = Bot as typeof Bot) {
     if (!publicKey) {
       toast({ title: "Payment unavailable", description: "Billing is not configured. Contact support.", variant: "destructive" });
       return;
     }
-    const pkg = PACKAGES.find(p => p.id === pkgId);
-    if (pkg) setModalPkg(pkg);
+    setModalState({ coins, bonus, label, icon });
   }
 
-  function handlePay(method: string, email: string) {
-    if (!modalPkg || !publicKey) return;
-    const price = coinsToPrice(modalPkg.coins, selectedCountry.currency);
+  function openPackModal(pkg: typeof PACKAGES[0]) {
+    openModal(pkg.coins, pkg.bonus, pkg.label, pkg.icon);
+  }
+
+  async function handlePay(method: string, email: string) {
+    if (!modalState || !publicKey || !user?.id) return;
+    const price = coinsToPrice(modalState.coins, selectedCountry.currency);
     const amountMinor = Math.round(price * 100);
+    const totalCoins = modalState.coins + modalState.bonus;
 
     setPaying(true);
     const handler = window.PaystackPop.setup({
@@ -347,12 +412,19 @@ export default function Billing() {
       amount: amountMinor,
       currency: selectedCountry.currency,
       channels: [method],
-      ref: `WOLF-${Date.now()}-${modalPkg.id}`,
-      metadata: { package: modalPkg.id, coins: modalPkg.coins + modalPkg.bonus, userId: user?.id },
-      callback: (response: { reference: string }) => {
+      ref: `WOLF-${Date.now()}-c${modalState.coins}`,
+      metadata: { coins: totalCoins, userId: user.id },
+      callback: async (response: { reference: string }) => {
         setPaying(false);
-        setModalPkg(null);
-        toast({ title: `${modalPkg.coins + modalPkg.bonus} coins added!`, description: `Ref: ${response.reference}. Coins have been credited to your account.` });
+        setModalState(null);
+        // Credit coins
+        try {
+          await apiRequest("POST", "/api/coins/credit", { userId: user.id, amount: totalCoins });
+          queryClient.invalidateQueries({ queryKey: ["/api/coins", user.id] });
+          toast({ title: `${totalCoins} coins added!`, description: `Ref: ${response.reference}. Your coin balance has been updated.` });
+        } catch {
+          toast({ title: "Coins not credited", description: "Payment received. Contact support with your reference.", variant: "destructive" });
+        }
       },
       onClose: () => setPaying(false),
     });
@@ -364,12 +436,12 @@ export default function Billing() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 min-h-full" data-testid="billing-page">
-      {modalPkg && (
+      {modalState && (
         <PaymentModal
-          pkg={modalPkg}
+          pkg={modalState}
           country={selectedCountry}
           email={user?.email ?? ""}
-          onClose={() => { setModalPkg(null); setPaying(false); }}
+          onClose={() => { setModalState(null); setPaying(false); }}
           onPay={handlePay}
           paying={paying}
           t={t}
@@ -380,44 +452,40 @@ export default function Billing() {
       <div>
         <h1 className="text-xl sm:text-3xl font-bold mb-1 text-white">Buy Coins</h1>
         <p className="text-xs sm:text-sm font-mono" style={{ color: t.textMuted }}>
-          Coins power your bot deployments. 10 coins = 1 bot instance. Pay once, deploy anytime.
+          Coins power your bots. 10 coins = 1 bot instance. Pay once, deploy anytime.
         </p>
       </div>
 
-      {/* How it works */}
-      <div className="flex flex-wrap gap-3">
-        {[
-          { icon: Coins,  label: "Buy coins",       desc: "Choose a coin pack below" },
-          { icon: Bot,    label: "Deploy bots",      desc: "10 coins = 1 bot instance" },
-          { icon: Zap,    label: "Instant credit",   desc: "Coins added immediately" },
-        ].map(({ icon: Icon, label, desc }) => (
-          <div key={label} className="flex items-center gap-3 px-4 py-3 rounded-xl flex-1 min-w-[160px]" style={{ background: t.accentFaded(0.04), border: `1px solid ${t.accentFaded(0.1)}` }}>
-            <div className="p-2 rounded-lg flex-shrink-0" style={{ background: t.accentFaded(0.1) }}>
-              <Icon className="w-4 h-4" style={{ color: t.accent }} />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-white font-mono">{label}</p>
-              <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>{desc}</p>
-            </div>
+      {/* Coin balance banner */}
+      <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: t.accentFaded(0.07), border: `1px solid ${t.accentFaded(0.25)}` }}>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl" style={{ background: t.accentFaded(0.15) }}>
+            <Coins className="w-5 h-5" style={{ color: t.accent }} />
           </div>
-        ))}
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: t.textMuted }}>Your Coin Balance</p>
+            <p className="text-2xl font-black text-white font-mono">{balance} <span className="text-sm font-normal" style={{ color: t.textMuted }}>coins</span></p>
+          </div>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-mono uppercase tracking-widest mb-0.5" style={{ color: t.textMuted }}>Can deploy</p>
+          <div className="flex items-center gap-1.5 justify-end">
+            <Bot className="w-4 h-4" style={{ color: t.accent }} />
+            <span className="text-lg font-black text-white font-mono">{Math.floor(balance / 10)}</span>
+            <span className="text-xs font-mono" style={{ color: t.textMuted }}>bots</span>
+          </div>
+        </div>
       </div>
 
       {/* Country selector */}
-      <div
-        className="rounded-xl p-4 sm:p-5"
-        style={{ background: cardBg, border: `1px solid ${cardBorder}`, backdropFilter: t.backdropBlur, position: "relative", zIndex: showCountryDrop ? 20 : "auto" }}
-      >
+      <div className="rounded-xl p-4 sm:p-5" style={{ background: cardBg, border: `1px solid ${cardBorder}`, backdropFilter: t.backdropBlur, position: "relative", zIndex: showCountryDrop ? 20 : "auto" }}>
         <p className="text-xs font-mono uppercase tracking-widest mb-3 flex items-center gap-2" style={{ color: t.textMuted }}>
           <Globe className="w-3.5 h-3.5" /> Select Your Country
         </p>
         <div className="relative">
-          <button
-            data-testid="button-country-select"
-            onClick={() => setShowCountryDrop(v => !v)}
+          <button data-testid="button-country-select" onClick={() => setShowCountryDrop(v => !v)}
             className="w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all"
-            style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.2)}`, color: "white" }}
-          >
+            style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.2)}`, color: "white" }}>
             <span className="flex items-center gap-3">
               <span className="text-xl">{selectedCountry.flag}</span>
               <span className="font-mono text-sm">{selectedCountry.name}</span>
@@ -426,17 +494,11 @@ export default function Billing() {
             <ChevronDown className={`w-4 h-4 transition-transform ${showCountryDrop ? "rotate-180" : ""}`} style={{ color: t.accent }} />
           </button>
           {showCountryDrop && (
-            <div
-              className="absolute top-full mt-2 left-0 right-0 rounded-xl overflow-hidden max-h-72 overflow-y-auto"
-              style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0c0c0c", border: `1px solid ${t.accentFaded(0.2)}`, backdropFilter: "blur(12px)", zIndex: 9999 }}
-            >
+            <div className="absolute top-full mt-2 left-0 right-0 rounded-xl overflow-hidden max-h-72 overflow-y-auto"
+              style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0c0c0c", border: `1px solid ${t.accentFaded(0.2)}`, backdropFilter: "blur(12px)", zIndex: 9999 }}>
               {COUNTRIES.map(c => (
-                <button
-                  key={c.code}
-                  data-testid={`option-country-${c.code}`}
-                  onClick={() => handleCountryChange(c)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:bg-white/5"
-                >
+                <button key={c.code} data-testid={`option-country-${c.code}`} onClick={() => handleCountryChange(c)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left transition-all hover:bg-white/5">
                   <span className="text-lg">{c.flag}</span>
                   <span className="font-mono text-sm text-white flex-1">{c.name}</span>
                   <span className="text-xs font-mono" style={{ color: t.accent }}>{c.currency}</span>
@@ -454,79 +516,47 @@ export default function Billing() {
         </div>
       </div>
 
-      {/* Coin packages */}
+      {/* Preset packages */}
       <div>
-        <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: t.textMuted }}>Choose a coin pack</p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <p className="text-xs font-mono uppercase tracking-widest mb-4" style={{ color: t.textMuted }}>Coin Packs</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {PACKAGES.map(pkg => {
             const price = coinsToPrice(pkg.coins, selectedCountry.currency);
             const totalCoins = pkg.coins + pkg.bonus;
             const PkgIcon = pkg.icon;
             return (
-              <div
-                key={pkg.id}
-                data-testid={`card-package-${pkg.id}`}
-                className="rounded-2xl p-5 flex flex-col relative"
-                style={{
-                  background: pkg.popular ? t.accentFaded(0.07) : cardBg,
-                  border: `1px solid ${pkg.popular ? t.accentFaded(0.38) : cardBorder}`,
-                  backdropFilter: t.backdropBlur,
-                  boxShadow: pkg.popular ? `0 0 40px ${t.accentFaded(0.1)}` : "none",
-                }}
-              >
+              <div key={pkg.id} data-testid={`card-package-${pkg.id}`} className="rounded-2xl p-5 flex flex-col relative"
+                style={{ background: pkg.popular ? t.accentFaded(0.07) : cardBg, border: `1px solid ${pkg.popular ? t.accentFaded(0.38) : cardBorder}`, backdropFilter: t.backdropBlur, boxShadow: pkg.popular ? `0 0 40px ${t.accentFaded(0.1)}` : "none" }}>
                 {pkg.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="text-[9px] font-mono uppercase tracking-widest px-3 py-1 rounded-full" style={{ background: t.accent, color: "#000" }}>
-                      Most Popular
-                    </span>
+                    <span className="text-[9px] font-mono uppercase tracking-widest px-3 py-1 rounded-full" style={{ background: t.accent, color: "#000" }}>Most Popular</span>
                   </div>
                 )}
-
                 <div className="flex items-center gap-2.5 mb-4">
                   <div className="p-2 rounded-xl" style={{ background: t.accentFaded(0.1) }}>
                     <PkgIcon className="w-4 h-4" style={{ color: t.accent }} />
                   </div>
                   <span className="font-bold text-white text-sm font-mono">{pkg.label}</span>
                 </div>
-
-                {/* Coin count */}
                 <div className="mb-1">
                   <div className="flex items-end gap-2">
                     <span className="text-3xl font-black text-white font-mono">{totalCoins}</span>
                     <span className="text-sm font-mono mb-1" style={{ color: t.accent }}>coins</span>
                   </div>
-                  {pkg.bonus > 0 && (
-                    <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>
-                      {pkg.coins} + <span style={{ color: t.accent }}>{pkg.bonus} bonus</span>
-                    </p>
-                  )}
+                  {pkg.bonus > 0 && <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>{pkg.coins} + <span style={{ color: t.accent }}>{pkg.bonus} bonus</span></p>}
                 </div>
-
-                {/* Price */}
                 <div className="mb-3">
                   <span className="text-lg font-bold text-white">{selectedCountry.symbol}{price.toLocaleString()}</span>
                   <span className="text-xs font-mono ml-1.5" style={{ color: t.textMuted }}>{selectedCountry.currency}</span>
                 </div>
-
-                {/* Bot capacity */}
-                <div className="flex items-center gap-2 mb-5 px-3 py-2 rounded-lg" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.12)}` }}>
+                <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.12)}` }}>
                   <Bot className="w-3.5 h-3.5 flex-shrink-0" style={{ color: t.accent }} />
                   <span className="text-xs font-mono text-white">Supports <strong>{pkg.bots}</strong> bot{pkg.bots > 1 ? "s" : ""}</span>
                 </div>
-
-                <p className="text-[10px] font-mono mb-5 flex-1" style={{ color: t.textMuted }}>{pkg.tagline}</p>
-
-                <button
-                  data-testid={`button-buy-${pkg.id}`}
-                  onClick={() => openModal(pkg.id)}
+                <p className="text-[10px] font-mono mb-4 flex-1" style={{ color: t.textMuted }}>{pkg.tagline}</p>
+                <button data-testid={`button-buy-${pkg.id}`} onClick={() => openPackModal(pkg)}
                   className="w-full py-2.5 rounded-xl font-mono text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2"
-                  style={{
-                    background: pkg.popular ? t.accent : t.accentFaded(0.1),
-                    color: pkg.popular ? "#000" : t.accent,
-                    border: `1px solid ${pkg.popular ? t.accent : t.accentFaded(0.3)}`,
-                    boxShadow: pkg.popular ? `0 0 16px ${t.accentFaded(0.3)}` : "none",
-                  }}
-                >
+                  style={{ background: pkg.popular ? t.accent : t.accentFaded(0.1), color: pkg.popular ? "#000" : t.accent, border: `1px solid ${pkg.popular ? t.accent : t.accentFaded(0.3)}`, boxShadow: pkg.popular ? `0 0 16px ${t.accentFaded(0.3)}` : "none" }}>
                   <Coins className="w-3.5 h-3.5" /> Buy Coins
                 </button>
               </div>
@@ -534,6 +564,13 @@ export default function Billing() {
           })}
         </div>
       </div>
+
+      {/* Custom pack calculator */}
+      <CustomPackCalculator
+        country={selectedCountry}
+        t={t}
+        onBuy={(coins, bonus, label) => openModal(coins, bonus, label, Calculator as unknown as typeof Bot)}
+      />
 
       {/* Rate info */}
       <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: t.accentFaded(0.04), border: `1px solid ${t.accentFaded(0.12)}` }}>
@@ -546,7 +583,7 @@ export default function Billing() {
             )}
           </p>
           <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>
-            Prices are auto-converted from KES. 1 coin = 1/10th of a bot deployment. Payments secured by Paystack.
+            Prices auto-converted from KES. 10 coins = 1 bot deployment. Payments secured by Paystack.
           </p>
         </div>
       </div>

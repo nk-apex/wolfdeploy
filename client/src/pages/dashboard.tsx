@@ -1,36 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
-  Server, Wallet, Users, Activity, Plus, ArrowUpRight,
-  Zap, Check, Shield, Crown, Bot, Rocket, GitBranch, ExternalLink
+  Server, Wallet, Users, Activity, Plus, ArrowUpRight, Zap,
+  Bot, Rocket, GitBranch, ExternalLink, Coins,
 } from "lucide-react";
 import type { Deployment, Bot as BotType } from "@shared/schema";
 import { StatusBadge } from "@/components/status-badge";
 import { useAuth } from "@/lib/auth";
-
-const PLANS = [
-  {
-    name: "Starter",
-    price: "$5.00",
-    icon: Zap,
-    specs: ["1 Bot Instance", "512MB RAM", "Shared CPU", "Community Support"],
-    highlight: false,
-  },
-  {
-    name: "Pro",
-    price: "$15.00",
-    icon: Shield,
-    specs: ["Unlimited Bots", "2GB RAM", "Dedicated CPU", "Priority Support"],
-    highlight: true,
-  },
-  {
-    name: "Enterprise",
-    price: "$49.00",
-    icon: Crown,
-    specs: ["Unlimited Bots", "8GB RAM", "Dedicated Server", "24/7 Support"],
-    highlight: false,
-  },
-];
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -50,6 +26,17 @@ export default function Dashboard() {
     ? Math.round(((deployments.length - failed) / deployments.length) * 100)
     : 0;
 
+  const { data: coinData } = useQuery<{ balance: number }>({
+    queryKey: ["/api/coins", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch(`/api/coins/${user!.id}`);
+      return res.json();
+    },
+    refetchInterval: 15000,
+  });
+  const coinBalance = coinData?.balance ?? 0;
+
   const statCards = [
     {
       icon: Bot,
@@ -60,10 +47,10 @@ export default function Dashboard() {
       testId: "stat-bots",
     },
     {
-      icon: Wallet,
-      label: "Wallet Balance",
-      value: "$0.00",
-      subValue: "Available for deployment",
+      icon: Coins,
+      label: "Coin Balance",
+      value: `${coinBalance}`,
+      subValue: coinBalance >= 10 ? `${Math.floor(coinBalance / 10)} bot${Math.floor(coinBalance / 10) !== 1 ? "s" : ""} available` : "Top up to deploy",
       link: "/billing",
       testId: "stat-wallet",
     },
@@ -167,61 +154,6 @@ export default function Dashboard() {
                     <p className="text-[10px] sm:text-xs text-gray-500 font-mono mt-0.5 sm:mt-1">{action.desc}</p>
                   </div>
                   <ArrowUpRight className="w-4 h-4 text-primary/50 group-hover:text-primary transition-colors shrink-0" />
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* Bot Plans */}
-      <div className="mb-6 sm:mb-8">
-        <h2 className="text-base sm:text-xl font-bold mb-3 sm:mb-4 flex items-center text-white">
-          <Server className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" /> Bot Plans
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-          {PLANS.map((plan) => (
-            <Link key={plan.name} href="/deploy">
-              <div
-                data-testid={`plan-card-${plan.name.toLowerCase()}`}
-                className="p-4 sm:p-5 rounded-xl hover:border-primary/40 transition-all group cursor-pointer relative overflow-hidden"
-                style={{
-                  border: `1px solid ${plan.highlight ? "rgba(74,222,128,0.4)" : "rgba(74,222,128,0.2)"}`,
-                  background: "rgba(0,0,0,0.3)",
-                  backdropFilter: "blur(8px)",
-                  boxShadow: plan.highlight ? "0 0 20px rgba(74,222,128,0.06)" : "none",
-                }}
-              >
-                {plan.highlight && (
-                  <div
-                    className="absolute top-0 right-0 text-primary text-[9px] sm:text-xs font-mono px-2 py-0.5 rounded-bl-lg"
-                    style={{ background: "rgba(74,222,128,0.2)", borderLeft: "1px solid rgba(74,222,128,0.3)", borderBottom: "1px solid rgba(74,222,128,0.3)" }}
-                  >
-                    POPULAR
-                  </div>
-                )}
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="p-1.5 sm:p-2 rounded-lg" style={{ background: "rgba(74,222,128,0.1)" }}>
-                    <plan.icon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  </div>
-                  <h3 className="font-display font-bold text-white text-sm sm:text-base">{plan.name}</h3>
-                </div>
-                <div className="mb-3">
-                  <span className="text-xl sm:text-2xl font-display font-bold text-primary">{plan.price}</span>
-                  <span className="text-xs text-gray-500 font-mono ml-1">/server</span>
-                </div>
-                <div className="space-y-1.5">
-                  {plan.specs.map((spec) => (
-                    <div key={spec} className="flex items-center gap-2">
-                      <Check className="w-3 h-3 flex-shrink-0" style={{ color: "rgba(74,222,128,0.7)" }} />
-                      <span className="text-xs font-mono text-gray-400">{spec}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(74,222,128,0.1)" }}>
-                  <div className="flex items-center justify-center gap-1 text-xs font-mono text-primary/70 group-hover:text-primary transition-colors">
-                    Top up {plan.price} to deploy
-                  </div>
                 </div>
               </div>
             </Link>

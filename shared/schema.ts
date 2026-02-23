@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { pgTable, varchar, integer } from "drizzle-orm/pg-core";
 
 export const botSchema = z.object({
   id: z.string(),
@@ -57,3 +58,10 @@ export const users = {} as any;
 export type User = { id: string; username: string; password: string };
 export type InsertUser = Omit<User, "id">;
 export const insertUserSchema = z.object({ username: z.string(), password: z.string() });
+
+export const userCoins = pgTable("user_coins", {
+  userId: varchar("user_id").primaryKey(),
+  balance: integer("balance").notNull().default(0),
+});
+
+export type UserCoins = typeof userCoins.$inferSelect;
