@@ -67,7 +67,7 @@ export default function Dashboard() {
       icon: Users,
       label: "Referrals",
       value: "0/10",
-      subValue: "10 more to unlock Admin",
+      subValue: "Earn 10% on referrals",
       link: "/referrals",
       testId: "stat-referrals",
     },

@@ -44,8 +44,13 @@ async function deductCoins(userId: string, amount: number): Promise<{ ok: boolea
   return { ok: true, balance: newBal };
 }
 
+const ENV_ADMIN_IDS = new Set(
+  (process.env.ADMIN_USER_IDS ?? "").split(",").map(s => s.trim()).filter(Boolean)
+);
+
 async function isAdmin(userId: string): Promise<boolean> {
   if (!userId) return false;
+  if (ENV_ADMIN_IDS.has(userId)) return true;
   const rows = await db.select().from(adminUsers).where(eq(adminUsers.userId, userId));
   return rows.length > 0;
 }
