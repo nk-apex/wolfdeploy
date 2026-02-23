@@ -57,6 +57,7 @@ export async function registerRoutes(
     const deployment = await storage.createDeployment(
       result.data.botId,
       bot.name,
+      bot.repository,
       result.data.envVars
     );
     res.status(201).json(deployment);

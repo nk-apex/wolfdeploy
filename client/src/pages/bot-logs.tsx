@@ -51,10 +51,9 @@ export default function BotLogs() {
     },
     refetchInterval: (query) => {
       const dep = query.state.data as Deployment | undefined;
-      if (dep && (dep.status === "running" || dep.status === "stopped" || dep.status === "failed")) {
-        return 8000;
-      }
-      return 1500;
+      if (!dep || dep.status === "stopped" || dep.status === "failed") return 8000;
+      if (dep.status === "running") return 2000;
+      return 1200;
     },
   });
 
@@ -216,7 +215,7 @@ export default function BotLogs() {
             <span className="text-xs font-mono text-white font-bold">Deployment Logs</span>
             <span className="text-[9px] text-gray-600 font-mono">({deployment.logs.length} entries)</span>
           </div>
-          {(deployment.status === "deploying" || deployment.status === "queued") && (
+          {(deployment.status === "deploying" || deployment.status === "queued" || deployment.status === "running") && (
             <div className="flex items-center gap-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               <span className="text-[9px] text-primary font-mono uppercase tracking-wider">Live</span>
