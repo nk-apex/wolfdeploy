@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Wallet, CreditCard, Smartphone, Globe, Check, Crown, Shield, Zap, Star, ChevronDown, Lock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Wallet, CreditCard, Smartphone, Globe, Check, Crown, Shield, Zap, ChevronDown, Lock, X, ArrowRight, ShieldCheck, Banknote } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme, getThemeTokens } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
@@ -12,7 +12,6 @@ const PLANS = [
     icon: Zap,
     features: ["1 Bot Instance", "512MB RAM", "Shared CPU", "Community Support", "Basic Logs"],
     highlight: false,
-    color: "rgba(74,222,128,1)",
   },
   {
     id: "pro",
@@ -21,7 +20,6 @@ const PLANS = [
     icon: Shield,
     features: ["Unlimited Bots", "2GB RAM", "Dedicated CPU", "Priority Support", "Full Log Streaming", "Auto-Restart"],
     highlight: true,
-    color: "rgba(74,222,128,1)",
   },
   {
     id: "enterprise",
@@ -30,7 +28,6 @@ const PLANS = [
     icon: Crown,
     features: ["Unlimited Bots", "8GB RAM", "Dedicated Server", "24/7 Priority Support", "Custom Domain", "SLA Guarantee"],
     highlight: false,
-    color: "rgba(74,222,128,1)",
   },
 ];
 
@@ -51,11 +48,11 @@ const COUNTRIES = [
   { code: "XX", name: "Others (USD)", currency: "USD", symbol: "$", flag: "🌐", methods: ["card"] },
 ];
 
-const METHOD_LABELS: Record<string, { label: string; icon: typeof CreditCard }> = {
-  card: { label: "Card Payment", icon: CreditCard },
-  mobile_money: { label: "Mobile Money", icon: Smartphone },
-  bank_transfer: { label: "Bank Transfer", icon: Wallet },
-  ussd: { label: "USSD", icon: Smartphone },
+const METHOD_META: Record<string, { label: string; desc: string; icon: typeof CreditCard }> = {
+  card:          { label: "Card",          desc: "Visa / Mastercard",       icon: CreditCard },
+  mobile_money:  { label: "Mobile Money",  desc: "MTN, M-Pesa & more",      icon: Smartphone },
+  bank_transfer: { label: "Bank Transfer", desc: "Direct bank transfer",    icon: Banknote },
+  ussd:          { label: "USSD",          desc: "*737#, *919# & more",     icon: Smartphone },
 };
 
 declare global {
@@ -73,6 +70,210 @@ function getInitialCountry(userId?: string, savedCode?: string) {
   return COUNTRIES.find(c => c.code === code) ?? COUNTRIES[0];
 }
 
+/* ──────────────────────────────────────────────────────────
+   Payment Modal
+────────────────────────────────────────────────────────── */
+interface PaymentModalProps {
+  plan: typeof PLANS[0];
+  country: typeof COUNTRIES[0];
+  email: string;
+  onClose: () => void;
+  onPay: (method: string, email: string) => void;
+  paying: boolean;
+  t: ReturnType<typeof getThemeTokens>;
+}
+
+function PaymentModal({ plan, country, email: initialEmail, onClose, onPay, paying, t }: PaymentModalProps) {
+  const [method, setMethod] = useState(country.methods[0]);
+  const [email, setEmail] = useState(initialEmail);
+  const [visible, setVisible] = useState(false);
+  const PlanIcon = plan.icon;
+  const currency = country.currency as keyof typeof plan.price;
+  const price = plan.price[currency] ?? plan.price.USD;
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  function handleClose() {
+    setVisible(false);
+    setTimeout(onClose, 220);
+  }
+
+  const accentRgb = t.accent.startsWith("hsl")
+    ? t.accent
+    : t.accent;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center px-4 py-8"
+      style={{
+        zIndex: 10000,
+        background: visible ? "rgba(0,0,0,0.75)" : "rgba(0,0,0,0)",
+        backdropFilter: visible ? "blur(6px)" : "blur(0px)",
+        transition: "background 220ms ease, backdrop-filter 220ms ease",
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) handleClose(); }}
+    >
+      <div
+        data-testid="payment-modal"
+        className="w-full max-w-md rounded-2xl overflow-hidden flex flex-col"
+        style={{
+          background: t.glassEffect ? "rgba(8,15,40,0.97)" : "#0a0a0a",
+          border: `1px solid ${t.accentFaded(0.25)}`,
+          boxShadow: `0 0 60px ${t.accentFaded(0.12)}, 0 24px 80px rgba(0,0,0,0.6)`,
+          transform: visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.97)",
+          opacity: visible ? 1 : 0,
+          transition: "transform 220ms cubic-bezier(0.34,1.56,0.64,1), opacity 220ms ease",
+        }}
+      >
+        {/* Header bar */}
+        <div
+          className="flex items-center justify-between px-5 py-4"
+          style={{ borderBottom: `1px solid ${t.accentFaded(0.12)}`, background: t.accentFaded(0.04) }}
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg" style={{ background: t.accentFaded(0.12) }}>
+              <PlanIcon className="w-4 h-4" style={{ color: t.accent }} />
+            </div>
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest" style={{ color: t.textMuted }}>Subscribe to</p>
+              <p className="font-bold text-white text-sm leading-tight">{plan.name} Plan</p>
+            </div>
+          </div>
+          <button
+            data-testid="button-close-modal"
+            onClick={handleClose}
+            className="p-1.5 rounded-lg transition-all hover:bg-white/10"
+            style={{ color: t.textMuted }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Price summary */}
+          <div
+            className="rounded-xl p-4 flex items-center justify-between"
+            style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.18)}` }}
+          >
+            <div>
+              <p className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: t.textMuted }}>Total due today</p>
+              <p className="text-2xl font-black text-white font-mono">
+                {country.symbol}{price.toLocaleString()}
+                <span className="text-xs font-normal ml-1.5" style={{ color: t.textMuted }}>{country.currency}/mo</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-mono uppercase tracking-widest mb-1" style={{ color: t.textMuted }}>Country</p>
+              <p className="text-sm font-mono text-white">{country.flag} {country.name}</p>
+            </div>
+          </div>
+
+          {/* Features included */}
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>What's included</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {plan.features.map(f => (
+                <div key={f} className="flex items-center gap-2 text-xs font-mono text-gray-300">
+                  <Check className="w-3 h-3 flex-shrink-0" style={{ color: t.accent }} />
+                  {f}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment method picker */}
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>Payment method</p>
+            <div className="grid gap-2" style={{ gridTemplateColumns: country.methods.length === 1 ? "1fr" : "1fr 1fr" }}>
+              {country.methods.map(m => {
+                const meta = METHOD_META[m];
+                const MethodIcon = meta.icon;
+                const active = method === m;
+                return (
+                  <button
+                    key={m}
+                    data-testid={`method-${m}`}
+                    onClick={() => setMethod(m)}
+                    className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{
+                      background: active ? t.accentFaded(0.12) : t.accentFaded(0.04),
+                      border: `1px solid ${active ? t.accentFaded(0.45) : t.accentFaded(0.12)}`,
+                      boxShadow: active ? `0 0 0 1px ${t.accentFaded(0.2)}` : "none",
+                    }}
+                  >
+                    <div className="p-1.5 rounded-lg flex-shrink-0" style={{ background: active ? t.accentFaded(0.2) : t.accentFaded(0.08) }}>
+                      <MethodIcon className="w-3.5 h-3.5" style={{ color: active ? t.accent : t.textMuted }} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono font-bold" style={{ color: active ? t.accent : "white" }}>{meta.label}</p>
+                      <p className="text-[9px] font-mono" style={{ color: t.textMuted }}>{meta.desc}</p>
+                    </div>
+                    {active && (
+                      <div className="ml-auto w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.accent }} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>
+              Billing email
+            </label>
+            <input
+              data-testid="input-billing-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white outline-none transition-all"
+              style={{ background: t.accentFaded(0.05), border: `1px solid ${t.accentFaded(0.2)}` }}
+            />
+          </div>
+
+          {/* Pay button */}
+          <button
+            data-testid="button-pay-now"
+            disabled={paying || !email}
+            onClick={() => onPay(method, email)}
+            className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
+            style={{
+              background: paying ? t.accentFaded(0.15) : t.accent,
+              color: paying ? t.accent : "#000",
+              border: `1px solid ${t.accent}`,
+              boxShadow: paying ? "none" : `0 0 24px ${t.accentFaded(0.35)}`,
+              opacity: !email ? 0.5 : 1,
+            }}
+          >
+            {paying ? (
+              <><div className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Processing…</>
+            ) : (
+              <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>
+            )}
+          </button>
+
+          {/* Trust badges */}
+          <div className="flex items-center justify-center gap-4">
+            <span className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: t.textMuted }}>
+              <ShieldCheck className="w-3 h-3" style={{ color: t.accent }} /> SSL Secured
+            </span>
+            <span className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: t.textMuted }}>
+              <Lock className="w-3 h-3" style={{ color: t.accent }} /> Powered by Paystack
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ──────────────────────────────────────────────────────────
+   Main Billing Page
+────────────────────────────────────────────────────────── */
 export default function Billing() {
   const { user, updateUserCountry } = useAuth();
   const { theme } = useTheme();
@@ -82,9 +283,11 @@ export default function Billing() {
   const [selectedCountry, setSelectedCountry] = useState(() =>
     getInitialCountry(user?.id, user?.user_metadata?.country)
   );
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [paying, setPaying] = useState(false);
   const [showCountryDrop, setShowCountryDrop] = useState(false);
+  const [modalPlan, setModalPlan] = useState<typeof PLANS[0] | null>(null);
+  const [paying, setPaying] = useState(false);
+
+  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
 
   function handleCountryChange(c: typeof COUNTRIES[0]) {
     setSelectedCountry(c);
@@ -93,38 +296,36 @@ export default function Billing() {
     updateUserCountry(c.code);
   }
 
-  const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY as string | undefined;
-
-  function handlePay(planId: string) {
-    const plan = PLANS.find(p => p.id === planId);
-    if (!plan) return;
+  function openModal(planId: string) {
     if (!publicKey) {
-      toast({ title: "Payment unavailable", description: "Billing is not yet configured. Please contact support.", variant: "destructive" });
+      toast({ title: "Payment unavailable", description: "Billing is not configured. Contact support.", variant: "destructive" });
       return;
     }
+    const plan = PLANS.find(p => p.id === planId);
+    if (plan) setModalPlan(plan);
+  }
 
-    const currency = selectedCountry.currency;
-    const amount = plan.price[currency as keyof typeof plan.price] || plan.price.USD;
-    const amountKobo = amount * 100;
+  function handlePay(method: string, email: string) {
+    if (!modalPlan || !publicKey) return;
+    const currency = selectedCountry.currency as keyof typeof modalPlan.price;
+    const amount = (modalPlan.price[currency] ?? modalPlan.price.USD) * 100;
 
     setPaying(true);
-    setSelectedPlan(planId);
-
     const handler = window.PaystackPop.setup({
       key: publicKey,
-      email: user?.email || "",
-      amount: amountKobo,
-      currency,
-      ref: `WOLF-${Date.now()}-${planId}`,
-      metadata: { plan: planId, userId: user?.id },
+      email,
+      amount,
+      currency: selectedCountry.currency,
+      channels: [method],
+      ref: `WOLF-${Date.now()}-${modalPlan.id}`,
+      metadata: { plan: modalPlan.id, userId: user?.id },
       callback: (response: { reference: string }) => {
         setPaying(false);
-        setSelectedPlan(null);
-        toast({ title: "Payment successful!", description: `Reference: ${response.reference}. Your plan has been activated.` });
+        setModalPlan(null);
+        toast({ title: "Payment successful!", description: `Ref: ${response.reference}. Your plan is now active.` });
       },
       onClose: () => {
         setPaying(false);
-        setSelectedPlan(null);
       },
     });
     handler.openIframe();
@@ -140,6 +341,19 @@ export default function Billing() {
 
   return (
     <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 min-h-full" data-testid="billing-page">
+      {/* Modal */}
+      {modalPlan && (
+        <PaymentModal
+          plan={modalPlan}
+          country={selectedCountry}
+          email={user?.email ?? ""}
+          onClose={() => { setModalPlan(null); setPaying(false); }}
+          onPay={handlePay}
+          paying={paying}
+          t={t}
+        />
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-3xl font-bold mb-1 text-white">Billing</h1>
@@ -200,14 +414,15 @@ export default function Billing() {
           )}
         </div>
 
-        {/* Payment methods for selected country */}
+        {/* Payment methods */}
         <div className="mt-3 flex flex-wrap gap-2">
           <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: t.textMuted }}>Available methods:</span>
           {selectedCountry.methods.map(m => {
-            const meta = METHOD_LABELS[m];
+            const meta = METHOD_META[m];
+            const MethodIcon = meta.icon;
             return (
               <span key={m} className="flex items-center gap-1.5 text-[10px] font-mono px-2.5 py-1 rounded-lg" style={{ background: t.accentFaded(0.08), color: t.accent, border: `1px solid ${t.accentFaded(0.15)}` }}>
-                <meta.icon className="w-3 h-3" />
+                <MethodIcon className="w-3 h-3" />
                 {meta.label}
               </span>
             );
@@ -221,9 +436,7 @@ export default function Billing() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PLANS.map((plan) => {
             const currency = selectedCountry.currency as keyof typeof plan.price;
-            const price = plan.price[currency] || plan.price.USD;
-            const symbol = selectedCountry.symbol;
-            const isPaying = paying && selectedPlan === plan.id;
+            const price = plan.price[currency] ?? plan.price.USD;
             const PlanIcon = plan.icon;
 
             return (
@@ -249,10 +462,10 @@ export default function Billing() {
                   <div className="p-2.5 rounded-xl" style={{ background: t.accentFaded(0.1) }}>
                     <PlanIcon className="w-5 h-5" style={{ color: t.accent }} />
                   </div>
-                  <span className="font-bold text-white text-lg font-display">{plan.name}</span>
+                  <span className="font-bold text-white text-lg">{plan.name}</span>
                 </div>
                 <div className="mb-5">
-                  <span className="text-3xl font-display font-black text-white">{symbol}{price.toLocaleString()}</span>
+                  <span className="text-3xl font-black text-white">{selectedCountry.symbol}{price.toLocaleString()}</span>
                   <span className="text-xs font-mono ml-1.5" style={{ color: t.textMuted }}>{selectedCountry.currency}/mo</span>
                 </div>
                 <ul className="space-y-2.5 mb-6 flex-1">
@@ -265,21 +478,15 @@ export default function Billing() {
                 </ul>
                 <button
                   data-testid={`button-subscribe-${plan.id}`}
-                  onClick={() => handlePay(plan.id)}
-                  disabled={isPaying}
+                  onClick={() => openModal(plan.id)}
                   className="w-full py-3 rounded-xl font-mono text-xs font-bold tracking-wider uppercase transition-all flex items-center justify-center gap-2"
                   style={{
                     background: plan.highlight ? t.accent : t.accentFaded(0.1),
                     color: plan.highlight ? "#000" : t.accent,
                     border: `1px solid ${plan.highlight ? t.accent : t.accentFaded(0.3)}`,
-                    opacity: isPaying ? 0.7 : 1,
                   }}
                 >
-                  {isPaying ? (
-                    <><div className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" /> Processing...</>
-                  ) : (
-                    <><Lock className="w-3.5 h-3.5" /> Subscribe</>
-                  )}
+                  <Lock className="w-3.5 h-3.5" /> Subscribe
                 </button>
               </div>
             );
