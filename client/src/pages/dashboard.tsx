@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import type { Deployment, Bot as BotType } from "@shared/schema";
 import { StatusBadge } from "@/components/status-badge";
+import { useAuth } from "@/lib/auth";
 
 const PLANS = [
   {
@@ -32,6 +33,7 @@ const PLANS = [
 ];
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const { data: deployments = [], isLoading: depLoading } = useQuery<Deployment[]>({
     queryKey: ["/api/deployments"],
     refetchInterval: 4000,
@@ -40,6 +42,7 @@ export default function Dashboard() {
     queryKey: ["/api/bots"],
   });
 
+  const username = user?.user_metadata?.full_name?.split(" ")[0] || user?.email?.split("@")[0] || "wolf";
   const bot = bots[0];
   const running = deployments.filter(d => d.status === "running").length;
   const failed = deployments.filter(d => d.status === "failed").length;
@@ -50,18 +53,18 @@ export default function Dashboard() {
   const statCards = [
     {
       icon: Bot,
-      label: "Servers",
+      label: "Bots",
       value: depLoading ? "—" : running > 0 ? `${running}/${deployments.length}` : "0",
-      subValue: running > 0 ? `${running} online` : "No servers deployed yet",
+      subValue: running > 0 ? `${running} online` : "No bots deployed yet",
       link: "/bots",
-      testId: "stat-servers",
+      testId: "stat-bots",
     },
     {
       icon: Wallet,
       label: "Wallet Balance",
       value: "$0.00",
       subValue: "Available for deployment",
-      link: "/",
+      link: "/billing",
       testId: "stat-wallet",
     },
     {
@@ -69,7 +72,7 @@ export default function Dashboard() {
       label: "Total Deposits",
       value: "$0.00",
       subValue: "0 transactions",
-      link: "/",
+      link: "/billing",
       testId: "stat-deposits",
     },
     {
@@ -77,15 +80,15 @@ export default function Dashboard() {
       label: "Referrals",
       value: "0/10",
       subValue: "10 more to unlock Admin",
-      link: "/",
+      link: "/referrals",
       testId: "stat-referrals",
     },
   ];
 
   const quickActions = [
-    { icon: Plus, label: "Deploy Server", path: "/deploy", desc: "Launch a new server instance" },
-    { icon: Wallet, label: "Add Funds", path: "/", desc: "Deposit via M-Pesa or Card" },
-    { icon: Users, label: "Invite Friends", path: "/", desc: "Earn 10% on referrals" },
+    { icon: Plus, label: "Deploy Bot", path: "/deploy", desc: "Launch a new bot instance" },
+    { icon: Wallet, label: "Add Funds", path: "/billing", desc: "Deposit via M-Pesa or Card" },
+    { icon: Users, label: "Invite Friends", path: "/referrals", desc: "Earn 10% on referrals" },
   ];
 
   return (
@@ -97,18 +100,18 @@ export default function Dashboard() {
             Command Center
           </h1>
           <p className="text-gray-400 font-mono text-xs sm:text-sm" data-testid="text-welcome-message">
-            Welcome back, wolf
+            Welcome back, <span className="text-primary capitalize">{username}</span> 🐺
           </p>
         </div>
         <Link href="/deploy">
           <button
             className="group px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg hover:opacity-90 transition-all"
             style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}
-            data-testid="button-deploy-server"
+            data-testid="button-deploy-bot"
           >
             <div className="flex items-center text-xs sm:text-sm font-mono text-primary">
               <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
-              Deploy Server
+              Deploy Bot
             </div>
           </button>
         </Link>
@@ -174,7 +177,7 @@ export default function Dashboard() {
       {/* Bot Plans */}
       <div className="mb-6 sm:mb-8">
         <h2 className="text-base sm:text-xl font-bold mb-3 sm:mb-4 flex items-center text-white">
-          <Server className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" /> Server Plans
+          <Server className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" /> Bot Plans
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
           {PLANS.map((plan) => (
