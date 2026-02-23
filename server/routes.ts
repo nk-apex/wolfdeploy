@@ -7,6 +7,14 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // Public config endpoint — exposes safe public keys to the frontend
+  app.get("/api/config", (_req, res) => {
+    res.json({
+      supabaseUrl: process.env.SUPABASE_URL || "",
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY || "",
+    });
+  });
+
   app.get("/api/bots", async (_req, res) => {
     const bots = await storage.getBots();
     res.json(bots);

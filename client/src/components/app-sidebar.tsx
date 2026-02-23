@@ -13,6 +13,7 @@ import {
 import { LayoutDashboard, Bot, Rocket, Settings, Wallet, Users, LogOut, Circle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Deployment } from "@shared/schema";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { title: "Command Center", url: "/", icon: LayoutDashboard },
@@ -24,7 +25,8 @@ const navItems = [
 ];
 
 export function AppSidebar() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { user, signOut } = useAuth();
   const { data: deployments = [] } = useQuery<Deployment[]>({
     queryKey: ["/api/deployments"],
     refetchInterval: 6000,
@@ -156,13 +158,16 @@ export function AppSidebar() {
             W
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] text-white font-mono font-bold leading-tight truncate">wolf</p>
+            <p className="text-[10px] text-white font-mono font-bold leading-tight truncate">
+              {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "wolf"}
+            </p>
             <p className="text-[9px] text-gray-600 font-mono leading-tight truncate">Free Plan</p>
           </div>
           <Circle className="w-2 h-2 text-primary fill-primary flex-shrink-0" />
         </div>
         <button
           data-testid="button-sign-out"
+          onClick={async () => { await signOut(); navigate("/login"); }}
           className="w-full flex items-center gap-2 text-[9px] text-gray-600 font-mono uppercase tracking-widest hover:text-gray-400 transition-colors cursor-pointer px-1"
         >
           <LogOut className="w-3 h-3" />

@@ -1,7 +1,7 @@
-# BotForge - WhatsApp Bot Deployment Platform
+# WolfDeploy - WhatsApp Bot Deployment Platform
 
 ## Overview
-A Heroku-style platform for deploying WhatsApp bots. Users select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs.
+A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs.
 
 ## UI Style
 Matches the WolfHost dark terminal aesthetic:

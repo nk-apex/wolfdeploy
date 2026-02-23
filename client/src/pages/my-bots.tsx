@@ -21,6 +21,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
 
+function Spinner({ label }: { label?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-3 py-20">
+      <div className="w-8 h-8 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+      {label && <p className="text-[10px] text-gray-600 font-mono uppercase tracking-widest">{label}</p>}
+    </div>
+  );
+}
+
 export default function MyBots() {
   const { toast } = useToast();
   const { data: deployments = [], isLoading } = useQuery<Deployment[]>({
@@ -48,6 +57,8 @@ export default function MyBots() {
       toast({ title: "Deployment deleted" });
     },
   });
+
+  if (isLoading) return <Spinner label="Loading your bots…" />;
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
