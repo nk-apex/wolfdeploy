@@ -1,14 +1,15 @@
-import { type Bot, type Deployment, type DeploymentStatus, platformBots } from "@shared/schema";
+import { type Bot, type Deployment, type DeploymentStatus, platformBots, deployments as deploymentsTable } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { spawn, type ChildProcess } from "child_process";
 import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync, symlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import * as ptero from "./pterodactyl";
 
 export interface IStorage {
+  initialize(): Promise<void>;
   getBots(): Promise<Bot[]>;
   getBot(id: string): Promise<Bot | undefined>;
   getAllDeployments(): Promise<Deployment[]>;
@@ -89,11 +90,91 @@ const DEFAULT_BOTS = [
 class MemStorage implements IStorage {
   private deployments: Map<string, Deployment>;
   private processes: Map<string, ChildProcess>;
+  private logFlushTimers: Map<string, NodeJS.Timeout>;
 
   constructor() {
     this.deployments = new Map();
     this.processes = new Map();
+    this.logFlushTimers = new Map();
     mkdirSync(BASE_DIR, { recursive: true });
+  }
+
+  async initialize(): Promise<void> {
+    try {
+      const rows = await db.select().from(deploymentsTable)
+        .orderBy(desc(deploymentsTable.createdAt));
+
+      for (const row of rows) {
+        const dep: Deployment = {
+          id: row.id,
+          botId: row.botId,
+          botName: row.botName,
+          userId: row.userId ?? undefined,
+          status: (row.status as DeploymentStatus) ?? "stopped",
+          envVars: (row.envVars as Record<string, string>) ?? {},
+          url: row.url ?? undefined,
+          pterodactylId: row.pterodactylId ?? undefined,
+          pterodactylIdentifier: row.pterodactylIdentifier ?? undefined,
+          createdAt: row.createdAt?.toISOString() ?? new Date().toISOString(),
+          updatedAt: row.updatedAt?.toISOString() ?? new Date().toISOString(),
+          logs: (row.logs as Deployment["logs"]) ?? [],
+          metrics: (row.metrics as Deployment["metrics"]) ?? { cpu: 0, memory: 0, uptime: 0, requests: 0 },
+        };
+        // Mark any that were deploying/queued as failed (they can't resume after restart)
+        if (dep.status === "deploying" || dep.status === "queued") {
+          dep.status = "failed";
+          dep.logs.push({ timestamp: new Date().toISOString(), level: "warn", message: "Server restarted — deployment interrupted." });
+        }
+        this.deployments.set(dep.id, dep);
+      }
+      console.log(`[storage] Loaded ${rows.length} deployments from database.`);
+    } catch (err) {
+      console.error("[storage] Failed to load deployments from DB:", err);
+    }
+  }
+
+  private async persistDeployment(dep: Deployment): Promise<void> {
+    try {
+      await db.insert(deploymentsTable).values({
+        id: dep.id,
+        botId: dep.botId,
+        botName: dep.botName,
+        userId: dep.userId,
+        status: dep.status,
+        envVars: dep.envVars,
+        url: dep.url,
+        pterodactylId: dep.pterodactylId,
+        pterodactylIdentifier: dep.pterodactylIdentifier,
+        logs: dep.logs,
+        metrics: dep.metrics ?? { cpu: 0, memory: 0, uptime: 0, requests: 0 },
+        createdAt: new Date(dep.createdAt),
+        updatedAt: new Date(dep.updatedAt),
+      }).onConflictDoUpdate({
+        target: deploymentsTable.id,
+        set: {
+          status: dep.status,
+          url: dep.url,
+          pterodactylId: dep.pterodactylId,
+          pterodactylIdentifier: dep.pterodactylIdentifier,
+          logs: dep.logs,
+          metrics: dep.metrics ?? { cpu: 0, memory: 0, uptime: 0, requests: 0 },
+          updatedAt: new Date(dep.updatedAt),
+        },
+      });
+    } catch (err) {
+      console.error("[storage] Failed to persist deployment:", err);
+    }
+  }
+
+  private scheduleLogFlush(id: string): void {
+    const existing = this.logFlushTimers.get(id);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(async () => {
+      this.logFlushTimers.delete(id);
+      const dep = this.deployments.get(id);
+      if (dep) await this.persistDeployment(dep);
+    }, 3000);
+    this.logFlushTimers.set(id, timer);
   }
 
   async getBots(): Promise<Bot[]> {
@@ -180,6 +261,7 @@ class MemStorage implements IStorage {
       metrics: { cpu: 0, memory: 0, uptime: 0, requests: 0 },
     };
     this.deployments.set(id, deployment);
+    this.persistDeployment(deployment).catch(() => {});
 
     if (ptero.isPterodactylConfigured()) {
       this.runPterodactylDeployment(id, botName, botRepo, envVars).catch(async (err) => {
@@ -404,6 +486,7 @@ class MemStorage implements IStorage {
     dep.status = status;
     dep.updatedAt = new Date().toISOString();
     this.deployments.set(id, dep);
+    this.persistDeployment(dep).catch(() => {});
     return dep;
   }
 
@@ -418,6 +501,7 @@ class MemStorage implements IStorage {
     dep.logs.push({ timestamp: new Date().toISOString(), level, message });
     dep.updatedAt = new Date().toISOString();
     this.deployments.set(id, dep);
+    this.scheduleLogFlush(id);
   }
 
   async stopDeployment(id: string): Promise<Deployment | undefined> {
@@ -465,6 +549,11 @@ class MemStorage implements IStorage {
         try { rmSync(deployDir, { recursive: true, force: true }); } catch (_) {}
       }
     }
+
+    // Remove from DB
+    try {
+      await db.delete(deploymentsTable).where(eq(deploymentsTable.id, id));
+    } catch (_) {}
 
     return this.deployments.delete(id);
   }

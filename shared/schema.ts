@@ -105,6 +105,24 @@ export const notifications = pgTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 
+export const deployments = pgTable("deployments", {
+  id: varchar("id").primaryKey(),
+  botId: varchar("bot_id").notNull(),
+  botName: varchar("bot_name").notNull(),
+  userId: varchar("user_id"),
+  status: varchar("status").notNull().default("queued"),
+  envVars: jsonb("env_vars").notNull().default(sql`'{}'::jsonb`),
+  url: varchar("url"),
+  pterodactylId: integer("pterodactyl_id"),
+  pterodactylIdentifier: varchar("pterodactyl_identifier"),
+  logs: jsonb("logs").notNull().default(sql`'[]'::jsonb`),
+  metrics: jsonb("metrics").notNull().default(sql`'{"cpu":0,"memory":0,"uptime":0,"requests":0}'::jsonb`),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type DeploymentRow = typeof deployments.$inferSelect;
+
 export const paymentTransactions = pgTable("payment_transactions", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull(),

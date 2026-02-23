@@ -4,6 +4,7 @@ import { serveStatic } from "./static";
 import { createServer } from "http";
 import { db } from "./db";
 import { adminUsers } from "@shared/schema";
+import { storage } from "./storage";
 
 const app = express();
 const httpServer = createServer(app);
@@ -70,6 +71,9 @@ app.use((req, res, next) => {
   if (adminIds.length > 0) {
     console.log(`[admin] Seeded ${adminIds.length} admin user(s) from ADMIN_USER_IDS`);
   }
+
+  // Load persisted deployments from DB (fixes bots disappearing on refresh/restart)
+  await storage.initialize();
 
   await registerRoutes(httpServer, app);
 
