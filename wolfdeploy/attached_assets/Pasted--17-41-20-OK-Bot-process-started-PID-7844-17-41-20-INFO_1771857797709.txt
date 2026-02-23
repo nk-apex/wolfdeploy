@@ -1,0 +1,166 @@
+
+17:41:20
+[ OK ]
+Bot process started (PID: 7844)
+17:41:20
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Starting...
+17:41:20
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Fetching bot files...
+17:41:21
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Bot loaded successfully.
+17:41:22
+[INFO ]
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🛠️ run anywhere with `dotenvx run -- yourcommand`
+17:41:22
+[INFO ]
+[2:41:22 PM] ✅ JID Manager initialized
+17:41:22
+[INFO ]
+[2:41:22 PM] ✅ New Member Detector initialized
+17:41:22
+[INFO ]
+[2:41:22 PM]
+17:41:22
+[INFO ]
+╔══════════════════════════════════════════════════════════════════════╗
+17:41:22
+[INFO ]
+║ 🐺 WOLFBOT v1.1.5 (PREFIXLESS & MEMBER DETECTION)
+17:41:22
+[INFO ]
+║ 💬 Prefix : "."
+17:41:22
+[INFO ]
+║ 🔧 Auto Fix: ✅ ENABLED
+17:41:22
+[INFO ]
+║ 🔄 Real-time Prefix: ✅ ENABLED
+17:41:22
+[INFO ]
+║ 👁️ Status Detector: ✅ ACTIVE
+17:41:22
+[INFO ]
+║ 👥 Member Detector: ✅ ACTIVE
+17:41:22
+[INFO ]
+║ 🔐 Anti-ViewOnce: ✅ ACTIVE
+17:41:22
+[INFO ]
+║ 🛡️ Rate Limit Protection: ✅ ACTIVE
+17:41:22
+[INFO ]
+║ 🔗 Auto-Connect on Link: ✅
+17:41:22
+[INFO ]
+║ 🔄 Auto-Connect on Start: ✅
+17:41:22
+[INFO ]
+║ 🔐 Login Methods: Pairing Code | Session ID | Clean Start
+17:41:22
+[INFO ]
+║ 📱 Session Support: WOLF-BOT: format & Base64
+17:41:22
+[INFO ]
+║ 📊 Log Level: ULTRA CLEAN (Zero spam)
+17:41:22
+[INFO ]
+║ 🔊 Console: ✅ COMPLETELY FILTERED
+17:41:22
+[INFO ]
+║ ⚡ SPEED: ✅ OPTIMIZED (FAST RESPONSE)
+17:41:22
+[INFO ]
+║ 🎯 Background Auth: ✅ ENABLED
+17:41:22
+[INFO ]
+║ 🎉 Welcome/Goodbye: OFF by default (per-group)
+17:41:22
+[INFO ]
+╚══════════════════════════════════════════════════════════════════════╝
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 💾 Database: Connecting to PostgreSQL...
+17:41:22
+[INFO ]
+[2:41:22 PM] ✅ 🚀 Starting WOLFBOT v1.1.5 (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🌐 Environment: production
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔧 Platform: Heroku
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Loaded prefix: "."
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Prefixless mode: ❌ DISABLED
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Auto-connect on link: ✅
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Auto-connect on start: ✅
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Rate limit protection: ✅
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ Console filtering: ✅ ULTRA CLEAN ACTIVE
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ ⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🎯 Member Detection: ✅ ENABLED (New members in groups)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 👥 Welcome/Goodbye System: ✅ AVAILABLE (Off by default, enable per-group)
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🎯 Background processes: ✅ ENABLED
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔐 No valid existing session, applying SESSION_ID...
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔍 Detected WOLF-BOT: prefix
+17:41:22
+[INFO ]
+[2:41:22 PM] ✅ ✅ Session ID applied to creds.json, auto-connecting...
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🚀 Initializing WhatsApp connection...
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 🔄 Loading existing session from storage...
+17:41:22
+[INFO ]
+[2:41:22 PM] ℹ️ 📦 Loading commands (first time)...
+17:41:22
+[INFO ]
+[2:41:22 PM] ✅ Status Detector initialized
+17:41:22
+[WARN ]
+[2:41:22 PM] (node:7844) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/.946fa534b379cbb5/n7-main/lib/sudo-store.js is not specified and it doesn't parse as CommonJS.
+17:41:22
+[WARN ]
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+17:41:22
+[WARN ]
+To eliminate this warning, add "type": "module" to /tmp/.946fa534b379cbb5/n7-main/package.json.
+17:41:22
+[WARN ]
+(Use `node --trace-warnings ...` to show where the warning was created)
+17:41:22
+[ERROR]
+Process exited with code 1. Bot crashed.

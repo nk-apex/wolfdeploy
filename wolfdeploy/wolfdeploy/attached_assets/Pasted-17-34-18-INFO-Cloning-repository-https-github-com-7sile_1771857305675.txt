@@ -1,0 +1,255 @@
+17:34:18
+[INFO ]
+Cloning repository: https://github.com/7silent-wolf/silentwolf.git
+17:34:18
+[WARN ]
+Cloning into '/tmp/botforge-deployments/39a8d8c0-26e6-453e-848e-c1bc5b8d90c4'...
+17:34:19
+[INFO ]
+Repository cloned successfully.
+17:34:19
+[INFO ]
+Installing Node.js dependencies...
+17:34:31
+[WARN ]
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+17:34:31
+[WARN ]
+npm warn deprecated npmlog@5.0.1: This package is no longer supported.
+17:34:31
+[WARN ]
+npm warn deprecated trim@0.0.1: Use String.prototype.trim() instead
+17:34:31
+[WARN ]
+npm warn deprecated har-validator@5.1.5: this library is no longer supported
+17:34:31
+[WARN ]
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+17:34:31
+[WARN ]
+npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+17:34:31
+[WARN ]
+npm warn deprecated are-we-there-yet@2.0.0: This package is no longer supported.
+17:34:31
+[WARN ]
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+17:34:32
+[WARN ]
+npm warn deprecated prebuild-install@7.1.3: No longer maintained. Please contact the author of the relevant native addon; alternatives are available.
+17:34:32
+[WARN ]
+npm warn deprecated gauge@3.0.2: This package is no longer supported.
+17:34:32
+[WARN ]
+npm warn deprecated uuid@3.4.0: Please upgrade to version 7 or higher. Older versions may use Math.random() in certain circumstances, which is known to be problematic. See https://v8.dev/blog/math-random for details.
+17:34:32
+[WARN ]
+npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+17:34:32
+[WARN ]
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+17:34:32
+[WARN ]
+npm warn deprecated tar@6.2.1: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+17:34:32
+[WARN ]
+npm warn deprecated jpeg-exif@1.1.4: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+17:34:33
+[WARN ]
+npm warn deprecated glob@11.1.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+17:34:33
+[WARN ]
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+17:34:35
+[WARN ]
+npm warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+17:34:46
+[INFO ]
+added 938 packages in 27s
+17:34:46
+[INFO ]
+180 packages are looking for funding
+17:34:46
+[INFO ]
+run `npm fund` for details
+17:34:46
+[INFO ]
+Dependencies installed.
+17:34:46
+[INFO ]
+Setting environment variables...
+17:34:46
+[INFO ]
+Database: Provisioned automatically by BotForge.
+17:34:46
+[INFO ]
+Environment ready (4 variables).
+17:34:46
+[INFO ]
+Starting bot process...
+17:34:46
+[ OK ]
+Bot process started (PID: 6733)
+17:34:46
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Starting...
+17:34:46
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Fetching bot files...
+17:34:47
+[INFO ]
+[WOLF TECH BWM XMD FAMILY] Bot loaded successfully.
+17:34:47
+[INFO ]
+[dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️ suppress all logs with { quiet: true }
+17:34:47
+[INFO ]
+[2:34:47 PM] ✅ JID Manager initialized
+17:34:47
+[INFO ]
+[2:34:47 PM] ✅ New Member Detector initialized
+17:34:47
+[INFO ]
+[2:34:47 PM]
+17:34:47
+[INFO ]
+╔══════════════════════════════════════════════════════════════════════╗
+17:34:47
+[INFO ]
+║ 🐺 WOLFBOT v1.1.5 (PREFIXLESS & MEMBER DETECTION)
+17:34:47
+[INFO ]
+║ 💬 Prefix : "."
+17:34:47
+[INFO ]
+║ 🔧 Auto Fix: ✅ ENABLED
+17:34:47
+[INFO ]
+║ 🔄 Real-time Prefix: ✅ ENABLED
+17:34:47
+[INFO ]
+║ 👁️ Status Detector: ✅ ACTIVE
+17:34:47
+[INFO ]
+║ 👥 Member Detector: ✅ ACTIVE
+17:34:47
+[INFO ]
+║ 🔐 Anti-ViewOnce: ✅ ACTIVE
+17:34:47
+[INFO ]
+║ 🛡️ Rate Limit Protection: ✅ ACTIVE
+17:34:47
+[INFO ]
+║ 🔗 Auto-Connect on Link: ✅
+17:34:47
+[INFO ]
+║ 🔄 Auto-Connect on Start: ✅
+17:34:47
+[INFO ]
+║ 🔐 Login Methods: Pairing Code | Session ID | Clean Start
+17:34:47
+[INFO ]
+║ 📱 Session Support: WOLF-BOT: format & Base64
+17:34:47
+[INFO ]
+║ 📊 Log Level: ULTRA CLEAN (Zero spam)
+17:34:47
+[INFO ]
+║ 🔊 Console: ✅ COMPLETELY FILTERED
+17:34:47
+[INFO ]
+║ ⚡ SPEED: ✅ OPTIMIZED (FAST RESPONSE)
+17:34:47
+[INFO ]
+║ 🎯 Background Auth: ✅ ENABLED
+17:34:47
+[INFO ]
+║ 🎉 Welcome/Goodbye: OFF by default (per-group)
+17:34:47
+[INFO ]
+╚══════════════════════════════════════════════════════════════════════╝
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 💾 Database: Connecting to PostgreSQL...
+17:34:47
+[INFO ]
+[2:34:47 PM] ✅ 🚀 Starting WOLFBOT v1.1.5 (PREFIXLESS & MEMBER DETECTION & ANTI-VIEWONCE)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🌐 Environment: production
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔧 Platform: Heroku
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Loaded prefix: "."
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Prefixless mode: ❌ DISABLED
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Auto-connect on link: ✅
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Auto-connect on start: ✅
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Rate limit protection: ✅
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ Console filtering: ✅ ULTRA CLEAN ACTIVE
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ ⚡ Response speed: OPTIMIZED (Reduced delays by 50-70%)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔐 Session ID support: ✅ ENABLED (WOLF-BOT: format)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🎯 Member Detection: ✅ ENABLED (New members in groups)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔐 Anti-ViewOnce: ✅ ENABLED (Private/Auto modes)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 👥 Welcome/Goodbye System: ✅ AVAILABLE (Off by default, enable per-group)
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🎯 Background processes: ✅ ENABLED
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔐 No valid existing session, applying SESSION_ID...
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔍 Detected WOLF-BOT: prefix
+17:34:47
+[INFO ]
+[2:34:47 PM] ✅ ✅ Session ID applied to creds.json, auto-connecting...
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🚀 Initializing WhatsApp connection...
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 🔄 Loading existing session from storage...
+17:34:47
+[INFO ]
+[2:34:47 PM] ℹ️ 📦 Loading commands (first time)...
+17:34:47
+[INFO ]
+[2:34:47 PM] ✅ Status Detector initialized
+17:34:47
+[WARN ]
+[2:34:47 PM] (node:6733) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///tmp/.36a86d044ccc8d5d/n7-main/lib/sudo-store.js is not specified and it doesn't parse as CommonJS.
+17:34:47
+[WARN ]
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+17:34:47
+[WARN ]
+To eliminate this warning, add "type": "module" to /tmp/.36a86d044ccc8d5d/n7-main/package.json.
+17:34:47
+[WARN ]
+(Use `node --trace-warnings ...` to show where the warning was created)
+17:34:47
+[ERROR]
+Process exited with code 1. Bot crashed.

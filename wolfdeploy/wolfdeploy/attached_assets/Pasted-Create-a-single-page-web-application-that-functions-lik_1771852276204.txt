@@ -1,0 +1,102 @@
+Create a single-page web application that functions like Heroku for deploying WhatsApp bots. The app should:
+
+1. **UI Components Required:**
+   - Use the provided shadcn/ui Command component for bot selection
+   - Clean, modern dashboard layout
+   - Dark mode support
+   - Responsive design
+
+2. **Core Functionality:**
+   - Users can select from available WhatsApp bots
+   - Each bot has an app.json configuration file defining required env vars (session ID and phone number)
+   - Users input their WhatsApp session ID and phone number
+   - Click "Deploy" to start deployment on a VPS
+   - Real-time deployment logs
+   - Status tracking (deploying, running, stopped, failed)
+   - Auto-generated deployment URL
+
+3. **Technical Implementation:**
+   - Frontend: React with Tailwind CSS
+   - Backend API endpoints:
+     - GET /api/bots - List available bots
+     - GET /api/bots/:id/app.json - Fetch bot configuration
+     - POST /api/deploy - Start new deployment
+     - GET /api/deploy/:id/logs - Stream deployment logs
+     - GET /api/deployments - List user deployments
+     - POST /api/deploy/:id/stop - Stop deployment
+     - DELETE /api/deploy/:id - Delete deployment
+
+4. **Deployment Flow:**
+   - User searches/selects bot from command palette
+   - Bot details page shows requirements from app.json
+   - User fills in required env vars (session ID, phone number)
+   - System validates inputs
+   - Deployment starts with progress indicator
+   - Real-time logs show Docker build and deployment process
+   - Success page shows deployment URL and management options
+
+5. **VPS Integration:**
+   - Use Docker for containerization
+   - Each deployment gets unique port/subdomain
+   - Nginx reverse proxy for routing
+   - Automatic SSL via Let's Encrypt
+   - Resource limits per deployment
+
+6. **Session Management:**
+   - Secure storage of WhatsApp session data
+   - Session persistence across restarts
+   - QR code display for initial authentication
+   - Session backup and restore
+
+7. **Additional Features:**
+   - One-click deploy from GitHub repo
+   - Environment variable management
+   - Deployment metrics (CPU, memory, uptime)
+   - Automatic restarts on crash
+   - Logs viewer with search
+   - Domain management
+
+8. **Example app.json structure:**
+```json
+{
+  "name": "WhatsApp Bot",
+  "description": "A WhatsApp bot template",
+  "env": {
+    "SESSION_ID": {
+      "description": "WhatsApp session ID for authentication",
+      "required": true
+    },
+    "PHONE_NUMBER": {
+      "description": "Your WhatsApp phone number",
+      "required": true
+    }
+  },
+  "repository": "https://github.com/username/repo",
+  "logo": "https://example.com/logo.png",
+  "keywords": ["whatsapp", "bot", "nodejs"]
+}
+Styling Requirements:
+
+Use the provided Command component as the main navigation
+
+Gradient backgrounds for headers
+
+Glassmorphism effects for cards
+
+Smooth animations for state changes
+
+Status badges with color coding
+
+User Experience:
+
+Keyboard shortcuts (⌘K to open command palette)
+
+Toast notifications for actions
+
+Confirmation dialogs for destructive actions
+
+Loading skeletons during data fetch
+
+Error boundaries with retry options
+
+The final output should be a fully functional React application with all the above features, ready to be deployed on Replit. Include all necessary API routes, database schemas, and deployment
