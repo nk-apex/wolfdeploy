@@ -1,26 +1,47 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Rocket, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Rocket, Eye, EyeOff, AlertCircle, Mail, CheckCircle2 } from "lucide-react";
+
+const EMAIL_NOT_CONFIRMED = "Email not confirmed";
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, resendConfirmation } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [needsConfirm, setNeedsConfirm] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSent, setResendSent] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setNeedsConfirm(false);
     setLoading(true);
     const { error: err } = await signIn(email, password);
     setLoading(false);
-    if (err) { setError(err); return; }
+    if (err) {
+      if (err.toLowerCase().includes("email not confirmed") || err.toLowerCase().includes("not confirmed")) {
+        setNeedsConfirm(true);
+      } else {
+        setError(err);
+      }
+      return;
+    }
     navigate("/");
+  };
+
+  const handleResend = async () => {
+    setResendLoading(true);
+    const { error: err } = await resendConfirmation(email);
+    setResendLoading(false);
+    if (!err) setResendSent(true);
+    else setError(err);
   };
 
   return (
@@ -28,7 +49,6 @@ export default function Login() {
       className="min-h-screen flex items-center justify-center px-4"
       style={{ background: "#080808" }}
     >
-      {/* Grid bg */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -62,6 +82,44 @@ export default function Login() {
           className="p-6 sm:p-8 rounded-2xl"
           style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)" }}
         >
+          {/* Email confirmation required banner */}
+          {needsConfirm && (
+            <div
+              className="mb-5 p-4 rounded-xl"
+              style={{ background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.25)" }}
+            >
+              <div className="flex items-start gap-2.5 mb-3">
+                <Mail className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-[11px] text-yellow-400 font-mono font-bold mb-1">Confirm your email first</p>
+                  <p className="text-[10px] text-yellow-600 font-mono leading-relaxed">
+                    We sent a confirmation link to <span className="text-yellow-400 font-bold">{email}</span>. Click it to activate your account, then sign in.
+                  </p>
+                </div>
+              </div>
+              {resendSent ? (
+                <div className="flex items-center gap-1.5 text-[10px] text-primary font-mono">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Confirmation email resent! Check your inbox.
+                </div>
+              ) : (
+                <button
+                  data-testid="button-resend-confirmation"
+                  onClick={handleResend}
+                  disabled={resendLoading}
+                  className="flex items-center gap-1.5 text-[10px] text-yellow-500 font-mono hover:text-yellow-300 transition-colors disabled:opacity-50"
+                >
+                  {resendLoading ? (
+                    <div className="w-3 h-3 rounded-full border border-yellow-500/30 border-t-yellow-500 animate-spin" />
+                  ) : (
+                    <Mail className="w-3 h-3" />
+                  )}
+                  Resend confirmation email
+                </button>
+              )}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
@@ -73,14 +131,10 @@ export default function Login() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setNeedsConfirm(false); setResendSent(false); }}
                 placeholder="wolf@example.com"
-                className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white placeholder:text-gray-700 outline-none focus:ring-1 transition-all"
-                style={{
-                  background: "rgba(0,0,0,0.5)",
-                  border: "1px solid rgba(74,222,128,0.2)",
-                  focusRingColor: "rgba(74,222,128,0.4)",
-                }}
+                className="w-full px-3 py-2.5 rounded-xl text-sm font-mono text-white placeholder:text-gray-700 outline-none transition-all"
+                style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
               />
             </div>
 
@@ -98,10 +152,7 @@ export default function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="w-full px-3 py-2.5 pr-10 rounded-xl text-sm font-mono text-white placeholder:text-gray-700 outline-none transition-all"
-                  style={{
-                    background: "rgba(0,0,0,0.5)",
-                    border: "1px solid rgba(74,222,128,0.2)",
-                  }}
+                  style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
                 />
                 <button
                   type="button"
@@ -113,7 +164,7 @@ export default function Login() {
               </div>
             </div>
 
-            {/* Error */}
+            {/* Generic error */}
             {error && (
               <div
                 className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-[11px] font-mono text-red-400"
@@ -147,7 +198,6 @@ export default function Login() {
           </form>
         </div>
 
-        {/* Footer link */}
         <p className="text-center mt-5 text-[11px] text-gray-600 font-mono">
           Don't have an account?{" "}
           <Link href="/signup" className="text-primary hover:underline">
