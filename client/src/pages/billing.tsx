@@ -61,7 +61,10 @@ const METHOD_META: Record<string, { label: string; desc: string; icon: typeof Cr
 
 declare global {
   interface Window {
-    PaystackPop: { setup: (opts: Record<string, unknown>) => { openIframe: () => void } };
+    PaystackPop: {
+      setup: (opts: Record<string, unknown>) => { openIframe: () => void };
+      resumeTransaction: (accessCode: string, callbacks: { callback?: (r: { reference: string }) => void; onClose?: () => void }) => void;
+    };
   }
 }
 
@@ -92,23 +95,12 @@ interface ModalProps {
   t: ReturnType<typeof getThemeTokens>;
 }
 
-const STK_STEPS = [
-  { label: "Initiating payment",        sub: "Connecting to Paystack…" },
-  { label: "Sending STK push",          sub: "Payment prompt on its way…" },
-  { label: "STK pushed to your phone",  sub: "Check your phone now." },
-  { label: "Waiting for PIN",           sub: "Enter your PIN on your phone…" },
-  { label: "Verifying payment",         sub: "Confirming with mobile network…" },
-];
-
 function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }: ModalProps) {
-  const { toast } = useToast();
   const [method, setMethod] = useState(country.methods[0]);
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState(userEmail);
   const [visible, setVisible] = useState(false);
-  /* payStep: 0=idle, 1=init, 2=stk_sent, 3=waiting_pin, 4=verifying, 5=done */
-  const [payStep, setPayStep] = useState(0);
-  const [payRef, setPayRef] = useState("");
+  const [paying, setPaying] = useState(false);
   const [errMsg, setErrMsg] = useState("");
   const isMobileMoney = method === "mobile_money";
   const PkgIcon = pkg.icon;
@@ -122,110 +114,94 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   }, []);
 
   function handleClose() {
-    if (payStep > 0 && payStep < 5) return;
+    if (paying) return;
     setVisible(false);
     setTimeout(onClose, 220);
-  }
-
-  function handleCancel() {
-    setPayStep(0);
-    setErrMsg("");
   }
 
   async function handlePay() {
     setErrMsg("");
     const ref = `WOLF-${Date.now()}-c${totalCoins}`;
-    /* Strip + and spaces from phone */
-    const cleanPhone = phone.replace(/^\+/, "").replace(/\s+/g, "");
+    const cleanPhone = isMobileMoney ? `254${phone.replace(/\D/g, "")}` : undefined;
     const amountMinor = Math.round(price * 100);
+    const payEmail = isMobileMoney ? `${cleanPhone}@wolfdeploy.app` : email;
 
-    /* Step 1 — initiating */
-    setPayStep(1);
+    setPaying(true);
     try {
       const initRes = await fetch("/api/payments/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: isMobileMoney ? `${cleanPhone}@mobile.wolfdeploy.app` : email,
+          email: payEmail,
           amount: amountMinor,
           currency: country.currency,
           channels: [method],
-          phone: isMobileMoney ? cleanPhone : undefined,
+          phone: cleanPhone,
           reference: ref,
           userId,
           coins: totalCoins,
         }),
       });
-      const initData = await initRes.json() as { authorizationUrl?: string; error?: string };
-      if (!initRes.ok || !initData.authorizationUrl) {
-        setPayStep(0);
+      const initData = await initRes.json() as { accessCode?: string; error?: string };
+      if (!initRes.ok || !initData.accessCode) {
+        setPaying(false);
         setErrMsg(initData.error || "Failed to initialise payment. Try again.");
         return;
       }
 
-      setPayRef(ref);
-
-      if (isMobileMoney) {
-        /* Step 2 — STK sent */
-        setPayStep(2);
-        /* Open Paystack page in new tab so user can confirm */
-        window.open(initData.authorizationUrl, "_blank", "noopener");
-        /* Step 3 — waiting for PIN */
-        setTimeout(() => setPayStep(3), 2000);
-        /* Step 4 — verifying (after reasonable wait) */
-        setTimeout(async () => {
-          setPayStep(4);
-          await verifyPayment(ref, totalCoins);
-        }, 18000);
-      } else {
-        /* Card / USSD / bank — open Paystack page, poll after close */
-        setPayStep(2);
-        const win = window.open(initData.authorizationUrl, "_blank", "width=600,height=700,noopener");
-        const poll = setInterval(() => {
-          if (!win || win.closed) {
-            clearInterval(poll);
-            setPayStep(4);
-            verifyPayment(ref, totalCoins);
+      /* Open Paystack payment form inline on this page (no new window) */
+      window.PaystackPop.resumeTransaction(initData.accessCode, {
+        callback: async (response: { reference: string }) => {
+          setPaying(false);
+          try {
+            const verRes = await fetch("/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ reference: response.reference, userId, coins: totalCoins }),
+            });
+            const verData = await verRes.json() as { success?: boolean; error?: string };
+            if (verRes.ok && verData.success) {
+              onSuccess(totalCoins, response.reference);
+            } else {
+              setErrMsg(verData.error || "Payment received but coins not credited. Contact support.");
+            }
+          } catch {
+            setErrMsg("Could not verify payment. Contact support if amount was deducted.");
           }
-        }, 1200);
-      }
+        },
+        onClose: () => setPaying(false),
+      });
     } catch {
-      setPayStep(0);
+      setPaying(false);
       setErrMsg("Network error. Please check your connection and try again.");
     }
   }
 
-  async function verifyPayment(ref: string, coins: number) {
-    try {
-      const res = await fetch("/api/payments/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference: ref, userId, coins }),
-      });
-      const data = await res.json() as { success?: boolean; balance?: number; error?: string };
-      if (res.ok && data.success) {
-        setPayStep(5);
-        setTimeout(() => {
-          onSuccess(coins, ref);
-        }, 1200);
-      } else {
-        setPayStep(0);
-        setErrMsg(data.error || "Payment not confirmed yet. If you paid, your coins will be credited shortly.");
-      }
-    } catch {
-      setPayStep(0);
-      setErrMsg("Could not verify payment. Contact support if amount was deducted.");
-    }
-  }
-
   const canPay = isMobileMoney ? !!phone.trim() : !!email.trim();
-  const isProcessing = payStep > 0 && payStep < 5;
+
+  /* Processing overlay */
+  if (paying) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center px-4 py-8" style={{ zIndex: 10000, background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}>
+        <div className="w-full max-w-sm rounded-2xl p-8 text-center" style={{ background: t.glassEffect ? "rgba(8,15,40,0.98)" : "#0a0a0a", border: `1px solid ${t.accentFaded(0.3)}` }}>
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.3)}` }}>
+            <div className="w-7 h-7 border-2 rounded-full animate-spin" style={{ borderColor: `${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accentFaded(0.2)} ${t.accent}` }} />
+          </div>
+          <p className="text-white font-bold font-mono text-sm mb-1">Processing Payment</p>
+          <p className="text-xs font-mono mb-5" style={{ color: t.textMuted }}>Complete the payment in the Paystack window</p>
+          <button data-testid="button-cancel-payment" onClick={() => setPaying(false)} className="text-xs font-mono underline" style={{ color: t.textMuted }}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
       className="fixed inset-0 flex items-center justify-center px-4 py-8"
-      style={{ zIndex: 10000, background: visible ? "rgba(0,0,0,0.82)" : "rgba(0,0,0,0)", backdropFilter: visible ? "blur(6px)" : "blur(0px)", transition: "background 220ms ease, backdrop-filter 220ms ease" }}
-      onClick={e => { if (e.target === e.currentTarget && !isProcessing) handleClose(); }}
+      style={{ zIndex: 10000, background: visible ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0)", backdropFilter: visible ? "blur(6px)" : "blur(0px)", transition: "background 220ms ease, backdrop-filter 220ms ease" }}
+      onClick={e => { if (e.target === e.currentTarget) handleClose(); }}
     >
       <div
         data-testid="payment-modal"
@@ -250,11 +226,9 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
               <p className="font-bold text-white text-sm">{pkg.label}</p>
             </div>
           </div>
-          {!isProcessing && (
-            <button data-testid="button-close-modal" onClick={handleClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-all" style={{ color: t.textMuted }}>
-              <X className="w-4 h-4" />
-            </button>
-          )}
+          <button data-testid="button-close-modal" onClick={handleClose} className="p-1.5 rounded-lg hover:bg-white/10 transition-all" style={{ color: t.textMuted }}>
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <div className="p-5 space-y-5">
@@ -289,35 +263,33 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             </div>
           </div>
 
-          {/* Payment method — hidden while processing */}
-          {!isProcessing && (
-            <div>
-              <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>Payment method</p>
-              <div className="grid gap-2" style={{ gridTemplateColumns: country.methods.length === 1 ? "1fr" : "1fr 1fr" }}>
-                {country.methods.map(m => {
-                  const meta = METHOD_META[m];
-                  const MethodIcon = meta.icon;
-                  const active = method === m;
-                  return (
-                    <button key={m} data-testid={`method-${m}`} onClick={() => setMethod(m)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
-                      style={{ background: active ? t.accentFaded(0.12) : t.accentFaded(0.04), border: `1px solid ${active ? t.accentFaded(0.45) : t.accentFaded(0.12)}` }}>
-                      <div className="p-1.5 rounded-lg flex-shrink-0" style={{ background: active ? t.accentFaded(0.2) : t.accentFaded(0.08) }}>
-                        <MethodIcon className="w-3.5 h-3.5" style={{ color: active ? t.accent : t.textMuted }} />
-                      </div>
-                      <div>
-                        <p className="text-xs font-mono font-bold" style={{ color: active ? t.accent : "white" }}>{meta.label}</p>
-                        <p className="text-[9px] font-mono" style={{ color: t.textMuted }}>{meta.desc}</p>
-                      </div>
-                      {active && <div className="ml-auto w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.accent }} />}
-                    </button>
-                  );
-                })}
-              </div>
+          {/* Payment method */}
+          <div>
+            <p className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>Payment method</p>
+            <div className="grid gap-2" style={{ gridTemplateColumns: country.methods.length === 1 ? "1fr" : "1fr 1fr" }}>
+              {country.methods.map(m => {
+                const meta = METHOD_META[m];
+                const MethodIcon = meta.icon;
+                const active = method === m;
+                return (
+                  <button key={m} data-testid={`method-${m}`} onClick={() => setMethod(m)} className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{ background: active ? t.accentFaded(0.12) : t.accentFaded(0.04), border: `1px solid ${active ? t.accentFaded(0.45) : t.accentFaded(0.12)}` }}>
+                    <div className="p-1.5 rounded-lg flex-shrink-0" style={{ background: active ? t.accentFaded(0.2) : t.accentFaded(0.08) }}>
+                      <MethodIcon className="w-3.5 h-3.5" style={{ color: active ? t.accent : t.textMuted }} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-mono font-bold" style={{ color: active ? t.accent : "white" }}>{meta.label}</p>
+                      <p className="text-[9px] font-mono" style={{ color: t.textMuted }}>{meta.desc}</p>
+                    </div>
+                    {active && <div className="ml-auto w-2 h-2 rounded-full flex-shrink-0" style={{ background: t.accent }} />}
+                  </button>
+                );
+              })}
             </div>
-          )}
+          </div>
 
-          {/* Phone (mobile money only) — no email */}
-          {isMobileMoney && !isProcessing && (
+          {/* Phone — mobile money only */}
+          {isMobileMoney && (
             <div>
               <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>
                 Phone number (STK push)
@@ -334,13 +306,13 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                 />
               </div>
               <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
-                Enter number without country code — STK push sent to 254{phone || "XXXXXXXXX"}
+                Enter digits only — STK push sent to 254{phone || "XXXXXXXXX"}
               </p>
             </div>
           )}
 
-          {/* Email (card / USSD / bank only) */}
-          {!isMobileMoney && !isProcessing && (
+          {/* Email — card / USSD / bank only */}
+          {!isMobileMoney && (
             <div>
               <label className="block text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: t.textMuted }}>Billing email</label>
               <input data-testid="input-billing-email" type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -349,7 +321,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             </div>
           )}
 
-          {/* Error message */}
+          {/* Error */}
           {errMsg && (
             <div className="rounded-xl px-4 py-3 flex items-start gap-2" style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)" }}>
               <AlertCircle className="w-3.5 h-3.5 text-red-400 flex-shrink-0 mt-0.5" />
@@ -357,79 +329,18 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
             </div>
           )}
 
-          {/* ── Pay button / inline step progress ── */}
-          {payStep === 0 ? (
-            /* Normal pay button */
-            <button
-              data-testid="button-pay-now"
-              disabled={!canPay}
-              onClick={handlePay}
-              className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
-              style={{ background: t.accent, color: "#000", border: `1px solid ${t.accent}`, boxShadow: `0 0 24px ${t.accentFaded(0.35)}`, opacity: canPay ? 1 : 0.45 }}
-            >
-              {isMobileMoney
-                ? <><Smartphone className="w-4 h-4" /> Send STK Push · {country.symbol}{price.toLocaleString()}</>
-                : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
-            </button>
-          ) : payStep === 5 ? (
-            /* Success state */
-            <div className="w-full py-4 rounded-xl flex items-center justify-center gap-2.5 font-mono text-sm font-bold" style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.4)}`, color: t.accent }}>
-              ✓ Payment confirmed — coins added!
-            </div>
-          ) : (
-            /* Inline step progress — replaces button */
-            <div data-testid="stk-steps" className="w-full rounded-xl overflow-hidden" style={{ border: `1px solid ${t.accentFaded(0.25)}`, background: t.accentFaded(0.04) }}>
-              <div className="px-4 pt-4 pb-3 space-y-3">
-                {(isMobileMoney ? STK_STEPS : STK_STEPS.filter((_, i) => i !== 2 && i !== 3)).map((s, idx) => {
-                  const realIdx = isMobileMoney ? idx : [0, 1, 4][idx];
-                  const done = payStep > realIdx + 1;
-                  const active = payStep === realIdx + 1;
-                  return (
-                    <div key={s.label} className="flex items-center gap-3">
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
-                        style={{
-                          background: done ? t.accent : active ? t.accentFaded(0.18) : t.accentFaded(0.04),
-                          border: `1.5px solid ${done ? t.accent : active ? t.accentFaded(0.55) : t.accentFaded(0.15)}`,
-                          boxShadow: active ? `0 0 8px ${t.accentFaded(0.4)}` : "none",
-                        }}
-                      >
-                        {done
-                          ? <span style={{ color: "#000", fontSize: "9px", fontWeight: 900 }}>✓</span>
-                          : active
-                            ? <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: t.accent }} />
-                            : null}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-mono transition-all duration-300 truncate"
-                          style={{ color: done ? t.accent : active ? "white" : t.accentFaded(0.3), fontWeight: active || done ? 700 : 400 }}>
-                          {s.label}{active && <span className="animate-pulse">…</span>}
-                        </p>
-                        {active && <p className="text-[9px] font-mono" style={{ color: t.textMuted }}>{s.sub}</p>}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              {isMobileMoney && payStep >= 2 && payStep < 5 && (
-                <div className="px-4 pb-3">
-                  <p className="text-[9px] font-mono text-center mb-2" style={{ color: t.textMuted }}>
-                    STK push sent to 254{phone} — enter PIN when prompted
-                  </p>
-                </div>
-              )}
-              <div className="px-4 pb-4">
-                <button
-                  data-testid="button-cancel-payment"
-                  onClick={handleCancel}
-                  className="w-full py-2 rounded-lg font-mono text-[10px] font-bold uppercase tracking-wider transition-all"
-                  style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.18)", color: "rgba(239,68,68,0.65)" }}
-                >
-                  Cancel Payment
-                </button>
-              </div>
-            </div>
-          )}
+          {/* Pay button */}
+          <button
+            data-testid="button-pay-now"
+            disabled={!canPay}
+            onClick={handlePay}
+            className="w-full py-3.5 rounded-xl font-mono font-bold text-sm tracking-wider uppercase flex items-center justify-center gap-2.5 transition-all"
+            style={{ background: t.accent, color: "#000", border: `1px solid ${t.accent}`, boxShadow: `0 0 24px ${t.accentFaded(0.35)}`, opacity: canPay ? 1 : 0.45 }}
+          >
+            {isMobileMoney
+              ? <><Smartphone className="w-4 h-4" /> Send STK Push · {country.symbol}{price.toLocaleString()}</>
+              : <>Pay {country.symbol}{price.toLocaleString()} <ArrowRight className="w-4 h-4" /></>}
+          </button>
 
           <div className="flex items-center justify-center gap-4">
             <span className="flex items-center gap-1.5 text-[10px] font-mono" style={{ color: t.textMuted }}>
