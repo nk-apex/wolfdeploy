@@ -41,7 +41,7 @@ type MobileProvider = { id: string; name: string; directCharge: boolean };
 const COUNTRIES = [
   { code: "NG", name: "Nigeria",        currency: "NGN", symbol: "₦",    flag: "🇳🇬", dialCode: "234", methods: ["card", "bank_transfer", "ussd"], providers: [] as MobileProvider[] },
   { code: "GH", name: "Ghana",          currency: "GHS", symbol: "₵",    flag: "🇬🇭", dialCode: "233", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: true }, { id: "vodafone", name: "Vodafone", directCharge: true }, { id: "airteltigo", name: "AirtelTigo", directCharge: true }] },
-  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA", directCharge: false }] },
+  { code: "KE", name: "Kenya",          currency: "KES", symbol: "KSh",  flag: "🇰🇪", dialCode: "254", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA", directCharge: true }] },
   { code: "ZA", name: "South Africa",   currency: "ZAR", symbol: "R",    flag: "🇿🇦", dialCode: "27",  methods: ["card"], providers: [] as MobileProvider[] },
   { code: "RW", name: "Rwanda",         currency: "RWF", symbol: "FRw",  flag: "🇷🇼", dialCode: "250", methods: ["card", "mobile_money"], providers: [{ id: "mtn", name: "MTN", directCharge: true }] },
   { code: "TZ", name: "Tanzania",       currency: "TZS", symbol: "TSh",  flag: "🇹🇿", dialCode: "255", methods: ["card", "mobile_money"], providers: [{ id: "mpesa", name: "M-PESA", directCharge: false }, { id: "tigopesa", name: "Tigo", directCharge: false }, { id: "airtel", name: "Airtel", directCharge: false }, { id: "halopesa", name: "Halotel", directCharge: false }] },
@@ -180,8 +180,8 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   async function handlePay() {
     setErrMsg("");
     const digits = phone.replace(/\D/g, "");
-    /* Paystack Charge API expects local format: 0XXXXXXXXX (not international) */
-    const localPhone = digits.startsWith("0") ? digits : `0${digits}`;
+    /* Paystack Charge API requires international format with + prefix: +2547XXXXXXXX */
+    const intlPhone = `+${country.dialCode}${digits}`;
     const amountMinor = Math.round(price * 100);
 
     setLoading(true);
@@ -192,10 +192,10 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: `${localPhone}@wolfdeploy.app`,
+            email: `${intlPhone.replace("+", "")}@wolfdeploy.app`,
             amount: amountMinor,
             currency: country.currency,
-            phone: localPhone,
+            phone: intlPhone,
             provider,
           }),
         });
@@ -220,8 +220,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           userId,
           coins: totalCoins,
         };
-        /* Pass phone so Paystack pre-fills the M-PESA number in their form */
-        if (isMobileMoney) initBody.phone = `+${country.dialCode}${digits}`;
+        if (isMobileMoney) initBody.phone = intlPhone;
         const initRes = await fetch("/api/payments/initialize", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
