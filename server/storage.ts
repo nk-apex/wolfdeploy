@@ -36,6 +36,28 @@ const AVAILABLE_BOTS: Bot[] = [
       },
     },
   },
+  {
+    id: "junex",
+    name: "JUNE-X",
+    description: "June-x, your friendly WhatsApp assistant! Feature-rich bot with media support, auto-reply, games, and more. Built on Baileys with container stack.",
+    repository: "https://github.com/Vinpink2/JUNE-X.git",
+    logo: "https://avatars.githubusercontent.com/u/166421298?v=4",
+    keywords: ["whatsapp", "bot", "june-x", "baileys", "assistant"],
+    category: "WhatsApp Bot",
+    stars: 0,
+    env: {
+      SESSION_ID: {
+        description: "Your session ID. Must begin with 'JUNE-MD:~'",
+        required: true,
+        placeholder: "JUNE-MD:~xxxxxxxxxxxx",
+      },
+      PHONE_NUMBER: {
+        description: "Your WhatsApp phone number with country code (e.g. +1234567890)",
+        required: true,
+        placeholder: "+1234567890",
+      },
+    },
+  },
 ];
 
 const DEPLOY_LOG_SEQUENCE = [
@@ -88,7 +110,7 @@ class MemStorage implements IStorage {
       botName,
       status: "queued",
       envVars,
-      url: `https://silentwolf-${id.slice(0, 8)}.botforge.app`,
+      url: `https://${botId}-${id.slice(0, 8)}.botforge.app`,
       port,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),

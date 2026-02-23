@@ -276,72 +276,68 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Silent WolfBot Featured */}
+        {/* Available Bots Catalog */}
         <div
           className="p-3 sm:p-6 rounded-xl"
           style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}
         >
-          <div className="flex flex-wrap justify-between items-center mb-4 sm:mb-6 gap-2">
+          <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
             <h2 className="text-base sm:text-xl font-bold flex items-center text-white">
-              <GitBranch className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" /> Available Bot
+              <GitBranch className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-primary" /> Available Bots
             </h2>
             <Link href="/deploy" className="text-xs text-primary hover:underline font-mono flex items-center gap-1" data-testid="link-deploy-bot">
-              Deploy <ArrowUpRight size={12} />
+              Browse all <ArrowUpRight size={12} />
             </Link>
           </div>
 
-          {bot && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}>
-                  <Bot className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <p className="font-display font-bold text-white text-sm sm:text-base">{bot.name}</p>
-                  <span className="text-[9px] text-primary font-mono" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", padding: "1px 6px", borderRadius: "4px" }}>
-                    {bot.category}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-xs text-gray-400 font-mono leading-relaxed">{bot.description}</p>
-
-              <div className="space-y-2">
-                {Object.entries(bot.env).map(([key, cfg]) => (
-                  <div key={key} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(74,222,128,0.1)" }}>
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                    <span className="text-[10px] text-gray-400 font-mono">{key}</span>
-                    {cfg.required && (
-                      <span className="text-[8px] text-primary font-mono ml-auto" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 4px", borderRadius: "3px" }}>
-                        REQUIRED
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              <a
-                href={bot.repository}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-[10px] text-primary font-mono hover:underline"
-              >
-                <ExternalLink className="w-3 h-3" />
-                {bot.repository}
-              </a>
-
-              <Link href="/deploy">
-                <button
-                  className="w-full py-2 rounded-lg font-mono text-sm font-bold text-primary transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                  style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}
-                  data-testid="button-deploy-wolf"
+          <div className="grid grid-cols-1 gap-3">
+            {bots.map((b) => (
+              <Link key={b.id} href="/deploy">
+                <div
+                  className="group flex items-center gap-3 p-3 rounded-xl hover:border-primary/30 transition-all cursor-pointer overflow-hidden"
+                  style={{ border: "1px solid rgba(74,222,128,0.1)", background: "rgba(0,0,0,0.2)" }}
+                  data-testid={`card-catalog-${b.id}`}
                 >
-                  <Rocket className="w-4 h-4" />
-                  Deploy Now
-                </button>
+                  <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0" style={{ border: "1px solid rgba(74,222,128,0.15)" }}>
+                    <img
+                      src={b.logo}
+                      alt={b.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const el = e.target as HTMLImageElement;
+                        el.style.display = "none";
+                        el.parentElement!.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-primary/10"><span style="color:hsl(142 76% 42%);font-size:18px;font-weight:900;">${b.name[0]}</span></div>`;
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-display font-bold text-white text-sm truncate">{b.name}</p>
+                    <p className="text-[10px] text-gray-500 font-mono mt-0.5 truncate">{b.description.slice(0, 60)}…</p>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                    <span
+                      className="text-[9px] text-primary font-mono px-1.5 py-0.5 rounded"
+                      style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}
+                    >
+                      {b.category}
+                    </span>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-primary/40 group-hover:text-primary transition-colors" />
+                  </div>
+                </div>
               </Link>
-            </div>
-          )}
+            ))}
+          </div>
+
+          <Link href="/deploy">
+            <button
+              className="w-full mt-3 py-2 rounded-xl font-mono text-xs font-bold text-primary transition-all hover:opacity-90 flex items-center justify-center gap-2"
+              style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)" }}
+              data-testid="button-browse-bots"
+            >
+              <Rocket className="w-3.5 h-3.5" />
+              Deploy a Bot Now
+            </button>
+          </Link>
         </div>
       </div>
     </div>
