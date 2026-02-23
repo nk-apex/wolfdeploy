@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Bot, Deployment } from "@shared/schema";
 import {
   Rocket, ExternalLink, Lock, CheckCircle2, ArrowUpRight,
-  Bot as BotIcon, ArrowLeft, Check,
+  Bot as BotIcon, ArrowLeft, Database,
 } from "lucide-react";
 
 export default function Deploy() {
@@ -322,7 +322,22 @@ export default function Deploy() {
                     value={envVars[key] || ""}
                     onChange={(e) => setEnvVars(prev => ({ ...prev, [key]: e.target.value }))}
                   />
-                  <p className="text-[10px] text-gray-600 font-mono mt-1">{config.description}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-[10px] text-gray-600 font-mono">{config.description}</p>
+                    {key === "DATABASE_URL" && (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <a href="https://neon.tech" target="_blank" rel="noopener noreferrer"
+                          className="flex items-center gap-1 text-[9px] text-primary font-mono hover:underline">
+                          <Database className="w-2.5 h-2.5" />neon.tech
+                        </a>
+                        <span className="text-gray-700 text-[9px]">·</span>
+                        <a href="https://railway.app" target="_blank" rel="noopener noreferrer"
+                          className="text-[9px] text-primary font-mono hover:underline">
+                          railway.app
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

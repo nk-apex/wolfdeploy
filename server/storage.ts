@@ -1,7 +1,7 @@
 import { type Bot, type Deployment, type DeploymentStatus } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { spawn, type ChildProcess } from "child_process";
-import { mkdirSync, rmSync, existsSync } from "fs";
+import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -38,6 +38,11 @@ const BOTS: Bot[] = [
         required: true,
         placeholder: "+254712345678",
       },
+      DATABASE_URL: {
+        description: "PostgreSQL connection URL. Get a free one at neon.tech or railway.app",
+        required: true,
+        placeholder: "postgresql://user:password@host:5432/dbname",
+      },
     },
   },
   {
@@ -59,6 +64,11 @@ const BOTS: Bot[] = [
         description: "Your WhatsApp phone number with country code (e.g. +254712345678)",
         required: true,
         placeholder: "+254712345678",
+      },
+      DATABASE_URL: {
+        description: "PostgreSQL connection URL. Get a free one at neon.tech or railway.app",
+        required: true,
+        placeholder: "postgresql://user:password@host:5432/dbname",
       },
     },
   },
@@ -147,8 +157,15 @@ class MemStorage implements IStorage {
     await this.spawnStep(id, "npm", ["install", "--legacy-peer-deps", "--no-audit", "--prefer-offline"], { cwd: deployDir });
     await this.addDeploymentLog(id, "info", "Dependencies installed.");
 
-    // ── Step 3: set env vars and start the bot ────────────────────────────────
+    // ── Step 3: write .env file + build process env ───────────────────────────
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
+
+    // Write a real .env file into the deploy dir so dotenv picks everything up
+    const envFileContent = Object.entries(envVars)
+      .map(([k, v]) => `${k}="${v.replace(/\\/g, "\\\\").replace(/"/g, '\\"')}"`)
+      .join("\n") + '\nNODE_ENV="production"\n';
+    writeFileSync(join(deployDir, ".env"), envFileContent, "utf-8");
+    await this.addDeploymentLog(id, "info", `Written .env with ${Object.keys(envVars).length} variable(s).`);
     await this.addDeploymentLog(id, "info", "Starting bot process...");
 
     const botEnv: NodeJS.ProcessEnv = {
