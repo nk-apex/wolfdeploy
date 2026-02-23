@@ -104,7 +104,7 @@ function AppShell() {
               <Route path="/billing" component={Billing} />
               <Route path="/settings" component={Settings} />
               <Route path="/referrals" component={Referrals} />
-              <Route path="/admin" component={Admin} />
+              <Route path="/wolf" component={Admin} />
               <Route component={NotFound} />
             </Switch>
           </main>

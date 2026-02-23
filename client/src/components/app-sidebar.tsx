@@ -159,7 +159,7 @@ export function AppSidebar() {
             <p className="text-[9px] font-mono uppercase tracking-[0.18em] px-2 mb-2" style={{ color: t.accentFaded(0.35) }}>Admin</p>
             <SidebarGroupContent>
               <SidebarMenu className="gap-0.5">
-                {renderNavItem({ title: "Admin Panel", url: "/admin", icon: Shield })}
+                {renderNavItem({ title: "Wolf Panel", url: "/wolf", icon: Shield })}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
