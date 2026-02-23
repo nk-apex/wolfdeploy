@@ -33,6 +33,8 @@ export const deploymentSchema = z.object({
   envVars: z.record(z.string()),
   url: z.string().optional(),
   port: z.number().optional(),
+  pterodactylId: z.number().optional(),
+  pterodactylIdentifier: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
   logs: z.array(z.object({

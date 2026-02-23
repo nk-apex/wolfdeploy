@@ -6,6 +6,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import * as ptero from "./pterodactyl";
 
 export interface IStorage {
   getBots(): Promise<Bot[]>;
@@ -161,7 +162,6 @@ class MemStorage implements IStorage {
     userId?: string
   ): Promise<Deployment> {
     const id = randomUUID();
-    const deployDir = join(BASE_DIR, id);
 
     const deployment: Deployment = {
       id,
@@ -172,6 +172,8 @@ class MemStorage implements IStorage {
       envVars,
       url: undefined,
       port: undefined,
+      pterodactylId: undefined,
+      pterodactylIdentifier: undefined,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       logs: [],
@@ -179,12 +181,76 @@ class MemStorage implements IStorage {
     };
     this.deployments.set(id, deployment);
 
-    this.runDeployment(id, botRepo, deployDir, envVars).catch(async (err) => {
-      await this.addDeploymentLog(id, "error", `Fatal: ${err.message}`);
-      await this.updateDeploymentStatus(id, "failed");
-    });
+    if (ptero.isPterodactylConfigured()) {
+      this.runPterodactylDeployment(id, botName, botRepo, envVars).catch(async (err) => {
+        await this.addDeploymentLog(id, "error", `Pterodactyl fatal: ${err.message}`);
+        await this.updateDeploymentStatus(id, "failed");
+      });
+    } else {
+      const deployDir = join(BASE_DIR, id);
+      this.runDeployment(id, botRepo, deployDir, envVars).catch(async (err) => {
+        await this.addDeploymentLog(id, "error", `Fatal: ${err.message}`);
+        await this.updateDeploymentStatus(id, "failed");
+      });
+    }
 
     return deployment;
+  }
+
+  private async runPterodactylDeployment(
+    id: string,
+    botName: string,
+    botRepo: string,
+    envVars: Record<string, string>
+  ): Promise<void> {
+    await this.updateDeploymentStatus(id, "deploying");
+    await this.addDeploymentLog(id, "info", "Provisioning server via Pterodactyl...");
+
+    const server = await ptero.createServer({
+      name: `wolfdeploy-${id.slice(0, 8)}`,
+      botRepo,
+      envVars,
+    });
+
+    const dep = this.deployments.get(id);
+    if (dep) {
+      dep.pterodactylId = server.id;
+      dep.pterodactylIdentifier = server.identifier;
+      dep.url = server.panelUrl;
+      this.deployments.set(id, dep);
+    }
+
+    await this.addDeploymentLog(id, "info", `Server created: ${server.identifier} (ID: ${server.id})`);
+    await this.addDeploymentLog(id, "info", `Panel URL: ${server.panelUrl}`);
+    await this.addDeploymentLog(id, "info", "Waiting for server to install and start...");
+
+    // Poll until server is running (up to 10 minutes)
+    const maxWait = 10 * 60 * 1000;
+    const interval = 15000;
+    const started = Date.now();
+
+    while (Date.now() - started < maxWait) {
+      await new Promise(r => setTimeout(r, interval));
+      try {
+        const status = await ptero.getServerStatus(server.id);
+        if (status === "running") {
+          await this.addDeploymentLog(id, "success", "Bot server is online and running.");
+          await this.updateDeploymentStatus(id, "running");
+          return;
+        }
+        if (status === "suspended") {
+          await this.addDeploymentLog(id, "error", "Server was suspended by the panel.");
+          await this.updateDeploymentStatus(id, "failed");
+          return;
+        }
+        await this.addDeploymentLog(id, "info", `Server status: ${status}...`);
+      } catch (e: any) {
+        await this.addDeploymentLog(id, "warn", `Status poll error: ${e.message}`);
+      }
+    }
+
+    await this.addDeploymentLog(id, "warn", "Timed out waiting for server. Marking as running — check panel.");
+    await this.updateDeploymentStatus(id, "running");
   }
 
   private async runDeployment(
@@ -355,29 +421,51 @@ class MemStorage implements IStorage {
   }
 
   async stopDeployment(id: string): Promise<Deployment | undefined> {
-    const proc = this.processes.get(id);
-    if (proc && !proc.killed) {
-      await this.addDeploymentLog(id, "warn", "Received stop signal. Sending SIGTERM to bot process...");
-      proc.kill("SIGTERM");
-      setTimeout(() => { if (!proc.killed) proc.kill("SIGKILL"); }, 5000);
-      this.processes.delete(id);
+    const dep = this.deployments.get(id);
+
+    if (dep?.pterodactylId) {
+      await this.addDeploymentLog(id, "warn", "Sending stop signal to Pterodactyl server...");
+      try {
+        await ptero.deleteServer(dep.pterodactylId);
+        await this.addDeploymentLog(id, "info", "Pterodactyl server deleted.");
+      } catch (e: any) {
+        await this.addDeploymentLog(id, "warn", `Could not stop Pterodactyl server: ${e.message}`);
+      }
     } else {
-      await this.addDeploymentLog(id, "warn", "No running process found for this deployment.");
+      const proc = this.processes.get(id);
+      if (proc && !proc.killed) {
+        await this.addDeploymentLog(id, "warn", "Received stop signal. Sending SIGTERM to bot process...");
+        proc.kill("SIGTERM");
+        setTimeout(() => { if (!proc.killed) proc.kill("SIGKILL"); }, 5000);
+        this.processes.delete(id);
+      } else {
+        await this.addDeploymentLog(id, "warn", "No running process found for this deployment.");
+      }
     }
+
     await this.addDeploymentLog(id, "info", "Bot stopped.");
     return this.updateDeploymentStatus(id, "stopped");
   }
 
   async deleteDeployment(id: string): Promise<boolean> {
-    const proc = this.processes.get(id);
-    if (proc && !proc.killed) {
-      proc.kill("SIGKILL");
-      this.processes.delete(id);
+    const dep = this.deployments.get(id);
+
+    if (dep?.pterodactylId) {
+      try {
+        await ptero.deleteServer(dep.pterodactylId);
+      } catch (_) {}
+    } else {
+      const proc = this.processes.get(id);
+      if (proc && !proc.killed) {
+        proc.kill("SIGKILL");
+        this.processes.delete(id);
+      }
+      const deployDir = join(BASE_DIR, id);
+      if (existsSync(deployDir)) {
+        try { rmSync(deployDir, { recursive: true, force: true }); } catch (_) {}
+      }
     }
-    const deployDir = join(BASE_DIR, id);
-    if (existsSync(deployDir)) {
-      try { rmSync(deployDir, { recursive: true, force: true }); } catch (_) {}
-    }
+
     return this.deployments.delete(id);
   }
 }
