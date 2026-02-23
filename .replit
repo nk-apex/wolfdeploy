@@ -41,3 +41,8 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[userenv]
+
+[userenv.shared]
+VITE_PAYSTACK_PUBLIC_KEY = "pk_live_088049698ee943a439abd25e20173c85503afa02"

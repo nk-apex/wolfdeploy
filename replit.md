@@ -3,14 +3,22 @@
 ## Overview
 A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs.
 
-## UI Style
-Matches the WolfHost dark terminal aesthetic:
-- Pure black background (#0D0D0D range)
-- Neon green as primary accent (hsl 142 76% 42%)
-- JetBrains Mono font throughout
-- Uppercase tracking-widest labels
-- Card-based layout with subtle borders
-- StatusBadge component for deployment states
+## UI Style & Theming
+Multi-theme system stored in localStorage, toggled via Settings → Appearance:
+- **Cyberpunk** (default): pure black bg, neon green accent
+- **Glassmorphism**: navy gradient bg, frosted glass panels, cyan accent + floating blobs
+- **Neon Purple**: dark bg, violet/purple accent
+- **Matrix**: pitch black, pale green retro terminal
+Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `getThemeTokens()`
+
+## Pages
+- `/` — Dashboard (Command Center)
+- `/deploy` — Deploy Bot
+- `/bots` — My Bots
+- `/bots/:id/logs` — Bot Logs
+- `/billing` — Billing (Paystack, 13 countries, local currency)
+- `/settings` — Settings (Profile, Appearance/Theme, Notifications, Security)
+- `/referrals` — Referral Program (tiers, share link)
 
 ## Architecture
 
