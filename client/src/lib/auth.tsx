@@ -48,10 +48,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signUp = async (email: string, password: string, name: string) => {
     const sb = await getSupabase();
+    const redirectTo = `${window.location.origin}/login`;
     const { error } = await sb.auth.signUp({
       email,
       password,
-      options: { data: { full_name: name } },
+      options: {
+        data: { full_name: name },
+        emailRedirectTo: redirectTo,
+      },
     });
     return { error: error?.message ?? null };
   };
@@ -63,7 +67,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const resendConfirmation = async (email: string) => {
     const sb = await getSupabase();
-    const { error } = await sb.auth.resend({ type: "signup", email });
+    const redirectTo = `${window.location.origin}/login`;
+    const { error } = await sb.auth.resend({
+      type: "signup",
+      email,
+      options: { emailRedirectTo: redirectTo },
+    });
     return { error: error?.message ?? null };
   };
 
