@@ -284,13 +284,6 @@ export default function AdminPage() {
   // Coin adjust inline state
   const [coinInputs, setCoinInputs] = useState<Record<string, string>>({});
 
-  // Promote self (first-run)
-  const promoteMutation = useMutation({
-    mutationFn: () => apiRequest("POST", "/api/admin/promote"),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] }); toast({ title: "You are now an admin!" }); },
-    onError: (e: any) => toast({ title: e.message || "Promotion failed", variant: "destructive" }),
-  });
-
   if (checkLoading) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
@@ -306,17 +299,9 @@ export default function AdminPage() {
           <Shield size={28} style={{ color: t.accent }} />
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold mb-2">Admin Access Required</h2>
-          <p className="text-gray-500 text-sm max-w-sm">You don't have admin privileges. If you are the first user, click below to claim admin access.</p>
+          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
+          <p className="text-gray-500 text-sm max-w-sm">This area is restricted to authorized administrators only.</p>
         </div>
-        <Button
-          data-testid="button-claim-admin"
-          onClick={() => promoteMutation.mutate()}
-          disabled={promoteMutation.isPending}
-          style={{ background: t.accent, color: "#000" }}
-        >
-          {promoteMutation.isPending ? "Claiming…" : "Claim Admin (First Run)"}
-        </Button>
       </div>
     );
   }

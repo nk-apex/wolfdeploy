@@ -388,18 +388,6 @@ export async function registerRoutes(
     res.json({ isAdmin: admin });
   });
 
-  /* ── Admin: promote self (first-run if no admins exist) ─── */
-  app.post("/api/admin/promote", async (req, res) => {
-    const uid = getUserId(req);
-    if (!uid) return res.status(400).json({ error: "No user ID" });
-    const existing = await db.select().from(adminUsers);
-    if (existing.length > 0) {
-      return res.status(403).json({ error: "Admins already exist. Contact an existing admin." });
-    }
-    await db.insert(adminUsers).values({ userId: uid }).onConflictDoNothing();
-    res.json({ success: true, message: "You are now an admin." });
-  });
-
   /* ── Admin: Stats overview ──────────────────────────────── */
   app.get("/api/admin/stats", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
