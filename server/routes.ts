@@ -195,6 +195,14 @@ export async function registerRoutes(
         return res.status(402).json({ error: `Payment not completed. Status: ${data.data.status}` });
       }
 
+      // Guard against double-credit: check if already processed
+      const existing = await db.select().from(paymentTransactions)
+        .where(eq(paymentTransactions.reference, reference));
+      if (existing.length > 0 && existing[0].status === "success") {
+        const balance = await getBalance(userId);
+        return res.json({ success: true, balance, alreadyCredited: true });
+      }
+
       const balance = await creditCoins(userId, coins);
 
       // Upsert payment transaction as success

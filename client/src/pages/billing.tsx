@@ -710,6 +710,8 @@ export default function Billing() {
       const res = await fetch(`/api/coins/${user!.id}`);
       return res.json();
     },
+    staleTime: 0,
+    refetchInterval: 15000,
   });
   const balance = coinData?.balance ?? 0;
 

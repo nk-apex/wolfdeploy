@@ -33,7 +33,8 @@ export default function Dashboard() {
       const res = await fetch(`/api/coins/${user!.id}`);
       return res.json();
     },
-    refetchInterval: 15000,
+    staleTime: 0,
+    refetchInterval: 10000,
   });
   const coinBalance = coinData?.balance ?? 0;
 

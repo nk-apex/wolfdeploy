@@ -31,6 +31,7 @@ export default function Deploy() {
       const res = await fetch(`/api/coins/${user!.id}`);
       return res.json();
     },
+    staleTime: 0,
     refetchInterval: 10000,
   });
 
