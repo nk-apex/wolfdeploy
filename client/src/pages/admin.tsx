@@ -132,7 +132,7 @@ function StatCard({ label, value, sub, icon: Icon, color }: { label: string; val
 
 export default function AdminPage() {
   const [, navigate] = useLocation();
-  const { user } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const { theme } = useTheme();
   const t = getThemeTokens(theme);
   const { toast } = useToast();
@@ -283,24 +283,114 @@ export default function AdminPage() {
 
   // Coin adjust inline state
   const [coinInputs, setCoinInputs] = useState<Record<string, string>>({});
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [showLoginPw, setShowLoginPw] = useState(false);
+
+  async function handleAdminLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    const { error } = await signIn(loginEmail, loginPassword);
+    if (error) {
+      setLoginError(error);
+      setLoginLoading(false);
+      return;
+    }
+    await queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] });
+    setLoginLoading(false);
+  }
 
   if (checkLoading) {
     return (
       <div className="flex items-center justify-center h-full text-gray-500">
-        <RefreshCw size={20} className="animate-spin mr-2" /> Checking admin access…
+        <RefreshCw size={20} className="animate-spin mr-2" /> Checking access…
       </div>
     );
   }
 
   if (!adminCheck?.isAdmin) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-6 px-4">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${t.accentFaded(0.1)}`, border: `1px solid ${t.accentFaded(0.3)}` }}>
-          <Shield size={28} style={{ color: t.accent }} />
-        </div>
-        <div className="text-center">
-          <h2 className="text-xl font-bold mb-2">Access Denied</h2>
-          <p className="text-gray-500 text-sm max-w-sm">This area is restricted to authorized administrators only.</p>
+      <div className="flex items-center justify-center h-full px-4">
+        <div
+          className="w-full max-w-sm rounded-2xl p-8"
+          style={{
+            background: "rgba(255,255,255,0.03)",
+            border: `1px solid ${t.accentFaded(0.12)}`,
+            backdropFilter: "blur(12px)",
+          }}
+        >
+          <div className="flex flex-col items-center mb-7">
+            <div
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+              style={{ background: t.accentFaded(0.1), border: `1px solid ${t.accentFaded(0.3)}` }}
+            >
+              <Shield size={26} style={{ color: t.accent }} />
+            </div>
+            <h2 className="text-xl font-bold" style={{ color: t.accent }}>Wolf Panel</h2>
+            <p className="text-gray-500 text-xs mt-1">Administrator access only</p>
+          </div>
+
+          {user && !adminCheck?.isAdmin ? (
+            <div className="text-center">
+              <p className="text-sm text-gray-500 mb-4">
+                The account <span className="text-white font-medium">{user.email}</span> does not have admin privileges.
+              </p>
+              <Button
+                data-testid="button-signout-wolf"
+                variant="outline"
+                className="w-full text-sm"
+                style={{ borderColor: t.accentFaded(0.2), color: t.accent }}
+                onClick={async () => { await signOut(); queryClient.invalidateQueries({ queryKey: ["/api/admin/check"] }); }}
+              >
+                Sign in with a different account
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleAdminLogin} className="flex flex-col gap-3">
+              <Input
+                data-testid="input-wolf-email"
+                type="email"
+                placeholder="Admin email"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
+                required
+                className="bg-white/5 border-white/10 text-white placeholder:text-gray-600"
+              />
+              <div className="relative">
+                <Input
+                  data-testid="input-wolf-password"
+                  type={showLoginPw ? "text" : "password"}
+                  placeholder="Password"
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-600 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowLoginPw(p => !p)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                >
+                  {showLoginPw ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+              {loginError && (
+                <p className="text-xs text-red-400 text-center">{loginError}</p>
+              )}
+              <Button
+                data-testid="button-wolf-login"
+                type="submit"
+                disabled={loginLoading}
+                className="w-full font-bold mt-1"
+                style={{ background: t.accent, color: "#000" }}
+              >
+                {loginLoading ? "Signing in…" : "Sign In"}
+              </Button>
+            </form>
+          )}
         </div>
       </div>
     );
