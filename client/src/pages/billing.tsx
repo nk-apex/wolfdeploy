@@ -175,7 +175,9 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
 
   async function handlePay() {
     setErrMsg("");
-    const cleanPhone = `${country.dialCode}${phone.replace(/\D/g, "")}`;
+    const digits = phone.replace(/\D/g, "");
+    /* Paystack Charge API expects local format: 0XXXXXXXXX (not international) */
+    const localPhone = digits.startsWith("0") ? digits : `0${digits}`;
     const amountMinor = Math.round(price * 100);
 
     setLoading(true);
@@ -186,10 +188,10 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: `${cleanPhone}@wolfdeploy.app`,
+            email: `${localPhone}@wolfdeploy.app`,
             amount: amountMinor,
             currency: country.currency,
-            phone: cleanPhone,
+            phone: localPhone,
             provider,
           }),
         });
@@ -499,7 +501,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
                 />
               </div>
               <p className="text-[9px] font-mono mt-1" style={{ color: t.textMuted }}>
-                Digits only · STK push to +{country.dialCode}{phone || "XXXXXXXXX"}
+                Enter your number without country code e.g. 712345678
               </p>
             </div>
           )}

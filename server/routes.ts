@@ -189,6 +189,7 @@ export async function registerRoutes(
         data?: { reference: string; status: string; display_text?: string };
       };
 
+      console.log("[mobile-charge] Paystack response:", JSON.stringify(data));
       if (!data.status || !data.data) {
         return res.status(400).json({ error: data.message || "Failed to initiate charge" });
       }
