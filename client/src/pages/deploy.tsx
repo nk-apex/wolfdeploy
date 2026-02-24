@@ -112,7 +112,7 @@ export default function Deploy() {
         <div>
           <span className="text-sm font-mono font-bold text-white">{balance} coins</span>
           <span className="text-[10px] font-mono ml-2" style={{ color: hasCoins ? "rgba(74,222,128,0.7)" : "#f97316" }}>
-            {hasCoins ? `≈ ${Math.round(balance * 2.5)}h runtime` : "— top up to deploy"}
+            {hasCoins ? `${Math.floor(balance / 100) || 1} bot${Math.floor(balance / 100) > 1 ? "s" : ""} available` : "— top up to deploy"}
           </span>
         </div>
       </div>
@@ -273,7 +273,7 @@ export default function Deploy() {
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.12)", borderRadius: "8px", padding: "6px 10px" }}>
                 <Coins className="w-3 h-3 text-primary flex-shrink-0" />
-                <span className="text-gray-400">1 coin / 2.5h · Balance: <strong className="text-primary">{balance} coins</strong></span>
+                <span className="text-gray-400">Balance: <strong className="text-primary">{balance} coins</strong> · auto-billed while running</span>
               </div>
             </div>
           </div>
@@ -321,7 +321,7 @@ export default function Deploy() {
               )}
               {hasCoins && (
                 <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
-                  Billed at 1 coin / 2.5h while running · Balance: <span className="text-primary">{balance} coins</span>
+                  Auto-billed while running · Balance: <span className="text-primary">{balance} coins</span>
                 </p>
               )}
             </div>

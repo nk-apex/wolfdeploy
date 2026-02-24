@@ -424,12 +424,14 @@ export async function registerRoutes(
       }
 
       // Auto-grant 5 trial coins to first-time users
-      const existingCoins = await db.select().from(userCoins).where(eq(userCoins.userId, uid));
+      // Check trial table only — user_coins may already exist with balance 0 from middleware,
+      // so checking existingCoins.length === 0 would incorrectly skip the trial grant.
       const existingTrial = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
 
-      if (existingCoins.length === 0 && existingTrial.length === 0) {
+      if (existingTrial.length === 0) {
         const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-        await db.insert(userCoins).values({ userId: uid, balance: 5 });
+        await db.insert(userCoins).values({ userId: uid, balance: 5 })
+          .onConflictDoUpdate({ target: userCoins.userId, set: { balance: sql`user_coins.balance + 5` } });
         await db.insert(userTrials).values({ userId: uid, coinsGranted: 5, expiresAt });
       }
 
@@ -459,7 +461,9 @@ export async function registerRoutes(
     const result = deployRequestSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.message });
 
-    const { botId, envVars, userId } = result.data as typeof result.data & { userId?: string };
+    const { botId, envVars } = result.data;
+    // Always get userId from the auth header — never trust the body (Zod strips unknown fields anyway)
+    const userId = getUserId(req) || undefined;
 
     if (userId) {
       const balance = await getBalance(userId);

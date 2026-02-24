@@ -51,7 +51,7 @@ export default function Dashboard() {
       icon: Coins,
       label: "Coin Balance",
       value: `${coinBalance}`,
-      subValue: coinBalance >= 10 ? `${Math.floor(coinBalance / 10)} bot${Math.floor(coinBalance / 10) !== 1 ? "s" : ""} available` : "Top up to deploy",
+      subValue: coinBalance >= 1 ? `${Math.floor(coinBalance / 100) || 1} bot${Math.floor(coinBalance / 100) > 1 ? "s" : ""} · ${coinBalance} coins` : "Top up to deploy",
       link: "/billing",
       testId: "stat-wallet",
     },
