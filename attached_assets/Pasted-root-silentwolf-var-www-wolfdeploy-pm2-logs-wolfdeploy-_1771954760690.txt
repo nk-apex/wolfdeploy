@@ -1,0 +1,512 @@
+root@silentwolf:/var/www/wolfdeploy# pm2 logs wolfdeploy --lines 20
+[TAILING] Tailing last 20 lines for [wolfdeploy] process (change the v
+alue with --lines option)
+/root/.pm2/logs/wolfdeploy-error.log last 20 lines:
+10|wolfdep |     at async Of.persistDeployment (/var/www/wolfdeploy/di
+st/index.cjs:76:46204)
+10|wolfdep |     at async Timeout._onTimeout (/var/www/wolfdeploy/dist
+/index.cjs:76:47159) {
+10|wolfdep |   length: 128,
+10|wolfdep |   severity: 'ERROR',
+10|wolfdep |   code: '42703',
+10|wolfdep |   detail: undefined,
+10|wolfdep |   hint: undefined,
+10|wolfdep |   position: '77',
+10|wolfdep |   internalPosition: undefined,
+10|wolfdep |   internalQuery: undefined,
+10|wolfdep |   where: undefined,
+10|wolfdep |   schema: undefined,
+10|wolfdep |   table: undefined,
+10|wolfdep |   column: undefined,
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   file: 'parse_target.c',
+10|wolfdep |   line: '1065',
+10|wolfdep |   routine: 'checkInsertTargets'
+10|wolfdep | }
+
+/root/.pm2/logs/wolfdeploy-out.log last 20 lines:
+10|wolfdep | tamp":"2026-02-24T17:38:48.360Z","level":"warn","message"
+:"npm warn deprecated phin@2.9.3: Package no longer supported. Contact
+ Support at https://www.npmjs.com/support for more info."},{"timestamp
+":"2026-02-24T17:38:48.387Z","level":"warn","message":"npm warn deprec
+ated npmlog@6.0.2: This package is no longer supported."},{"timestamp"
+:"2026-02-24T17:38:48.465Z","level":"warn","message":"npm warn depreca
+ted whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-c
+onformant and faster implementation"},{"timestamp":"2026-02-24T17:38:4
+8.474Z","level":"warn","message":"npm warn deprecated phin@3.7.1: Pack
+age no longer supported. Contact Support at https://www.npmjs.com/supp
+ort for more info."},{"timestamp":"2026-02-24T17:38:48.482Z","level":"
+warn","message":"npm warn deprecated rimraf@3.0.2: Rimraf versions pri
+or to v4 are no longer supported"},{"timestamp":"2026-02-24T17:38:48.5
+39Z","level":"warn","message":"npm warn deprecated are-we-there-yet@3.
+0.1: This package is no longer supported."},{"timestamp":"2026-02-24T1
+7:38:48.576Z","level":"warn","message":"npm warn deprecated glob@7.2.3
+: Old versions of glob are not supported, and contain widely publicize
+d security vulnerabilities, which have been fixed in the current versi
+on. Please update. Support for old versions may be purchased (at exorb
+itant rates) by contacting i@izs.me"},{"timestamp":"2026-02-24T17:38:4
+8.734Z","level":"warn","message":"npm warn deprecated prebuild-install
+@7.1.3: No longer maintained. Please contact the author of the relevan
+t native addon; alternatives are available."},{"timestamp":"2026-02-24
+T17:38:48.872Z","level":"warn","message":"npm warn deprecated gauge@4.
+0.4: This package is no longer supported."},{"timestamp":"2026-02-24T1
+7:38:49.162Z","level":"warn","message":"npm warn deprecated node-domex
+ception@1.0.0: Use your platform's native DOMException instead"},{"tim
+estamp":"2026-02-24T17:38:49.211Z","level":"warn","message":"npm warn
+deprecated tar@6.2.1: Old versions of tar are not supported, and conta
+in widely publicized security vulnerabilities, which have been fixed i
+n the current version. Please update. Support for old versions may be
+purchased (at exorbitant rates) by contacting i@izs.me"},{"timestamp":
+"2026-02-24T17:38:49.473Z","level":"warn","message":"npm warn deprecat
+ed jpeg-exif@1.1.4: Package no longer supported. Contact Support at ht
+tps://www.npmjs.com/support for more info."},{"timestamp":"2026-02-24T
+17:38:50.919Z","level":"warn","message":"npm warn deprecated fluent-ff
+mpeg@2.1.3: Package no longer supported. Contact Support at https://ww
+w.npmjs.com/support for more info."},{"timestamp":"2026-02-24T17:38:54
+.242Z","level":"info","message":"added 610 packages in 15s"},{"timesta
+mp":"2026-02-24T17:38:54.242Z","level":"info","message":"90 packages a
+re looking for funding"},{"timestamp":"2026-02-24T17:38:54.242Z","leve
+l":"info","message":"run `npm fund` for details"},{"timestamp":"2026-0
+2-24T17:38:54.353Z","level":"info","message":"Dependencies installed."
+},{"timestamp":"2026-02-24T17:38:54.353Z","level":"info","message":"Se
+tting environment variables..."},{"timestamp":"2026-02-24T17:38:54.353
+Z","level":"info","message":"Database: Supabase PostgreSQL provisioned
+ automatically."},{"timestamp":"2026-02-24T17:38:54.354Z","level":"inf
+o","message":"Environment ready (5 variables)."},{"timestamp":"2026-02
+-24T17:38:54.354Z","level":"info","message":"Starting bot process..."}
+,{"timestamp":"2026-02-24T17:38:54.362Z","level":"success","message":"
+Bot process started (PID: 117459)"},{"timestamp":"2026-02-24T17:38:54.
+941Z","level":"info","message":"File fetched successfully ✅✅:"},{"ti
+mestamp":"2026-02-24T17:38:55.073Z","level":"info","message":"Script l
+oaded successfully✅✅!"},{"timestamp":"2026-02-24T17:38:55.679Z","lev
+el":"error","message":"❌Error: Please install pg package manually"},{
+"timestamp":"2026-02-24T17:38:56.315Z","level":"info","message":"Proce
+ss exited cleanly (code 0)."}],"metrics":{"cpu":0,"memory":0,"uptime":
+0,"requests":0}}]
+
+10|wolfdeploy  | 6:39:03 PM [express] GET /api/notifications 200 in 59
+ms :: [{"id":"46b849c8-245f-4eae-b7ad-0da02ac7213a","title":"JUNE-X","
+message":"June-X , and TRUTH-MD are  now deployable on our site, reach
+ out to us through the public chat or private  incase of any issues.\n
+Thank you WolfTech at your service.\n","type":"info","active":true,"cr
+eatedAt":"2026-02-24T16:26:23.482Z"},{"id":"504b455d-e545-4d7f-a955-8e
+8403b75f66","title":"Concerning deployment","message":"Works like Hero
+ku, all you do is upload your session ID among the necessary , that de
+pends with the type of bot.\nI have confirmed WOLFBOT, I am yet to con
+firm others like JUNE-X, TRUTH -MD , DAVE-X among others.\n","type":"i
+nfo","active":true,"createdAt":"2026-02-23T23:25:48.181Z"}]
+10|wolfdeploy  | 6:39:05 PM [express] GET /api/deployments/e9167ddf-60
+a3-4aae-b0e5-bd3bdc3eeab8 200 in 2ms :: {"id":"e9167ddf-60a3-4aae-b0e5
+-bd3bdc3eeab8","botId":"5f66a9a8-0e76-46ab-9021-b6ab0c163c41","botName
+":"KEITH-MD","userId":"fc5a19f2-58cd-4539-8299-4da9f6de7422","status":
+"stopped","plan":"monthly","expiresAt":"2027-02-24T17:38:37.752Z","env
+Vars":{"SESSION_ID":"KEITH;;;H4sIAAAAAAAAA5VUyZKjOBD9lQld7WjAGDBEVMTgH
+eMdY8qe6IMAGQmzlSQMuMP/PkEtXX2Y6anhJLTke5nvZf4AWU4YslEDjB+goOQGOWqXvCk
+QMMCwvFwQBV0QQg6BASbTbDG3hh0TzbC+RcfdBF7Tl/LoujBc1t5RHdjpcKNZ3BOfwKMLi
+tJPSPCbgCuXuKXzHPX3qt6vMnOOir5WnkkiPMu2VtLn1Xkd9KJYn7Mn8GgjQkJJFk0KjFJ
+EYWKjZgsJ/Rr9dFw8hxdlzrb3jruwDr5yWZ/gTruO7EDQBazOai1EvQJ716/Rr2W0jRayU
+pD0FMs4tArn+XoIFwoaIS8OoN6hpGKdq79/p89IlKHQClHGCW++XHe4shRFm+56sYIizI7
+ii7OPC1tbdGrfXMOGxR7WXem+SNnXiI9f/M5CP279ZZyaB14197MyOuJ4dVd5MqaWW9iV7
+lb+xTz9SnxLP7xy/T91V6eDnT5klm9O9cV6PN/WsvaibfghMenKUsVjbkurO5qJ8upr9Ic
+eqfDAD4VZXxKcWxkPS5mRdXIinqKQ4TBlkrZQ0cGX3E/6kJf0dyyVarLSZ7OOl5hWVVnhx
+Kl2Tkj3ReJtovWymXtw57OmdiVcY30/H5+2Hl64ulDvLX16XW17m5ukO9U6jqTofDuEQZy
+MoqfXjK6osUJgSI8uoCgijFPISZ61ez2l3wUwvDkooIi/lhdIeJ/XTIWriLFOjc61BjfCx
+k+nub0Rbd338IYJ/UOEN/kT6IKC5gFiDIVzwnhOmxViDEaIAeOv712QoZq/CdfCyVIXXAh
+l3M3KIslh+KHqxyEMgrzMuNNkwahdIAoM8XMbcU6yiLV1LDNIA0xuaIQhZ8C4wIShnxkii
+kJgcFqin107ysO28CftNPd6Rx10QfoqCAmBAXpKX5NlXZWkQd9Q1D/Zt6oNC4viW4Y46II
+MtreBlWWI/rFFMECgC5LXt5KqKKLWk3RxIPdVvX3eHjx+0m5RQsQhSRgwwGhZxmw5GU/WG
+1UfVLOZKUbmKDLBZ5offnnTwx8edr4td9yN61j7hTq3HQ1tb06YdU46VHb+2ZtU/aiXjtj
+TPwQBBlibFlVJcCsy2ypeZkTJKw2dvfE9GAh+mHbooLMb4FwplvHh5S4PXKafheWBr68rb
+omCV9pkIkXDcW96xZ1BuOyzcTiqnlq0EN1IgH4Fw+fIdI7CaTlN1LM2N3FDl/ZRGZCztBs
+vFYiGcYIPYhbV5XKA7rOz51dRkbpxbxfXsUiveKaU9vROPAWnhSyPWEyH705+7aTkfYKRV
+4+1Ara/F4JeB8K7UP8p6Bvx1nfio/tLjPcR86+9X7nirOFCMk4mZOIg3FxLOdbE7CykW69
+0Z70jXm2sdRFR8Hh874IigfyS0xQYgKU+BF1A87J1sZVd8t8gjUzLGu6idZt2Ahk3PzvjQ
+FLEOEwLYEiaJumKrIji260tzYs5ZLi1pd3H835r88YsCodD/tFowGy/tR2Ax98s6E2vhAc
+AAA==","PHONE_NUMBER":"254733961184"},"createdAt":"2026-02-24T17:38:37
+.753Z","updatedAt":"2026-02-24T17:38:56.315Z","logs":[{"timestamp":"20
+26-02-24T17:38:37.756Z","level":"info","message":"Cloning repository:
+https://gitlab.com/Keithkeizzah/KEITH-MD.git"},{"timestamp":"2026-02-2
+4T17:38:37.772Z","level":"warn","message":"Cloning into '/tmp/botforge
+-deployments/e9167ddf-60a3-4aae-b0e5-bd3bdc3eeab8'..."},{"timestamp":"
+2026-02-24T17:38:38.743Z","level":"info","message":"Repository cloned
+successfully."},{"timestamp":"2026-02-24T17:38:38.743Z","level":"info"
+,"message":"Installing Node.js dependencies..."},{"timestamp":"2026-02
+-24T17:38:48.189Z","level":"warn","message":"npm warn deprecated crypt
+o@1.0.1: This package is no longer supported. It's now a built-in Node
+ module. If you've depended on crypto, you should switch to the one th
+at's built-in."},{"timestamp":"2026-02-24T17:38:48.288Z","level":"warn
+","message":"npm warn deprecated @npmcli/move-file@1.1.2: This functio
+nality has been moved to @npmcli/fs"},{"timestamp":"2026-02-24T17:38:4
+8.290Z","level":"warn","message":"npm warn deprecated inflight@1.0.6:
+This module is not supported, and leaks memory. Do not use it. Check o
+ut lru-cache if you want a good and tested way to coalesce async reque
+sts by a key value, which is much more comprehensive and powerful."},{
+"timestamp":"2026-02-24T17:38:48.360Z","level":"warn","message":"npm w
+arn deprecated phin@2.9.3: Package no longer supported. Contact Suppor
+t at https://www.npmjs.com/support for more info."},{"timestamp":"2026
+-02-24T17:38:48.387Z","level":"warn","message":"npm warn deprecated np
+mlog@6.0.2: This package is no longer supported."},{"timestamp":"2026-
+02-24T17:38:48.465Z","level":"warn","message":"npm warn deprecated wha
+twg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conforma
+nt and faster implementation"},{"timestamp":"2026-02-24T17:38:48.474Z"
+,"level":"warn","message":"npm warn deprecated phin@3.7.1: Package no
+longer supported. Contact Support at https://www.npmjs.com/support for
+ more info."},{"timestamp":"2026-02-24T17:38:48.482Z","level":"warn","
+message":"npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v
+4 are no longer supported"},{"timestamp":"2026-02-24T17:38:48.539Z","l
+evel":"warn","message":"npm warn deprecated are-we-there-yet@3.0.1: Th
+is package is no longer supported."},{"timestamp":"2026-02-24T17:38:48
+.576Z","level":"warn","message":"npm warn deprecated glob@7.2.3: Old v
+ersions of glob are not supported, and contain widely publicized secur
+ity vulnerabilities, which have been fixed in the current version. Ple
+ase update. Support for old versions may be purchased (at exorbitant r
+ates) by contacting i@izs.me"},{"timestamp":"2026-02-24T17:38:48.734Z"
+,"level":"warn","message":"npm warn deprecated prebuild-install@7.1.3:
+ No longer maintained. Please contact the author of the relevant nativ
+e addon; alternatives are available."},{"timestamp":"2026-02-24T17:38:
+48.872Z","level":"warn","message":"npm warn deprecated gauge@4.0.4: Th
+is package is no longer supported."},{"timestamp":"2026-02-24T17:38:49
+.162Z","level":"warn","message":"npm warn deprecated node-domexception
+@1.0.0: Use your platform's native DOMException instead"},{"timestamp"
+:"2026-02-24T17:38:49.211Z","level":"warn","message":"npm warn depreca
+ted tar@6.2.1: Old versions of tar are not supported, and contain wide
+ly publicized security vulnerabilities, which have been fixed in the c
+urrent version. Please update. Support for old versions may be purchas
+ed (at exorbitant rates) by contacting i@izs.me"},{"timestamp":"2026-0
+2-24T17:38:49.473Z","level":"warn","message":"npm warn deprecated jpeg
+-exif@1.1.4: Package no longer supported. Contact Support at https://w
+ww.npmjs.com/support for more info."},{"timestamp":"2026-02-24T17:38:5
+0.919Z","level":"warn","message":"npm warn deprecated fluent-ffmpeg@2.
+1.3: Package no longer supported. Contact Support at https://www.npmjs
+.com/support for more info."},{"timestamp":"2026-02-24T17:38:54.242Z",
+"level":"info","message":"added 610 packages in 15s"},{"timestamp":"20
+26-02-24T17:38:54.242Z","level":"info","message":"90 packages are look
+ing for funding"},{"timestamp":"2026-02-24T17:38:54.242Z","level":"inf
+o","message":"run `npm fund` for details"},{"timestamp":"2026-02-24T17
+:38:54.353Z","level":"info","message":"Dependencies installed."},{"tim
+estamp":"2026-02-24T17:38:54.353Z","level":"info","message":"Setting e
+nvironment variables..."},{"timestamp":"2026-02-24T17:38:54.353Z","lev
+el":"info","message":"Database: Supabase PostgreSQL provisioned automa
+tically."},{"timestamp":"2026-02-24T17:38:54.354Z","level":"info","mes
+sage":"Environment ready (5 variables)."},{"timestamp":"2026-02-24T17:
+38:54.354Z","level":"info","message":"Starting bot process..."},{"time
+stamp":"2026-02-24T17:38:54.362Z","level":"success","message":"Bot pro
+cess started (PID: 117459)"},{"timestamp":"2026-02-24T17:38:54.941Z","
+level":"info","message":"File fetched successfully ✅✅:"},{"timestamp
+":"2026-02-24T17:38:55.073Z","level":"info","message":"Script loaded s
+uccessfully✅✅!"},{"timestamp":"2026-02-24T17:38:55.679Z","level":"er
+ror","message":"❌Error: Please install pg package manually"},{"timest
+amp":"2026-02-24T17:38:56.315Z","level":"info","message":"Process exit
+ed cleanly (code 0)."}],"metrics":{"cpu":0,"memory":0,"uptime":0,"requ
+ests":0}}
+10|wolfdeploy  | 6:39:08 PM [express] GET /api/deployments 200 in 1ms
+:: [{"id":"e9167ddf-60a3-4aae-b0e5-bd3bdc3eeab8","botId":"5f66a9a8-0e7
+6-46ab-9021-b6ab0c163c41","botName":"KEITH-MD","userId":"fc5a19f2-58cd
+-4539-8299-4da9f6de7422","status":"stopped","plan":"monthly","expiresA
+t":"2027-02-24T17:38:37.752Z","envVars":{"SESSION_ID":"KEITH;;;H4sIAAA
+AAAAAA5VUyZKjOBD9lQld7WjAGDBEVMTgHeMdY8qe6IMAGQmzlSQMuMP/PkEtXX2Y6anhJ
+LTke5nvZf4AWU4YslEDjB+goOQGOWqXvCkQMMCwvFwQBV0QQg6BASbTbDG3hh0TzbC+Rcf
+dBF7Tl/LoujBc1t5RHdjpcKNZ3BOfwKMLitJPSPCbgCuXuKXzHPX3qt6vMnOOir5WnkkiP
+Mu2VtLn1Xkd9KJYn7Mn8GgjQkJJFk0KjFJEYWKjZgsJ/Rr9dFw8hxdlzrb3jruwDr5yWZ/
+gTruO7EDQBazOai1EvQJ716/Rr2W0jRayUpD0FMs4tArn+XoIFwoaIS8OoN6hpGKdq79/p
+89IlKHQClHGCW++XHe4shRFm+56sYIizI7ii7OPC1tbdGrfXMOGxR7WXem+SNnXiI9f/M5
+CP279ZZyaB14197MyOuJ4dVd5MqaWW9iV7lb+xTz9SnxLP7xy/T91V6eDnT5klm9O9cV6P
+N/WsvaibfghMenKUsVjbkurO5qJ8upr9IceqfDAD4VZXxKcWxkPS5mRdXIinqKQ4TBlkrZ
+Q0cGX3E/6kJf0dyyVarLSZ7OOl5hWVVnhxKl2Tkj3ReJtovWymXtw57OmdiVcY30/H5+2H
+l64ulDvLX16XW17m5ukO9U6jqTofDuEQZyMoqfXjK6osUJgSI8uoCgijFPISZ61ez2l3wU
+wvDkooIi/lhdIeJ/XTIWriLFOjc61BjfCxk+nub0Rbd338IYJ/UOEN/kT6IKC5gFiDIVzw
+nhOmxViDEaIAeOv712QoZq/CdfCyVIXXAhl3M3KIslh+KHqxyEMgrzMuNNkwahdIAoM8XM
+bcU6yiLV1LDNIA0xuaIQhZ8C4wIShnxkiikJgcFqin107ysO28CftNPd6Rx10QfoqCAmBA
+XpKX5NlXZWkQd9Q1D/Zt6oNC4viW4Y46IIMtreBlWWI/rFFMECgC5LXt5KqKKLWk3RxIPd
+VvX3eHjx+0m5RQsQhSRgwwGhZxmw5GU/WG1UfVLOZKUbmKDLBZ5offnnTwx8edr4td9yN6
+1j7hTq3HQ1tb06YdU46VHb+2ZtU/aiXjtjTPwQBBlibFlVJcCsy2ypeZkTJKw2dvfE9GAh
++mHbooLMb4FwplvHh5S4PXKafheWBr68rbomCV9pkIkXDcW96xZ1BuOyzcTiqnlq0EN1Ig
+H4Fw+fIdI7CaTlN1LM2N3FDl/ZRGZCztBsvFYiGcYIPYhbV5XKA7rOz51dRkbpxbxfXsUi
+veKaU9vROPAWnhSyPWEyH705+7aTkfYKRV4+1Ara/F4JeB8K7UP8p6Bvx1nfio/tLjPcR8
+6+9X7nirOFCMk4mZOIg3FxLOdbE7CykW690Z70jXm2sdRFR8Hh874IigfyS0xQYgKU+BF1
+A87J1sZVd8t8gjUzLGu6idZt2Ahk3PzvjQFLEOEwLYEiaJumKrIji260tzYs5ZLi1pd3H8
+35r88YsCodD/tFowGy/tR2Ax98s6E2vhAcAAA==","PHONE_NUMBER":"254733961184"
+},"createdAt":"2026-02-24T17:38:37.753Z","updatedAt":"2026-02-24T17:38
+:56.315Z","logs":[{"timestamp":"2026-02-24T17:38:37.756Z","level":"inf
+o","message":"Cloning repository: https://gitlab.com/Keithkeizzah/KEIT
+H-MD.git"},{"timestamp":"2026-02-24T17:38:37.772Z","level":"warn","mes
+sage":"Cloning into '/tmp/botforge-deployments/e9167ddf-60a3-4aae-b0e5
+-bd3bdc3eeab8'..."},{"timestamp":"2026-02-24T17:38:38.743Z","level":"i
+nfo","message":"Repository cloned successfully."},{"timestamp":"2026-0
+2-24T17:38:38.743Z","level":"info","message":"Installing Node.js depen
+dencies..."},{"timestamp":"2026-02-24T17:38:48.189Z","level":"warn","m
+essage":"npm warn deprecated crypto@1.0.1: This package is no longer s
+upported. It's now a built-in Node module. If you've depended on crypt
+o, you should switch to the one that's built-in."},{"timestamp":"2026-
+02-24T17:38:48.288Z","level":"warn","message":"npm warn deprecated @np
+mcli/move-file@1.1.2: This functionality has been moved to @npmcli/fs"
+},{"timestamp":"2026-02-24T17:38:48.290Z","level":"warn","message":"np
+m warn deprecated inflight@1.0.6: This module is not supported, and le
+aks memory. Do not use it. Check out lru-cache if you want a good and
+tested way to coalesce async requests by a key value, which is much mo
+re comprehensive and powerful."},{"timestamp":"2026-02-24T17:38:48.360
+Z","level":"warn","message":"npm warn deprecated phin@2.9.3: Package n
+o longer supported. Contact Support at https://www.npmjs.com/support f
+or more info."},{"timestamp":"2026-02-24T17:38:48.387Z","level":"warn"
+,"message":"npm warn deprecated npmlog@6.0.2: This package is no longe
+r supported."},{"timestamp":"2026-02-24T17:38:48.465Z","level":"warn",
+"message":"npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/byte
+s instead for a more spec-conformant and faster implementation"},{"tim
+estamp":"2026-02-24T17:38:48.474Z","level":"warn","message":"npm warn
+deprecated phin@3.7.1: Package no longer supported. Contact Support at
+ https://www.npmjs.com/support for more info."},{"timestamp":"2026-02-
+24T17:38:48.482Z","level":"warn","message":"npm warn deprecated rimraf
+@3.0.2: Rimraf versions prior to v4 are no longer supported"},{"timest
+amp":"2026-02-24T17:38:48.539Z","level":"warn","message":"npm warn dep
+recated are-we-there-yet@3.0.1: This package is no longer supported."}
+,{"timestamp":"2026-02-24T17:38:48.576Z","level":"warn","message":"npm
+ warn deprecated glob@7.2.3: Old versions of glob are not supported, a
+nd contain widely publicized security vulnerabilities, which have been
+ fixed in the current version. Please update. Support for old versions
+ may be purchased (at exorbitant rates) by contacting i@izs.me"},{"tim
+estamp":"2026-02-24T17:38:48.734Z","level":"warn","message":"npm warn
+deprecated prebuild-install@7.1.3: No longer maintained. Please contac
+t the author of the relevant native addon; alternatives are available.
+"},{"timestamp":"2026-02-24T17:38:48.872Z","level":"warn","message":"n
+pm warn deprecated gauge@4.0.4: This package is no longer supported."}
+,{"timestamp":"2026-02-24T17:38:49.162Z","level":"warn","message":"npm
+ warn deprecated node-domexception@1.0.0: Use your platform's native D
+OMException instead"},{"timestamp":"2026-02-24T17:38:49.211Z","level":
+"warn","message":"npm warn deprecated tar@6.2.1: Old versions of tar a
+re not supported, and contain widely publicized security vulnerabiliti
+es, which have been fixed in the current version. Please update. Suppo
+rt for old versions may be purchased (at exorbitant rates) by contacti
+ng i@izs.me"},{"timestamp":"2026-02-24T17:38:49.473Z","level":"warn","
+message":"npm warn deprecated jpeg-exif@1.1.4: Package no longer suppo
+rted. Contact Support at https://www.npmjs.com/support for more info."
+},{"timestamp":"2026-02-24T17:38:50.919Z","level":"warn","message":"np
+m warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Co
+ntact Support at https://www.npmjs.com/support for more info."},{"time
+stamp":"2026-02-24T17:38:54.242Z","level":"info","message":"added 610
+packages in 15s"},{"timestamp":"2026-02-24T17:38:54.242Z","level":"inf
+o","message":"90 packages are looking for funding"},{"timestamp":"2026
+-02-24T17:38:54.242Z","level":"info","message":"run `npm fund` for det
+ails"},{"timestamp":"2026-02-24T17:38:54.353Z","level":"info","message
+":"Dependencies installed."},{"timestamp":"2026-02-24T17:38:54.353Z","
+level":"info","message":"Setting environment variables..."},{"timestam
+p":"2026-02-24T17:38:54.353Z","level":"info","message":"Database: Supa
+base PostgreSQL provisioned automatically."},{"timestamp":"2026-02-24T
+17:38:54.354Z","level":"info","message":"Environment ready (5 variable
+s)."},{"timestamp":"2026-02-24T17:38:54.354Z","level":"info","message"
+:"Starting bot process..."},{"timestamp":"2026-02-24T17:38:54.362Z","l
+evel":"success","message":"Bot process started (PID: 117459)"},{"times
+tamp":"2026-02-24T17:38:54.941Z","level":"info","message":"File fetche
+d successfully ✅✅:"},{"timestamp":"2026-02-24T17:38:55.073Z","level"
+:"info","message":"Script loaded successfully✅✅!"},{"timestamp":"202
+6-02-24T17:38:55.679Z","level":"error","message":"❌Error: Please inst
+all pg package manually"},{"timestamp":"2026-02-24T17:38:56.315Z","lev
+el":"info","message":"Process exited cleanly (code 0)."}],"metrics":{"
+cpu":0,"memory":0,"uptime":0,"requests":0}}]
+10|wolfdeploy  | 6:39:13 PM [express] GET /api/deployments/e9167ddf-60
+a3-4aae-b0e5-bd3bdc3eeab8 200 in 1ms :: {"id":"e9167ddf-60a3-4aae-b0e5
+-bd3bdc3eeab8","botId":"5f66a9a8-0e76-46ab-9021-b6ab0c163c41","botName
+":"KEITH-MD","userId":"fc5a19f2-58cd-4539-8299-4da9f6de7422","status":
+"stopped","plan":"monthly","expiresAt":"2027-02-24T17:38:37.752Z","env
+Vars":{"SESSION_ID":"KEITH;;;H4sIAAAAAAAAA5VUyZKjOBD9lQld7WjAGDBEVMTgH
+eMdY8qe6IMAGQmzlSQMuMP/PkEtXX2Y6anhJLTke5nvZf4AWU4YslEDjB+goOQGOWqXvCk
+QMMCwvFwQBV0QQg6BASbTbDG3hh0TzbC+RcfdBF7Tl/LoujBc1t5RHdjpcKNZ3BOfwKMLi
+tJPSPCbgCuXuKXzHPX3qt6vMnOOir5WnkkiPMu2VtLn1Xkd9KJYn7Mn8GgjQkJJFk0KjFJ
+EYWKjZgsJ/Rr9dFw8hxdlzrb3jruwDr5yWZ/gTruO7EDQBazOai1EvQJ716/Rr2W0jRayU
+pD0FMs4tArn+XoIFwoaIS8OoN6hpGKdq79/p89IlKHQClHGCW++XHe4shRFm+56sYIizI7
+ii7OPC1tbdGrfXMOGxR7WXem+SNnXiI9f/M5CP279ZZyaB14197MyOuJ4dVd5MqaWW9iV7
+lb+xTz9SnxLP7xy/T91V6eDnT5klm9O9cV6PN/WsvaibfghMenKUsVjbkurO5qJ8upr9Ic
+eqfDAD4VZXxKcWxkPS5mRdXIinqKQ4TBlkrZQ0cGX3E/6kJf0dyyVarLSZ7OOl5hWVVnhx
+Kl2Tkj3ReJtovWymXtw57OmdiVcY30/H5+2Hl64ulDvLX16XW17m5ukO9U6jqTofDuEQZy
+MoqfXjK6osUJgSI8uoCgijFPISZ61ez2l3wUwvDkooIi/lhdIeJ/XTIWriLFOjc61BjfCx
+k+nub0Rbd338IYJ/UOEN/kT6IKC5gFiDIVzwnhOmxViDEaIAeOv712QoZq/CdfCyVIXXAh
+l3M3KIslh+KHqxyEMgrzMuNNkwahdIAoM8XMbcU6yiLV1LDNIA0xuaIQhZ8C4wIShnxkii
+kJgcFqin107ysO28CftNPd6Rx10QfoqCAmBAXpKX5NlXZWkQd9Q1D/Zt6oNC4viW4Y46II
+MtreBlWWI/rFFMECgC5LXt5KqKKLWk3RxIPdVvX3eHjx+0m5RQsQhSRgwwGhZxmw5GU/WG
+1UfVLOZKUbmKDLBZ5offnnTwx8edr4td9yN61j7hTq3HQ1tb06YdU46VHb+2ZtU/aiXjtj
+TPwQBBlibFlVJcCsy2ypeZkTJKw2dvfE9GAh+mHbooLMb4FwplvHh5S4PXKafheWBr68rb
+omCV9pkIkXDcW96xZ1BuOyzcTiqnlq0EN1IgH4Fw+fIdI7CaTlN1LM2N3FDl/ZRGZCztBs
+vFYiGcYIPYhbV5XKA7rOz51dRkbpxbxfXsUiveKaU9vROPAWnhSyPWEyH705+7aTkfYKRV
+4+1Ara/F4JeB8K7UP8p6Bvx1nfio/tLjPcR86+9X7nirOFCMk4mZOIg3FxLOdbE7CykW69
+0Z70jXm2sdRFR8Hh874IigfyS0xQYgKU+BF1A87J1sZVd8t8gjUzLGu6idZt2Ahk3PzvjQ
+FLEOEwLYEiaJumKrIji260tzYs5ZLi1pd3H835r88YsCodD/tFowGy/tR2Ax98s6E2vhAc
+AAA==","PHONE_NUMBER":"254733961184"},"createdAt":"2026-02-24T17:38:37
+.753Z","updatedAt":"2026-02-24T17:38:56.315Z","logs":[{"timestamp":"20
+26-02-24T17:38:37.756Z","level":"info","message":"Cloning repository:
+https://gitlab.com/Keithkeizzah/KEITH-MD.git"},{"timestamp":"2026-02-2
+4T17:38:37.772Z","level":"warn","message":"Cloning into '/tmp/botforge
+-deployments/e9167ddf-60a3-4aae-b0e5-bd3bdc3eeab8'..."},{"timestamp":"
+2026-02-24T17:38:38.743Z","level":"info","message":"Repository cloned
+successfully."},{"timestamp":"2026-02-24T17:38:38.743Z","level":"info"
+,"message":"Installing Node.js dependencies..."},{"timestamp":"2026-02
+-24T17:38:48.189Z","level":"warn","message":"npm warn deprecated crypt
+o@1.0.1: This package is no longer supported. It's now a built-in Node
+ module. If you've depended on crypto, you should switch to the one th
+at's built-in."},{"timestamp":"2026-02-24T17:38:48.288Z","level":"warn
+","message":"npm warn deprecated @npmcli/move-file@1.1.2: This functio
+nality has been moved to @npmcli/fs"},{"timestamp":"2026-02-24T17:38:4
+8.290Z","level":"warn","message":"npm warn deprecated inflight@1.0.6:
+This module is not supported, and leaks memory. Do not use it. Check o
+ut lru-cache if you want a good and tested way to coalesce async reque
+sts by a key value, which is much more comprehensive and powerful."},{
+"timestamp":"2026-02-24T17:38:48.360Z","level":"warn","message":"npm w
+arn deprecated phin@2.9.3: Package no longer supported. Contact Suppor
+t at https://www.npmjs.com/support for more info."},{"timestamp":"2026
+-02-24T17:38:48.387Z","level":"warn","message":"npm warn deprecated np
+mlog@6.0.2: This package is no longer supported."},{"timestamp":"2026-
+02-24T17:38:48.465Z","level":"warn","message":"npm warn deprecated wha
+twg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conforma
+nt and faster implementation"},{"timestamp":"2026-02-24T17:38:48.474Z"
+,"level":"warn","message":"npm warn deprecated phin@3.7.1: Package no
+longer supported. Contact Support at https://www.npmjs.com/support for
+ more info."},{"timestamp":"2026-02-24T17:38:48.482Z","level":"warn","
+message":"npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v
+4 are no longer supported"},{"timestamp":"2026-02-24T17:38:48.539Z","l
+evel":"warn","message":"npm warn deprecated are-we-there-yet@3.0.1: Th
+is package is no longer supported."},{"timestamp":"2026-02-24T17:38:48
+.576Z","level":"warn","message":"npm warn deprecated glob@7.2.3: Old v
+ersions of glob are not supported, and contain widely publicized secur
+ity vulnerabilities, which have been fixed in the current version. Ple
+ase update. Support for old versions may be purchased (at exorbitant r
+ates) by contacting i@izs.me"},{"timestamp":"2026-02-24T17:38:48.734Z"
+,"level":"warn","message":"npm warn deprecated prebuild-install@7.1.3:
+ No longer maintained. Please contact the author of the relevant nativ
+e addon; alternatives are available."},{"timestamp":"2026-02-24T17:38:
+48.872Z","level":"warn","message":"npm warn deprecated gauge@4.0.4: Th
+is package is no longer supported."},{"timestamp":"2026-02-24T17:38:49
+.162Z","level":"warn","message":"npm warn deprecated node-domexception
+@1.0.0: Use your platform's native DOMException instead"},{"timestamp"
+:"2026-02-24T17:38:49.211Z","level":"warn","message":"npm warn depreca
+ted tar@6.2.1: Old versions of tar are not supported, and contain wide
+ly publicized security vulnerabilities, which have been fixed in the c
+urrent version. Please update. Support for old versions may be purchas
+ed (at exorbitant rates) by contacting i@izs.me"},{"timestamp":"2026-0
+2-24T17:38:49.473Z","level":"warn","message":"npm warn deprecated jpeg
+-exif@1.1.4: Package no longer supported. Contact Support at https://w
+ww.npmjs.com/support for more info."},{"timestamp":"2026-02-24T17:38:5
+0.919Z","level":"warn","message":"npm warn deprecated fluent-ffmpeg@2.
+1.3: Package no longer supported. Contact Support at https://www.npmjs
+.com/support for more info."},{"timestamp":"2026-02-24T17:38:54.242Z",
+"level":"info","message":"added 610 packages in 15s"},{"timestamp":"20
+26-02-24T17:38:54.242Z","level":"info","message":"90 packages are look
+ing for funding"},{"timestamp":"2026-02-24T17:38:54.242Z","level":"inf
+o","message":"run `npm fund` for details"},{"timestamp":"2026-02-24T17
+:38:54.353Z","level":"info","message":"Dependencies installed."},{"tim
+estamp":"2026-02-24T17:38:54.353Z","level":"info","message":"Setting e
+nvironment variables..."},{"timestamp":"2026-02-24T17:38:54.353Z","lev
+el":"info","message":"Database: Supabase PostgreSQL provisioned automa
+tically."},{"timestamp":"2026-02-24T17:38:54.354Z","level":"info","mes
+sage":"Environment ready (5 variables)."},{"timestamp":"2026-02-24T17:
+38:54.354Z","level":"info","message":"Starting bot process..."},{"time
+stamp":"2026-02-24T17:38:54.362Z","level":"success","message":"Bot pro
+cess started (PID: 117459)"},{"timestamp":"2026-02-24T17:38:54.941Z","
+level":"info","message":"File fetched successfully ✅✅:"},{"timestamp
+":"2026-02-24T17:38:55.073Z","level":"info","message":"Script loaded s
+uccessfully✅✅!"},{"timestamp":"2026-02-24T17:38:55.679Z","level":"er
+ror","message":"❌Error: Please install pg package manually"},{"timest
+amp":"2026-02-24T17:38:56.315Z","level":"info","message":"Process exit
+ed cleanly (code 0)."}],"metrics":{"cpu":0,"memory":0,"uptime":0,"requ
+ests":0}}
+10|wolfdeploy  | 6:39:14 PM [express] GET /api/deployments 200 in 1ms
+:: [{"id":"e9167ddf-60a3-4aae-b0e5-bd3bdc3eeab8","botId":"5f66a9a8-0e7
+6-46ab-9021-b6ab0c163c41","botName":"KEITH-MD","userId":"fc5a19f2-58cd
+-4539-8299-4da9f6de7422","status":"stopped","plan":"monthly","expiresA
+t":"2027-02-24T17:38:37.752Z","envVars":{"SESSION_ID":"KEITH;;;H4sIAAA
+AAAAAA5VUyZKjOBD9lQld7WjAGDBEVMTgHeMdY8qe6IMAGQmzlSQMuMP/PkEtXX2Y6anhJ
+LTke5nvZf4AWU4YslEDjB+goOQGOWqXvCkQMMCwvFwQBV0QQg6BASbTbDG3hh0TzbC+Rcf
+dBF7Tl/LoujBc1t5RHdjpcKNZ3BOfwKMLitJPSPCbgCuXuKXzHPX3qt6vMnOOir5WnkkiP
+Mu2VtLn1Xkd9KJYn7Mn8GgjQkJJFk0KjFJEYWKjZgsJ/Rr9dFw8hxdlzrb3jruwDr5yWZ/
+gTruO7EDQBazOai1EvQJ716/Rr2W0jRayUpD0FMs4tArn+XoIFwoaIS8OoN6hpGKdq79/p
+89IlKHQClHGCW++XHe4shRFm+56sYIizI7ii7OPC1tbdGrfXMOGxR7WXem+SNnXiI9f/M5
+CP279ZZyaB14197MyOuJ4dVd5MqaWW9iV7lb+xTz9SnxLP7xy/T91V6eDnT5klm9O9cV6P
+N/WsvaibfghMenKUsVjbkurO5qJ8upr9IceqfDAD4VZXxKcWxkPS5mRdXIinqKQ4TBlkrZ
+Q0cGX3E/6kJf0dyyVarLSZ7OOl5hWVVnhxKl2Tkj3ReJtovWymXtw57OmdiVcY30/H5+2H
+l64ulDvLX16XW17m5ukO9U6jqTofDuEQZyMoqfXjK6osUJgSI8uoCgijFPISZ61ez2l3wU
+wvDkooIi/lhdIeJ/XTIWriLFOjc61BjfCxk+nub0Rbd338IYJ/UOEN/kT6IKC5gFiDIVzw
+nhOmxViDEaIAeOv712QoZq/CdfCyVIXXAhl3M3KIslh+KHqxyEMgrzMuNNkwahdIAoM8XM
+bcU6yiLV1LDNIA0xuaIQhZ8C4wIShnxkiikJgcFqin107ysO28CftNPd6Rx10QfoqCAmBA
+XpKX5NlXZWkQd9Q1D/Zt6oNC4viW4Y46IIMtreBlWWI/rFFMECgC5LXt5KqKKLWk3RxIPd
+VvX3eHjx+0m5RQsQhSRgwwGhZxmw5GU/WG1UfVLOZKUbmKDLBZ5offnnTwx8edr4td9yN6
+1j7hTq3HQ1tb06YdU46VHb+2ZtU/aiXjtjTPwQBBlibFlVJcCsy2ypeZkTJKw2dvfE9GAh
++mHbooLMb4FwplvHh5S4PXKafheWBr68rbomCV9pkIkXDcW96xZ1BuOyzcTiqnlq0EN1Ig
+H4Fw+fIdI7CaTlN1LM2N3FDl/ZRGZCztBsvFYiGcYIPYhbV5XKA7rOz51dRkbpxbxfXsUi
+veKaU9vROPAWnhSyPWEyH705+7aTkfYKRV4+1Ara/F4JeB8K7UP8p6Bvx1nfio/tLjPcR8
+6+9X7nirOFCMk4mZOIg3FxLOdbE7CykW690Z70jXm2sdRFR8Hh874IigfyS0xQYgKU+BF1
+A87J1sZVd8t8gjUzLGu6idZt2Ahk3PzvjQFLEOEwLYEiaJumKrIji260tzYs5ZLi1pd3H8
+35r88YsCodD/tFowGy/tR2Ax98s6E2vhAcAAA==","PHONE_NUMBER":"254733961184"
+},"createdAt":"2026-02-24T17:38:37.753Z","updatedAt":"2026-02-24T17:38
+:56.315Z","logs":[{"timestamp":"2026-02-24T17:38:37.756Z","level":"inf
+o","message":"Cloning repository: https://gitlab.com/Keithkeizzah/KEIT
+H-MD.git"},{"timestamp":"2026-02-24T17:38:37.772Z","level":"warn","mes
+sage":"Cloning into '/tmp/botforge-deployments/e9167ddf-60a3-4aae-b0e5
+-bd3bdc3eeab8'..."},{"timestamp":"2026-02-24T17:38:38.743Z","level":"i
+nfo","message":"Repository cloned successfully."},{"timestamp":"2026-0
+2-24T17:38:38.743Z","level":"info","message":"Installing Node.js depen
+dencies..."},{"timestamp":"2026-02-24T17:38:48.189Z","level":"warn","m
+essage":"npm warn deprecated crypto@1.0.1: This package is no longer s
+upported. It's now a built-in Node module. If you've depended on crypt
+o, you should switch to the one that's built-in."},{"timestamp":"2026-
+02-24T17:38:48.288Z","level":"warn","message":"npm warn deprecated @np
+mcli/move-file@1.1.2: This functionality has been moved to @npmcli/fs"
+},{"timestamp":"2026-02-24T17:38:48.290Z","level":"warn","message":"np
+m warn deprecated inflight@1.0.6: This module is not supported, and le
+aks memory. Do not use it. Check out lru-cache if you want a good and
+tested way to coalesce async requests by a key value, which is much mo
+re comprehensive and powerful."},{"timestamp":"2026-02-24T17:38:48.360
+Z","level":"warn","message":"npm warn deprecated phin@2.9.3: Package n
+o longer supported. Contact Support at https://www.npmjs.com/support f
+or more info."},{"timestamp":"2026-02-24T17:38:48.387Z","level":"warn"
+,"message":"npm warn deprecated npmlog@6.0.2: This package is no longe
+r supported."},{"timestamp":"2026-02-24T17:38:48.465Z","level":"warn",
+"message":"npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/byte
+s instead for a more spec-conformant and faster implementation"},{"tim
+estamp":"2026-02-24T17:38:48.474Z","level":"warn","message":"npm warn
+deprecated phin@3.7.1: Package no longer supported. Contact Support at
+ https://www.npmjs.com/support for more info."},{"timestamp":"2026-02-
+24T17:38:48.482Z","level":"warn","message":"npm warn deprecated rimraf
+@3.0.2: Rimraf versions prior to v4 are no longer supported"},{"timest
+amp":"2026-02-24T17:38:48.539Z","level":"warn","message":"npm warn dep
+recated are-we-there-yet@3.0.1: This package is no longer supported."}
+,{"timestamp":"2026-02-24T17:38:48.576Z","level":"warn","message":"npm
+ warn deprecated glob@7.2.3: Old versions of glob are not supported, a
+nd contain widely publicized security vulnerabilities, which have been
+ fixed in the current version. Please update. Support for old versions
+ may be purchased (at exorbitant rates) by contacting i@izs.me"},{"tim
+estamp":"2026-02-24T17:38:48.734Z","level":"warn","message":"npm warn
+deprecated prebuild-install@7.1.3: No longer maintained. Please contac
+t the author of the relevant native addon; alternatives are available.
+"},{"timestamp":"2026-02-24T17:38:48.872Z","level":"warn","message":"n
+pm warn deprecated gauge@4.0.4: This package is no longer supported."}
+,{"timestamp":"2026-02-24T17:38:49.162Z","level":"warn","message":"npm
+ warn deprecated node-domexception@1.0.0: Use your platform's native D
+OMException instead"},{"timestamp":"2026-02-24T17:38:49.211Z","level":
+"warn","message":"npm warn deprecated tar@6.2.1: Old versions of tar a
+re not supported, and contain widely publicized security vulnerabiliti
+es, which have been fixed in the current version. Please update. Suppo
+rt for old versions may be purchased (at exorbitant rates) by contacti
+ng i@izs.me"},{"timestamp":"2026-02-24T17:38:49.473Z","level":"warn","
+message":"npm warn deprecated jpeg-exif@1.1.4: Package no longer suppo
+rted. Contact Support at https://www.npmjs.com/support for more info."
+},{"timestamp":"2026-02-24T17:38:50.919Z","level":"warn","message":"np
+m warn deprecated fluent-ffmpeg@2.1.3: Package no longer supported. Co
+ntact Support at https://www.npmjs.com/support for more info."},{"time
+stamp":"2026-02-24T17:38:54.242Z","level":"info","message":"added 610
+packages in 15s"},{"timestamp":"2026-02-24T17:38:54.242Z","level":"inf
+o","message":"90 packages are looking for funding"},{"timestamp":"2026
+-02-24T17:38:54.242Z","level":"info","message":"run `npm fund` for det
+ails"},{"timestamp":"2026-02-24T17:38:54.353Z","level":"info","message
+":"Dependencies installed."},{"timestamp":"2026-02-24T17:38:54.353Z","
+level":"info","message":"Setting environment variables..."},{"timestam
+p":"2026-02-24T17:38:54.353Z","level":"info","message":"Database: Supa
+base PostgreSQL provisioned automatically."},{"timestamp":"2026-02-24T
+17:38:54.354Z","level":"info","message":"Environment ready (5 variable
+s)."},{"timestamp":"2026-02-24T17:38:54.354Z","level":"info","message"
+:"Starting bot process..."},{"timestamp":"2026-02-24T17:38:54.362Z","l
+evel":"success","message":"Bot process started (PID: 117459)"},{"times
+tamp":"2026-02-24T17:38:54.941Z","level":"info","message":"File fetche
+d successfully ✅✅:"},{"timestamp":"2026-02-24T17:38:55.073Z","level"
+:"info","message":"Script loaded successfully✅✅!"},{"timestamp":"202
+6-02-24T17:38:55.679Z","level":"error","message":"❌Error: Please inst
+all pg package manually"},{"timestamp":"2026-02-24T17:38:56.315Z","lev
+el":"info","message":"Process exited cleanly (code 0)."}],"metrics":{"
+cpu":0,"memory":0,"uptime":0,"requests":0}}]

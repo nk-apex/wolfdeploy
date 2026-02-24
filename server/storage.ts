@@ -365,6 +365,10 @@ class MemStorage implements IStorage {
     await this.spawnStep(id, "npm", ["install", "--legacy-peer-deps", "--no-audit", "--prefer-offline"], { cwd: deployDir });
     await this.addDeploymentLog(id, "info", "Dependencies installed.");
 
+    await this.addDeploymentLog(id, "info", "Installing PostgreSQL driver (pg)...");
+    await this.spawnStep(id, "npm", ["install", "pg", "--no-audit"], { cwd: deployDir });
+    await this.addDeploymentLog(id, "info", "PostgreSQL driver installed.");
+
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
 
     const platformDb = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
