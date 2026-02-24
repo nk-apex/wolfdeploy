@@ -134,20 +134,31 @@ export async function registerRoutes(
   });
 
   /* ── Deployments ────────────────────────────────────────── */
-  app.get("/api/deployments", async (_req, res) => {
-    const deployments = await storage.getDeployments();
+  app.get("/api/deployments", async (req, res) => {
+    const uid = getUserId(req);
+    // Only return deployments belonging to the requesting user
+    const deployments = await storage.getDeployments(uid || undefined);
     res.json(deployments);
   });
 
   app.get("/api/deployments/:id", async (req, res) => {
+    const uid = getUserId(req);
     const deployment = await storage.getDeployment(req.params.id);
     if (!deployment) return res.status(404).json({ error: "Deployment not found" });
+    // Users can only see their own deployments (admins bypass this via /api/admin/deployments)
+    if (uid && deployment.userId && deployment.userId !== uid) {
+      return res.status(403).json({ error: "Access denied" });
+    }
     res.json(deployment);
   });
 
   app.get("/api/deployments/:id/logs", async (req, res) => {
+    const uid = getUserId(req);
     const deployment = await storage.getDeployment(req.params.id);
     if (!deployment) return res.status(404).json({ error: "Deployment not found" });
+    if (uid && deployment.userId && deployment.userId !== uid) {
+      return res.status(403).json({ error: "Access denied" });
+    }
     res.json(deployment.logs);
   });
 
@@ -459,12 +470,23 @@ export async function registerRoutes(
   });
 
   app.post("/api/deployments/:id/stop", async (req, res) => {
+    const uid = getUserId(req);
+    const dep = await storage.getDeployment(req.params.id);
+    if (!dep) return res.status(404).json({ error: "Deployment not found" });
+    if (uid && dep.userId && dep.userId !== uid && !(await isAdmin(uid))) {
+      return res.status(403).json({ error: "Access denied" });
+    }
     const deployment = await storage.stopDeployment(req.params.id);
-    if (!deployment) return res.status(404).json({ error: "Deployment not found" });
     res.json(deployment);
   });
 
   app.delete("/api/deployments/:id", async (req, res) => {
+    const uid = getUserId(req);
+    const dep = await storage.getDeployment(req.params.id);
+    if (!dep) return res.status(404).json({ error: "Deployment not found" });
+    if (uid && dep.userId && dep.userId !== uid && !(await isAdmin(uid))) {
+      return res.status(403).json({ error: "Access denied" });
+    }
     const ok = await storage.deleteDeployment(req.params.id);
     if (!ok) return res.status(404).json({ error: "Deployment not found" });
     res.json({ success: true });

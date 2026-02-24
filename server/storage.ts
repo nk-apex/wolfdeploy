@@ -13,7 +13,7 @@ export interface IStorage {
   getBots(): Promise<Bot[]>;
   getBot(id: string): Promise<Bot | undefined>;
   getAllDeployments(): Promise<Deployment[]>;
-  getDeployments(): Promise<Deployment[]>;
+  getDeployments(userId?: string): Promise<Deployment[]>;
   getDeployment(id: string): Promise<Deployment | undefined>;
   createDeployment(botId: string, botName: string, botRepo: string, envVars: Record<string, string>, userId?: string): Promise<Deployment>;
   updateDeploymentStatus(id: string, status: DeploymentStatus): Promise<Deployment | undefined>;
@@ -227,8 +227,10 @@ class MemStorage implements IStorage {
     );
   }
 
-  async getDeployments(): Promise<Deployment[]> {
-    return Array.from(this.deployments.values()).sort(
+  async getDeployments(userId?: string): Promise<Deployment[]> {
+    const all = Array.from(this.deployments.values());
+    const filtered = userId ? all.filter(d => d.userId === userId) : all;
+    return filtered.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
   }
