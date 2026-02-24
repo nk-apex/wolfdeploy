@@ -1,0 +1,51 @@
+root@silentwolf:/var/www/wolfdeploy# curl -s http://localhost:3002/api
+/admin/stats -H "x-user-id: fc5a19f2-58cd-4539-8299-4da9f6de7422" -H "
+User-Agent: Mozilla/5.0"
+{"error":"Failed to fetch stats"}root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# npm start && npm run build
+
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.cjs
+
+[admin] Seeded 1 admin user(s) from ADMIN_USER_IDS
+[storage] Loaded 0 deployments from database.
+10:10:36 AM [express] serving on port 5000
+^[[A^[[A^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | }^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# for [wolfdeploy] process (change
+the value with --lines option)^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# ^C
+root@silentwolf:/var/www/wolfdeploy# pm2 logs wolfdeploy --err --lines
+ 20 --nostream
+[TAILING] Tailing last 20 lines for [wolfdeploy] process (change the v
+alue with --lines option)
+/root/.pm2/logs/wolfdeploy-error.log last 20 lines:
+10|wolfdep |     at async Pf.getBots (/var/www/wolfdeploy/dist/index.c
+js:76:46301)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:82:17319
+{
+10|wolfdep |   length: 113,
+10|wolfdep |   severity: 'ERROR',
+10|wolfdep |   code: '42703',
+10|wolfdep |   detail: undefined,
+10|wolfdep |   hint: undefined,
+10|wolfdep |   position: '59',
+10|wolfdep |   internalPosition: undefined,
+10|wolfdep |   internalQuery: undefined,
+10|wolfdep |   where: undefined,
+10|wolfdep |   schema: undefined,
+10|wolfdep |   table: undefined,
+10|wolfdep |   column: undefined,
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   file: 'parse_relation.c',
+10|wolfdep |   line: '3716',
+10|wolfdep |   routine: 'errorMissingColumn'
+10|wolfdep | }
