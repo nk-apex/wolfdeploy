@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import type { Bot, Deployment } from "@shared/schema";
 import {
   Rocket, ExternalLink, Lock, ArrowUpRight,
-  Bot as BotIcon, ArrowLeft, Coins, ShoppingCart,
+  ArrowLeft, Coins, ShoppingCart, AlertCircle,
 } from "lucide-react";
 
 export default function Deploy() {
@@ -34,6 +34,7 @@ export default function Deploy() {
   });
 
   const balance = coinData?.balance ?? 0;
+  const canAfford = balance >= 100;
 
   const deployMutation = useMutation({
     mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: string }) => {
@@ -120,6 +121,15 @@ export default function Deploy() {
 
         <CoinStrip />
 
+        {!canAfford && (
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6 text-xs font-mono"
+            style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>You need <strong>100 coins</strong> to deploy a bot. Your current balance is <strong>{balance} coins</strong>.</span>
+            <Link href="/billing" className="ml-auto underline whitespace-nowrap font-bold" style={{ color: "#f87171" }}>Buy coins</Link>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-xl animate-pulse" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }} />)}
@@ -127,9 +137,16 @@ export default function Deploy() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {bots.map((bot) => (
-              <button key={bot.id} data-testid={`card-bot-${bot.id}`} onClick={() => handleSelectBot(bot)}
-                className="text-left group rounded-xl overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.99] flex flex-row sm:flex-col"
-                style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
+              <button key={bot.id} data-testid={`card-bot-${bot.id}`}
+                onClick={() => { if (!canAfford) { toast({ title: "Insufficient coins", description: "You need 100 coins to deploy. Top up in Billing.", variant: "destructive" }); return; } handleSelectBot(bot); }}
+                className="text-left group rounded-xl overflow-hidden transition-all flex flex-row sm:flex-col"
+                style={{
+                  border: `1px solid ${canAfford ? "rgba(74,222,128,0.2)" : "rgba(107,114,128,0.2)"}`,
+                  background: "rgba(0,0,0,0.3)",
+                  backdropFilter: "blur(8px)",
+                  opacity: canAfford ? 1 : 0.55,
+                  cursor: canAfford ? "pointer" : "not-allowed",
+                }}>
                 <div className="relative w-24 sm:w-full flex-shrink-0 h-auto sm:h-32 overflow-hidden border-r sm:border-r-0 sm:border-b" style={{ borderColor: "rgba(74,222,128,0.12)" }}>
                   <img src={bot.logo} alt={bot.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 min-h-full"
                     onError={e => {
@@ -254,18 +271,32 @@ export default function Deploy() {
             </div>
 
             <div className="mt-6">
-              <button data-testid="button-deploy" onClick={handleDeploy} disabled={deployMutation.isPending}
-                className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)" }}>
+              {!canAfford && (
+                <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-3 text-xs font-mono"
+                  style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
+                  <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+                  Not enough coins. You have <strong className="mx-1">{balance}</strong> but need <strong className="mx-1">100</strong>.{" "}
+                  <Link href="/billing" className="underline font-bold ml-auto" style={{ color: "#f87171" }}>Buy coins</Link>
+                </div>
+              )}
+              <button data-testid="button-deploy" onClick={handleDeploy}
+                disabled={deployMutation.isPending || !canAfford}
+                className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{
+                  background: canAfford ? "rgba(74,222,128,0.15)" : "rgba(107,114,128,0.1)",
+                  border: `1px solid ${canAfford ? "rgba(74,222,128,0.4)" : "rgba(107,114,128,0.3)"}`,
+                }}>
                 {deployMutation.isPending ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /><span className="text-primary">Deploying…</span></>
                 ) : (
                   <><Rocket className="w-4 h-4 text-primary" /><span className="text-primary">Deploy — 100 coins · 30 days</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
                 )}
               </button>
-              <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
-                Balance after deploy: <span className="text-primary">{balance - 100} coins</span>
-              </p>
+              {canAfford && (
+                <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
+                  Balance after deploy: <span className="text-primary">{balance - 100} coins</span>
+                </p>
+              )}
             </div>
           </div>
         </div>
