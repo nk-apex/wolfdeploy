@@ -162,24 +162,16 @@ app.use("/api", (req, res, next) => {
    RATE LIMITING
 ════════════════════════════════════════════════════════════ */
 
-// Global: 150 req / 15 min per IP
+// Global: 2000 req / 15 min per IP — high enough to never block normal dashboard usage
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 150,
+  max: 2000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "Too many requests, please slow down." },
-  skip: (req) => req.path === "/api/config",
+  skip: (req) => req.path.startsWith("/api/admin") || req.path.startsWith("/api/chat") || req.path === "/api/config",
 });
 app.use(globalLimiter);
-
-// Progressive slowdown: starts delaying after 60 req / 15 min
-const speedLimiter = slowDown({
-  windowMs: 15 * 60 * 1000,
-  delayAfter: 60,
-  delayMs: (used) => (used - 60) * 150,
-});
-app.use("/api", speedLimiter);
 
 // Auth: 200 req / 15 min — generous limit; register-ip fires on every session restore
 // Only count failures so normal usage (login, token refresh) never hits the cap
