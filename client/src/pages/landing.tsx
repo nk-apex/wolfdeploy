@@ -30,38 +30,41 @@ const FEATURES = [
 const PLANS = [
   {
     name: "Starter",
-    coins: 10,
-    price: "KES 70",
+    coins: 100,
+    price: "KES 50",
     period: "one-time",
-    features: ["10 Coins", "Deploy 1 Bot", "Real-time Logs", "Community Support"],
-    cta: "Get Started",
+    runtime: "~1.5 weeks · 1 bot",
+    features: ["100 Coins", "1 Bot · ~1.5 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "Community Support"],
+    cta: "Get Started — KES 50",
     highlight: false,
     badge: null,
   },
   {
-    name: "Popular",
-    coins: 50,
-    price: "KES 300",
+    name: "Power",
+    coins: 250,
+    price: "KES 125",
     period: "one-time",
-    features: ["50 Coins", "Deploy 5 Bots", "Real-time Logs", "Priority Support"],
-    cta: "Buy 50 Coins",
+    runtime: "~3.5 weeks · 1 bot",
+    features: ["250 Coins", "1 Bot · ~3.5 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "Priority Support"],
+    cta: "Buy Power Pack",
     highlight: true,
     badge: "MOST POPULAR",
   },
   {
-    name: "Pro",
-    coins: 100,
-    price: "KES 550",
+    name: "Ultra",
+    coins: 600,
+    price: "KES 300",
     period: "one-time",
-    features: ["100 Coins", "Deploy 10 Bots", "Real-time Logs", "24/7 Support"],
-    cta: "Buy 100 Coins",
+    runtime: "~9 weeks · 1 bot",
+    features: ["600 Coins", "1 Bot · ~9 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "24/7 Support"],
+    cta: "Buy Ultra Pack",
     highlight: false,
     badge: "BEST VALUE",
   },
 ];
 
 const BOTS = [
-  { name: "Silent WolfBot", repo: "7silent-wolf/silentwolf", badge: "Popular" },
+  { name: "WolfBot", repo: "7silent-wolf/silentwolf", badge: "Popular" },
   { name: "JUNE-X", repo: "Vinpink2/JUNE-X", badge: "New" },
   { name: "DAVE-X", repo: "Davex-254/DAVE-X", badge: "⭐ 56" },
 ];
@@ -270,11 +273,28 @@ export default function Landing() {
 
         {/* Pricing */}
         <section className="px-6 sm:px-10 py-16 max-w-5xl mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <p className="text-[10px] text-primary font-bold tracking-widest uppercase mb-2">PRICING</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Coin-based — pay as you go</h2>
-            <p className="text-xs text-gray-500 font-mono mt-3">10 coins = 1 bot deployment · New users get 5 free trial coins</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">Simple coin-based billing</h2>
+            <p className="text-xs text-gray-500 font-mono mt-3">
+              50 KES = 100 coins · 1 coin deducted per bot every 2.5 hours, automatically
+            </p>
           </div>
+
+          {/* How it works callout */}
+          <div
+            className="flex flex-wrap gap-4 justify-center mb-8 p-4 rounded-xl text-[11px] font-mono"
+            style={{ border: "1px solid rgba(74,222,128,0.12)", background: "rgba(74,222,128,0.04)" }}
+          >
+            <span className="text-gray-400"><span className="text-primary font-bold">50 KES</span> = 100 coins</span>
+            <span className="text-gray-700">→</span>
+            <span className="text-gray-400"><span className="text-primary font-bold">100 coins</span> = 1 bot · ~1.5 weeks</span>
+            <span className="text-gray-700">→</span>
+            <span className="text-gray-400">Billed <span className="text-primary font-bold">automatically</span> every 2.5 hrs</span>
+            <span className="text-gray-700">→</span>
+            <span className="text-gray-400">Bot <span className="text-primary font-bold">auto-stops</span> at 0 coins</span>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => (
               <div
@@ -296,11 +316,12 @@ export default function Landing() {
                   </div>
                 )}
                 <h3 className="font-black text-white mb-1">{plan.name}</h3>
-                <div className="mb-1">
+                <div className="mb-0.5">
                   <span className="text-3xl font-black text-primary">{plan.price}</span>
                   <span className="text-xs text-gray-500 ml-1">{plan.period}</span>
                 </div>
-                <p className="text-[11px] text-primary font-mono font-bold mb-4 opacity-70">{plan.coins} coins</p>
+                <p className="text-[11px] text-primary font-mono font-bold opacity-70">{plan.coins} coins · {plan.runtime}</p>
+                <div className="w-full h-px my-3" style={{ background: "rgba(74,222,128,0.1)" }} />
                 <div className="space-y-2 mb-6">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-center gap-2">
@@ -325,7 +346,7 @@ export default function Landing() {
             ))}
           </div>
           <p className="text-center text-[10px] text-gray-700 font-mono mt-6">
-            Prices shown in KES · NGN / GHS / UGX / other currencies available at checkout via Paystack
+            Prices shown in KES · NGN / GHS / UGX / other currencies supported at checkout · New users get 5 free trial coins
           </p>
         </section>
 
