@@ -448,6 +448,13 @@ export async function registerRoutes(
     if (!bot) return res.status(404).json({ error: "Bot not found" });
 
     const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId);
+
+    // Deduct 1 coin immediately on deploy — acts as the first 2.5h billing tick
+    // so users see their balance update right away rather than waiting for the interval
+    if (userId) {
+      await deductCoins(userId, 1);
+    }
+
     res.status(201).json(deployment);
   });
 

@@ -64,7 +64,7 @@ export function TopBar() {
 
   return (
     <header
-      className="h-12 flex items-center justify-between px-4 flex-shrink-0 relative"
+      className="h-12 flex items-center justify-between px-4 flex-shrink-0 relative z-[100]"
       style={{
         background: t.topbarBg,
         backdropFilter: t.backdropBlur,
@@ -111,7 +111,7 @@ export function TopBar() {
           {/* Notifications dropdown */}
           {notifOpen && (
             <div
-              className="absolute right-0 top-10 w-80 rounded-xl overflow-hidden z-50 shadow-xl"
+              className="absolute right-0 top-10 w-80 rounded-xl overflow-hidden z-[300] shadow-xl"
               style={{ background: "rgba(8,8,8,0.97)", border: `1px solid ${t.accentFaded(0.2)}`, backdropFilter: "blur(16px)" }}
             >
               <div
