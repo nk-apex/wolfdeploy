@@ -542,18 +542,29 @@ export async function registerRoutes(
   app.get("/api/admin/users", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      const users = await db.select().from(userCoins).orderBy(desc(userCoins.balance));
-      const allDeployments = await storage.getAllDeployments();
-      const adminList = await db.select().from(adminUsers);
-      const adminIds = new Set(adminList.map(a => a.userId));
+      const [coinRows, ipRows, adminList] = await Promise.all([
+        db.select().from(userCoins),
+        db.select().from(ipRegistrations),
+        db.select().from(adminUsers),
+      ]);
 
-      const usersWithMeta = users.map(u => ({
-        userId: u.userId,
-        balance: u.balance,
-        isAdmin: adminIds.has(u.userId),
-        deploymentCount: allDeployments.filter(d => d.userId === u.userId).length,
-        runningBots: allDeployments.filter(d => d.userId === u.userId && d.status === "running").length,
-      }));
+      const allDeployments = await storage.getAllDeployments();
+      const adminIds = new Set(adminList.map(a => a.userId));
+      const coinMap = new Map(coinRows.map(c => [c.userId, c.balance]));
+
+      // Collect all unique userIds from both coins and ip registrations
+      const allUserIds = new Set([
+        ...coinRows.map(c => c.userId),
+        ...ipRows.map(r => r.userId),
+      ]);
+
+      const usersWithMeta = Array.from(allUserIds).map(userId => ({
+        userId,
+        balance: coinMap.get(userId) ?? 0,
+        isAdmin: adminIds.has(userId),
+        deploymentCount: allDeployments.filter(d => d.userId === userId).length,
+        runningBots: allDeployments.filter(d => d.userId === userId && d.status === "running").length,
+      })).sort((a, b) => b.balance - a.balance);
 
       res.json(usersWithMeta);
     } catch {
@@ -1064,15 +1075,18 @@ export async function registerRoutes(
       const { userId } = req.body;
       if (!userId) return res.status(400).json({ error: "userId required" });
 
+      // Always ensure the user has a userCoins row — this is how we track all users
+      await db.insert(userCoins)
+        .values({ userId, balance: 0 })
+        .onConflictDoNothing();
+
       const ip = (req.headers["x-forwarded-for"] as string || req.ip || "unknown").split(",")[0].trim();
       const existing = await db.select().from(ipRegistrations).where(eq(ipRegistrations.ipAddress, ip));
 
       if (existing.length > 0 && existing[0].userId !== userId) {
-        // Another account already registered from this IP
-        return res.status(409).json({
-          error: "An account is already registered from this location. Only one account per IP is allowed.",
-          blocked: true,
-        });
+        // Another account already registered from this IP — still allowed to use platform
+        // but flag it so admin can see (don't block, just note)
+        return res.json({ ok: true, ip, multiAccount: true });
       }
 
       if (existing.length === 0) {

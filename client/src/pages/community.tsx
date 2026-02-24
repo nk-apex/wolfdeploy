@@ -31,10 +31,13 @@ export default function Community() {
     refetchInterval: 30000,
   });
 
-  const { data: chatData, isLoading: chatLoading } = useQuery<{ messages: ChatMessage[]; enabled: boolean }>({
+  const { data: chatData, isLoading: chatLoading, isError: chatError, refetch: refetchChat } = useQuery<{ messages: ChatMessage[]; enabled: boolean }>({
     queryKey: ["/api/chat/messages"],
-    enabled: !!user && chatStatus?.enabled !== false,
+    enabled: !!user,
     refetchInterval: 4000,
+    staleTime: 0,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   const messages = chatData?.messages ?? [];
@@ -152,6 +155,12 @@ export default function Community() {
                 {chatLoading ? (
                   <div className="flex items-center justify-center h-full py-10">
                     <Loader2 className="w-5 h-5 animate-spin text-primary opacity-50" />
+                  </div>
+                ) : chatError ? (
+                  <div className="flex flex-col items-center justify-center h-full py-10 gap-3">
+                    <AlertCircle className="w-7 h-7 text-red-400 opacity-60" />
+                    <p className="text-xs font-mono text-gray-500">Could not load messages</p>
+                    <button onClick={() => refetchChat()} className="text-[10px] font-mono text-primary underline">Retry</button>
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full py-10">
