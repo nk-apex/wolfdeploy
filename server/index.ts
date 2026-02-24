@@ -11,6 +11,17 @@ import rateLimit from "express-rate-limit";
 import slowDown from "express-slow-down";
 import { scraperDefense, robotsHeaders, robotsTxt, sameOriginApiGuard } from "./scraper-defense";
 
+/* ═══════════════════════════════════════════════════════════
+   CRASH GUARDS — keep the server alive on unhandled errors
+════════════════════════════════════════════════════════════ */
+process.on("uncaughtException", (err) => {
+  console.error("[crash] Uncaught exception — server will continue:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("[crash] Unhandled promise rejection — server will continue:", reason);
+});
+
 const app = express();
 const httpServer = createServer(app);
 

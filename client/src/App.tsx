@@ -23,8 +23,34 @@ import RegisterBot from "@/pages/register-bot";
 import Community from "@/pages/community";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider, useTheme, getThemeTokens } from "@/lib/theme";
-import { useEffect } from "react";
+import { useEffect, Component, type ReactNode } from "react";
 import { initSecurity } from "@/lib/security";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  componentDidCatch(error: Error, info: { componentStack: string }) {
+    console.error("[ui-crash]", error, info.componentStack);
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#0a0a0a", color: "#fff", fontFamily: "monospace", padding: "2rem", flexDirection: "column", gap: "1rem" }}>
+          <div style={{ fontSize: "2rem" }}>⚠</div>
+          <div style={{ fontWeight: "bold", fontSize: "1.1rem" }}>Something went wrong</div>
+          <div style={{ color: "#888", fontSize: "0.8rem", maxWidth: "500px", textAlign: "center" }}>
+            {(this.state.error as Error).message}
+          </div>
+          <button onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+            style={{ marginTop: "1rem", padding: "0.5rem 1.5rem", borderRadius: "8px", border: "1px solid rgba(74,222,128,0.4)", background: "rgba(74,222,128,0.1)", color: "#4ade80", cursor: "pointer", fontFamily: "monospace" }}>
+            Reload page
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 function AppShell() {
   const { user, loading } = useAuth();
@@ -137,10 +163,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <AppShell />
-            <Toaster />
-          </AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <AppShell />
+              <Toaster />
+            </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </TooltipProvider>
     </QueryClientProvider>

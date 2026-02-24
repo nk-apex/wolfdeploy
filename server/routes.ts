@@ -40,8 +40,8 @@ function sanitize(s: unknown, maxLen = 1000): string {
     .slice(0, maxLen);
 }
 
-/* Coins are now deducted over time (1 coin per 2.5h per running bot), not upfront */
-const MIN_COINS_TO_DEPLOY = 1;
+/* 5 coins deducted on deploy. Ongoing drain: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
+const MIN_COINS_TO_DEPLOY = 5;
 
 async function getBalance(userId: string): Promise<number> {
   const rows = await db.select().from(userCoins).where(eq(userCoins.userId, userId));
@@ -525,10 +525,9 @@ export async function registerRoutes(
 
     const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId);
 
-    // Deduct 1 coin immediately on deploy — acts as the first 2.5h billing tick
-    // so users see their balance update right away rather than waiting for the interval
+    // Deduct 5 coins immediately on deploy — flat deploy fee
     if (userId) {
-      await deductCoins(userId, 1);
+      await deductCoins(userId, 5);
     }
 
     res.status(201).json(deployment);

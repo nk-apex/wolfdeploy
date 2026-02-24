@@ -11,8 +11,8 @@ import {
   Bot as BotIcon, ArrowLeft, Coins, AlertCircle, ShoppingCart,
 } from "lucide-react";
 
-/* Coins are deducted over time: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
-const MIN_COINS = 1;
+/* 5 coins deducted on deploy. Ongoing drain: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
+const MIN_COINS = 5;
 
 export default function Deploy() {
   const [, navigate] = useLocation();
@@ -56,7 +56,7 @@ export default function Deploy() {
     },
     onError: (err: Error) => {
       if (err.message === "Insufficient coins") {
-        toast({ title: "Not enough coins", description: "You need at least 1 coin to deploy a bot. Buy coins on the Billing page.", variant: "destructive" });
+        toast({ title: "Not enough coins", description: "You need at least 5 coins to deploy a bot. Buy coins on the Billing page.", variant: "destructive" });
       } else {
         toast({ title: "Deployment failed", description: err.message, variant: "destructive" });
       }
@@ -69,7 +69,7 @@ export default function Deploy() {
   const handleDeploy = () => {
     if (!selectedBot) return;
     if (!hasCoins) {
-      toast({ title: "Insufficient coins", description: `You need at least 1 coin to deploy. Current balance: ${balance}.`, variant: "destructive" });
+      toast({ title: "Insufficient coins", description: `You need at least 5 coins to deploy. Current balance: ${balance}.`, variant: "destructive" });
       return;
     }
     const missing = Object.entries(selectedBot.env)
@@ -148,7 +148,7 @@ export default function Deploy() {
             </div>
             <h3 className="text-white font-bold text-base mb-2 font-mono">Insufficient Coins</h3>
             <p className="text-gray-400 text-xs font-mono mb-5 max-w-xs mx-auto">
-              You need at least <strong className="text-white">1 coin</strong> to deploy a bot. Your current balance is <strong className="text-white">{balance} coins</strong>.
+              You need at least <strong className="text-white">5 coins</strong> to deploy a bot. Your current balance is <strong className="text-white">{balance} coins</strong>.
             </p>
             <Link href="/billing">
               <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono font-bold text-sm transition-all"
