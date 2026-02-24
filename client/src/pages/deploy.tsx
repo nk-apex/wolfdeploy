@@ -56,10 +56,11 @@ export default function Deploy() {
       return;
     }
     setLiveEnvLoading(true);
-    fetch(`/api/bots/${selectedBot.id}/fetch-env`)
+    setLiveEnv(null);
+    apiRequest("GET", `/api/bots/${selectedBot.id}/fetch-env`)
       .then(r => r.json())
       .then(data => {
-        if (data.env) {
+        if (data.found && data.env && Object.keys(data.env).length > 0) {
           setLiveEnv(data.env);
           if (data.pairSiteUrl) setLivePairSiteUrl(data.pairSiteUrl);
           const defaults: Record<string, string> = {};
@@ -67,6 +68,8 @@ export default function Deploy() {
             if (cfg.value) defaults[key] = cfg.value;
           }
           setEnvVars(defaults);
+        } else if (data.env) {
+          setLiveEnv(data.env);
         } else {
           setLiveEnv(selectedBot.env as unknown as EnvConfig);
         }

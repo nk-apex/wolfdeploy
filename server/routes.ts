@@ -252,6 +252,7 @@ export async function registerRoutes(
     if (!bot) return res.status(404).json({ error: "Bot not found" });
 
     const repoUrl = bot.repository;
+    console.log(`[fetch-env] Fetching app.json from: ${repoUrl}`);
     try {
       let appJson: Record<string, any> | null = null;
 
@@ -262,27 +263,44 @@ export async function registerRoutes(
         const repoPath = ghMatch[1];
         for (const branch of ["main", "master"]) {
           try {
-            const r = await fetch(`https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`);
-            if (r.ok) { appJson = await r.json(); break; }
-          } catch (_) {}
+            const url = `https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`;
+            console.log(`[fetch-env] Trying GitHub: ${url}`);
+            const r = await fetch(url);
+            if (r.ok) { appJson = await r.json(); console.log(`[fetch-env] Found app.json on branch ${branch}`); break; }
+          } catch (e: any) { console.log(`[fetch-env] GitHub fetch error: ${e.message}`); }
         }
       } else if (glMatch) {
         const repoPath = glMatch[1];
         const encoded = encodeURIComponent(repoPath);
         for (const branch of ["main", "master"]) {
           try {
-            const r = await fetch(`https://gitlab.com/api/v4/projects/${encoded}/repository/files/app.json/raw?ref=${branch}`);
-            if (r.ok) { appJson = await r.json(); break; }
-          } catch (_) {}
+            const url = `https://gitlab.com/api/v4/projects/${encoded}/repository/files/app.json/raw?ref=${branch}`;
+            console.log(`[fetch-env] Trying GitLab: ${url}`);
+            const r = await fetch(url);
+            if (r.ok) { appJson = await r.json(); console.log(`[fetch-env] Found app.json on branch ${branch}`); break; }
+          } catch (e: any) { console.log(`[fetch-env] GitLab fetch error: ${e.message}`); }
         }
+      } else {
+        console.log(`[fetch-env] Repo URL doesn't match GitHub or GitLab pattern: ${repoUrl}`);
       }
 
       if (!appJson || !appJson.env) {
+        console.log(`[fetch-env] No app.json found or no env key, falling back to catalog`);
         return res.json({ found: false, env: bot.env });
       }
 
-      res.json({ found: true, env: appJson.env, pairSiteUrl: appJson.pair_site_url || appJson.pairSiteUrl || null });
-    } catch {
+      const envKeys = Object.keys(appJson.env);
+      console.log(`[fetch-env] Success — ${envKeys.length} env vars: ${envKeys.join(", ")}`);
+      res.json({
+        found: true,
+        env: appJson.env,
+        name: appJson.name || bot.name,
+        description: appJson.description || bot.description,
+        logo: appJson.logo || appJson.image || bot.logo,
+        pairSiteUrl: appJson.pair_site_url || appJson.pairSiteUrl || appJson.website || null,
+      });
+    } catch (e: any) {
+      console.log(`[fetch-env] Fatal error: ${e.message}`);
       res.json({ found: false, env: bot.env });
     }
   });
