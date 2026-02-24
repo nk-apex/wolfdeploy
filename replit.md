@@ -46,8 +46,9 @@ Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `ge
 Two deployment modes — automatically selected based on env config:
 1. **Pterodactyl** (preferred): When `PTERODACTYL_URL` + `PTERODACTYL_API_KEY` set → creates managed game-server VPS via Pterodactyl Application API
 2. **Local process** (fallback): Clones GitHub/GitLab repo, runs npm install + npm install pg + node index.js locally
-   - **Auto-restart**: On crash, re-clones repo, reinstalls deps, restarts bot (up to 3 attempts)
-   - **Auto-cleanup**: Deployment files (repo + node_modules) cleaned up 30s after bot starts to save disk space
+   - **Auto-restart on crash**: On crash, re-clones repo, reinstalls deps, restarts bot (up to 3 attempts)
+   - **Auto-restart on server reboot**: Running bots auto-restart when PM2/server restarts (repo URL persisted in DB)
+   - **Auto-cleanup**: node_modules/.git removed 30s after bot starts; logs/tmp dirs preserved for bot runtime
    - Crashed bots auto-restart with full re-clone cycle; stopped bots need manual redeploy
 
 ### Authentication
@@ -61,7 +62,7 @@ Two deployment modes — automatically selected based on env config:
 - `platform_bots` — bot catalog (id, name, description, repository, env, etc.)
 - `notifications` — platform-wide announcements (title, message, type, active)
 - `payment_transactions` — Paystack transaction history (userId, amount, currency, coins, status, reference)
-- `deployments` — persisted deployment records (survive server restarts)
+- `deployments` — persisted deployment records (survive server restarts, auto-restart on boot)
 - `bot_registrations` — developer-submitted bots (pending/approved/rejected, 10-coin fee, 5-coin reward)
 - `user_comments` — private user feedback (admin-only visible)
 - `chat_messages` — public chat messages (admin-toggleable)

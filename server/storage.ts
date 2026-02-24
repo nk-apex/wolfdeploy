@@ -110,6 +110,8 @@ class MemStorage implements IStorage {
       const rows = await db.select().from(deploymentsTable)
         .orderBy(desc(deploymentsTable.createdAt));
 
+      const toRestart: Deployment[] = [];
+
       for (const row of rows) {
         const dep: Deployment = {
           id: row.id,
@@ -120,6 +122,7 @@ class MemStorage implements IStorage {
           plan: (row.plan as "trial" | "monthly") ?? "trial",
           expiresAt: row.expiresAt?.toISOString() ?? undefined,
           envVars: (row.envVars as Record<string, string>) ?? {},
+          repoUrl: row.repoUrl ?? undefined,
           url: row.url ?? undefined,
           pterodactylId: row.pterodactylId ?? undefined,
           pterodactylIdentifier: row.pterodactylIdentifier ?? undefined,
@@ -128,16 +131,48 @@ class MemStorage implements IStorage {
           logs: (row.logs as Deployment["logs"]) ?? [],
           metrics: (row.metrics as Deployment["metrics"]) ?? { cpu: 0, memory: 0, uptime: 0, requests: 0 },
         };
-        // Mark any that were deploying/queued as failed (they can't resume after restart)
         if (dep.status === "deploying" || dep.status === "queued") {
           dep.status = "failed";
           dep.logs.push({ timestamp: new Date().toISOString(), level: "warn", message: "Server restarted — deployment interrupted." });
         }
+        if (dep.status === "running" && dep.repoUrl && !dep.pterodactylId) {
+          toRestart.push(dep);
+        }
         this.deployments.set(dep.id, dep);
       }
       console.log(`[storage] Loaded ${rows.length} deployments from database.`);
+
+      if (toRestart.length > 0) {
+        console.log(`[storage] Auto-restarting ${toRestart.length} bot(s) that were running before server restart...`);
+        for (const dep of toRestart) {
+          this.autoRestartDeployment(dep).catch((err) => {
+            console.error(`[storage] Failed to auto-restart ${dep.botName} (${dep.id}):`, err.message);
+          });
+        }
+      }
     } catch (err) {
       console.error("[storage] Failed to load deployments from DB:", err);
+    }
+  }
+
+  private async autoRestartDeployment(dep: Deployment): Promise<void> {
+    const repoUrl = dep.repoUrl!;
+    await this.addDeploymentLog(dep.id, "info", "Server restarted — auto-restarting bot...");
+    await this.updateDeploymentStatus(dep.id, "deploying");
+
+    if (dep.expiresAt && new Date(dep.expiresAt) < new Date()) {
+      await this.addDeploymentLog(dep.id, "warn", "Plan expired — bot not restarted.");
+      await this.updateDeploymentStatus(dep.id, "stopped");
+      return;
+    }
+
+    this.deploymentMeta.set(dep.id, { repoUrl, restartCount: 0 });
+    const deployDir = join(BASE_DIR, dep.id);
+    try {
+      await this.runDeployment(dep.id, repoUrl, deployDir, dep.envVars);
+    } catch (err: any) {
+      await this.addDeploymentLog(dep.id, "error", `Auto-restart failed: ${err.message}`);
+      await this.updateDeploymentStatus(dep.id, "failed");
     }
   }
 
@@ -152,6 +187,7 @@ class MemStorage implements IStorage {
         plan: dep.plan ?? "trial",
         expiresAt: dep.expiresAt ? new Date(dep.expiresAt) : undefined,
         envVars: dep.envVars,
+        repoUrl: dep.repoUrl,
         url: dep.url,
         pterodactylId: dep.pterodactylId,
         pterodactylIdentifier: dep.pterodactylIdentifier,
@@ -271,6 +307,7 @@ class MemStorage implements IStorage {
       plan: plan ?? "trial",
       expiresAt: expiresAt?.toISOString(),
       envVars,
+      repoUrl: botRepo,
       url: undefined,
       port: undefined,
       pterodactylId: undefined,
