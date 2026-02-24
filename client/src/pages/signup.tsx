@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "wouter";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { Rocket, Eye, EyeOff, AlertCircle, CheckCircle2, ChevronDown, Globe } from "lucide-react";
 
@@ -21,7 +21,8 @@ const COUNTRIES = [
 ];
 
 export default function Signup() {
-  const { signUp } = useAuth();
+  const { signUp, user } = useAuth();
+  const [, navigate] = useLocation();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,6 +33,13 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (user && success) {
+      const t = setTimeout(() => navigate("/dashboard"), 1200);
+      return () => clearTimeout(t);
+    }
+  }, [user, success, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,9 +102,9 @@ export default function Signup() {
               >
                 <CheckCircle2 className="w-7 h-7 text-primary" />
               </div>
-              <h3 className="font-mono font-bold text-white text-base mb-2">Account created!</h3>
+              <h3 className="font-mono font-bold text-white text-base mb-2">You're in!</h3>
               <p className="text-[11px] text-gray-500 font-mono mb-3 leading-relaxed">
-                We sent a verification email to:
+                Account created for:
               </p>
               <div
                 className="px-3 py-2 rounded-lg mb-4 text-[12px] font-mono font-bold text-primary break-all"
@@ -105,7 +113,7 @@ export default function Signup() {
                 {email}
               </div>
               <p className="text-[10px] text-gray-600 font-mono leading-relaxed">
-                Click the link in that email to activate your account, then come back here to sign in.
+                Taking you to your dashboard...
               </p>
             </div>
           ) : (

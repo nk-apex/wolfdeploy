@@ -167,6 +167,57 @@ export async function registerRoutes(
     });
   });
 
+  /* ── Signup via admin API — no confirmation email, no rate limit ── */
+  app.post("/api/auth/signup", async (req, res) => {
+    const { email, password, name, country } = req.body ?? {};
+    if (!email || !password || typeof email !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "Email and password are required." });
+    }
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters." });
+    }
+
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceKey) {
+      return res.status(500).json({ error: "Auth service not configured." });
+    }
+
+    try {
+      const r = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${serviceKey}`,
+          "apikey": serviceKey,
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: typeof name === "string" ? name.trim() : "",
+            country: typeof country === "string" ? country : "NG",
+          },
+        }),
+      });
+
+      const data = await r.json() as any;
+
+      if (!r.ok) {
+        const msg: string = data?.msg || data?.message || data?.error_description || "Signup failed.";
+        if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("already exists")) {
+          return res.status(409).json({ error: "An account with this email already exists." });
+        }
+        return res.status(400).json({ error: msg });
+      }
+
+      return res.json({ success: true, userId: data.id });
+    } catch (e: any) {
+      return res.status(500).json({ error: "Could not create account. Try again later." });
+    }
+  });
+
   /* ── Bots (from DB) ─────────────────────────────────────── */
   app.get("/api/bots", async (req, res) => {
     const bots = await storage.getBots();

@@ -63,17 +63,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, country?: string) => {
-    const sb = await getSupabase();
-    const redirectTo = `${window.location.origin}/login`;
-    const { error } = await sb.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: name, country: country ?? "NG" },
-        emailRedirectTo: redirectTo,
-      },
-    });
-    return { error: error?.message ?? null };
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name, country: country ?? "NG" }),
+      });
+      const data = await res.json() as { error?: string; success?: boolean };
+      if (!res.ok || !data.success) {
+        return { error: data.error ?? "Signup failed. Please try again." };
+      }
+      // Auto sign-in immediately — no email confirmation needed
+      const sb = await getSupabase();
+      const { error: signInErr } = await sb.auth.signInWithPassword({ email, password });
+      if (signInErr) {
+        return { error: null }; // Account created, just redirect to login
+      }
+      return { error: null };
+    } catch {
+      return { error: "Could not connect. Please try again." };
+    }
   };
 
   const updateUserCountry = async (countryCode: string) => {
