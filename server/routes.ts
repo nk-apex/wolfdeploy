@@ -617,41 +617,39 @@ export async function registerRoutes(
   app.get("/api/admin/users", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      // Fetch all auth users from Supabase via service role API
-      const [supabaseUsers, ipRows, adminList] = await Promise.all([
-        fetchSupabaseUsers(),
-        db.select().from(ipRegistrations),
-        db.select().from(adminUsers),
-      ]);
+      // Supabase is the source of truth for users
+      const supabaseUsers = await fetchSupabaseUsers();
+
+      // Fetch local DB tables with individual fallbacks so a missing table never blocks the response
+      const adminList = await db.select().from(adminUsers).catch(() => []);
+      const coinRows = await db.select().from(userCoins).catch(() => []);
+      const profileRows = await db.select().from(userProfiles).catch(() => []);
 
       // Sync every Supabase auth user into local DB
       for (const u of supabaseUsers) {
-        await db.insert(userCoins).values({ userId: u.id, balance: 0 }).onConflictDoNothing();
-        await db.insert(userProfiles).values({ userId: u.id, email: u.email }).onConflictDoNothing();
+        await db.insert(userCoins).values({ userId: u.id, balance: 0 }).onConflictDoNothing().catch(() => {});
+        await db.insert(userProfiles).values({ userId: u.id, email: u.email }).onConflictDoNothing().catch(() => {});
       }
 
-      // Re-fetch updated local rows after seeding
-      const [freshCoinRows, freshUserRows] = await Promise.all([
-        db.select().from(userCoins),
-        db.select().from(userProfiles),
-      ]);
+      // Re-fetch after seeding
+      const freshCoinRows = await db.select().from(userCoins).catch(() => coinRows);
+      const freshUserRows = await db.select().from(userProfiles).catch(() => profileRows);
 
       const allDeployments = await storage.getAllDeployments();
-      const adminIds = new Set(adminList.map(a => a.userId));
-      const coinMap = new Map(freshCoinRows.map(c => [c.userId, c.balance]));
-      const userMap = new Map(freshUserRows.map(u => [u.userId, u]));
+      const adminIds = new Set(adminList.map((a: { userId: string }) => a.userId));
+      const coinMap = new Map(freshCoinRows.map((c: { userId: string; balance: number }) => [c.userId, c.balance]));
+      const userMap = new Map(freshUserRows.map((u: { userId: string }) => [u.userId, u]));
       const supabaseAuthMap = new Map(supabaseUsers.map(u => [u.id, u]));
 
-      // Build union of all user IDs (Supabase is the source of truth)
+      // Supabase users are always included; local-only records merged in
       const allUserIds = new Set([
         ...supabaseUsers.map(u => u.id),
-        ...freshCoinRows.map(c => c.userId),
-        ...ipRows.map(r => r.userId),
-        ...freshUserRows.map(u => u.userId),
+        ...freshCoinRows.map((c: { userId: string }) => c.userId),
+        ...freshUserRows.map((u: { userId: string }) => u.userId),
       ]);
 
       const usersWithMeta = Array.from(allUserIds).map(userId => {
-        const meta = userMap.get(userId);
+        const meta = userMap.get(userId) as { displayName?: string | null; email?: string | null; country?: string | null; createdAt?: Date | null } | undefined;
         const authMeta = supabaseAuthMap.get(userId);
         return {
           userId,
