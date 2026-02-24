@@ -1,0 +1,103 @@
+Pasted-02-51-05-INFO-90-packages-are-looking-for-funding-02-51_1771977096825.txt
+02:51:05
+[INFO ]
+90 packages are looking for funding
+02:51:05
+[INFO ]
+run `npm fund` for details
+02:51:05
+[INFO ]
+PostgreSQL driver installed.
+02:51:05
+[INFO ]
+Setting environment variables...
+02:51:05
+[INFO ]
+Database: Supabase PostgreSQL provisioned automatically.
+02:51:05
+[INFO ]
+Environment ready (12 variables).
+02:51:05
+[INFO ]
+Starting bot process...
+02:51:05
+[ OK ]
+Bot restarted successfully (PID: 170752)
+02:51:05
+[INFO ]
+File fetched successfully ✅✅:
+02:51:06
+[INFO ]
+Script loaded successfully✅✅!
+02:51:06
+[ERROR]
+❌ Session Error: unexpected end of file
+02:51:06
+[INFO ]
+JID verified: keith@s.whatsapp.net
+02:51:06
+[INFO ]
+Your verified JID: true
+02:51:06
+[INFO ]
+[INFO] Server Running on Port: 57761
+02:51:06
+[WARN ]
+node:internal/process/promises:394
+02:51:06
+[WARN ]
+triggerUncaughtException(err, true /* fromPromise */);
+02:51:06
+[WARN ]
+^
+02:51:06
+[ERROR]
+Error: unexpected end of file
+02:51:06
+[ERROR]
+at genericNodeError (node:internal/errors:983:15)
+02:51:06
+[ERROR]
+at wrappedFn (node:internal/errors:537:14)
+02:51:06
+[ERROR]
+at Zlib.zlibOnError [as onerror] (node:zlib:190:17)
+02:51:06
+[WARN ]
+at processChunkSync (node:zlib:429:12)
+02:51:06
+[WARN ]
+at zlibBufferSync (node:zlib:179:12)
+02:51:06
+[WARN ]
+at Object.syncBufferWrapper [as gunzipSync] (node:zlib:789:14)
+02:51:06
+[WARN ]
+at loadSession (/tmp/botforge-deployments/d9f72ab2-93da-4cf2-b3bd-54ded9df30a6/lib/botFunctions.js:328:39)
+02:51:06
+[WARN ]
+at eval (eval at fetchAlphaUrl (/tmp/botforge-deployments/d9f72ab2-93da-4cf2-b3bd-54ded9df30a6/index.js:5:2686), <anonymous>:1293:1)
+02:51:06
+[WARN ]
+at fetchAlphaUrl (/tmp/botforge-deployments/d9f72ab2-93da-4cf2-b3bd-54ded9df30a6/index.js:5:2686)
+02:51:06
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+02:51:06
+[WARN ]
+errno: -5,
+02:51:06
+[ERROR]
+code: 'Z_BUF_ERROR'
+02:51:06
+[WARN ]
+}
+02:51:06
+[WARN ]
+Node.js v22.22.0
+02:51:07
+[WARN ]
+Bot crashed (code 1). Auto-restarting... (attempt 2/3)
+02:51:12
+[INFO ]
+Cloning repository: https://gitlab.com/Keithkeizzah/KEITH-MD.git
