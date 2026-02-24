@@ -181,12 +181,14 @@ const speedLimiter = slowDown({
 });
 app.use("/api", speedLimiter);
 
-// Auth: 15 attempts / 15 min
+// Auth: 200 req / 15 min — generous limit; register-ip fires on every session restore
+// Only count failures so normal usage (login, token refresh) never hits the cap
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 15,
+  max: 200,
   message: { error: "Too many auth attempts. Try again later." },
-  skipSuccessfulRequests: false,
+  skipSuccessfulRequests: true,
+  skip: (req) => req.path === "/register-ip", // exclude session sync calls entirely
 });
 app.use("/api/auth", authLimiter);
 

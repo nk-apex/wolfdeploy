@@ -2,6 +2,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 import type { Deployment } from "@shared/schema";
 import { StatusBadge } from "@/components/status-badge";
 import {
@@ -32,9 +33,11 @@ function Spinner({ label }: { label?: string }) {
 
 export default function MyBots() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const { data: deployments = [], isLoading } = useQuery<Deployment[]>({
     queryKey: ["/api/deployments"],
     refetchInterval: 5000,
+    enabled: !!user,
   });
 
   const stopMutation = useMutation({

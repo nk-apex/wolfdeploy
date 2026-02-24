@@ -13,6 +13,7 @@ export default function Dashboard() {
   const { data: deployments = [], isLoading: depLoading } = useQuery<Deployment[]>({
     queryKey: ["/api/deployments"],
     refetchInterval: 4000,
+    enabled: !!user,
   });
   const { data: bots = [] } = useQuery<BotType[]>({
     queryKey: ["/api/bots"],

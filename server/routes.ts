@@ -1078,8 +1078,6 @@ export async function registerRoutes(
   });
 
   app.get("/api/chat/messages", async (req, res) => {
-    const uid = getUserId(req);
-    if (!uid) return res.status(401).json({ error: "Authentication required" });
     if (!(await isChatEnabled())) return res.json({ messages: [], enabled: false });
 
     const limit = Math.min(Number(req.query.limit) || 50, 100);
