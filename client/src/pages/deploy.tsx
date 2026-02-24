@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth";
 import type { Bot, Deployment } from "@shared/schema";
 import {
   Rocket, ExternalLink, Lock, ArrowUpRight,
-  ArrowLeft, Coins, ShoppingCart, AlertCircle,
+  ArrowLeft, Coins, ShoppingCart, AlertCircle, Shield,
 } from "lucide-react";
 
 export default function Deploy() {
@@ -22,9 +22,15 @@ export default function Deploy() {
 
   const { data: bots = [], isLoading } = useQuery<Bot[]>({ queryKey: ["/api/bots"] });
 
+  const { data: adminData } = useQuery<{ isAdmin: boolean }>({
+    queryKey: ["/api/admin/check"],
+    staleTime: 0,
+  });
+  const isAdmin = adminData?.isAdmin ?? false;
+
   const { data: coinData } = useQuery<{ balance: number }>({
     queryKey: ["/api/coins", user?.id],
-    enabled: !!user?.id,
+    enabled: !!user?.id && !isAdmin,
     queryFn: async () => {
       const res = await fetch(`/api/coins/${user!.id}`);
       return res.json();
@@ -34,7 +40,7 @@ export default function Deploy() {
   });
 
   const balance = coinData?.balance ?? 0;
-  const canAfford = balance >= 100;
+  const canAfford = isAdmin || balance >= 100;
 
   const deployMutation = useMutation({
     mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: string }) => {
@@ -91,7 +97,13 @@ export default function Deploy() {
   }
 
   /* ── Coin balance strip ── */
-  const CoinStrip = () => (
+  const CoinStrip = () => isAdmin ? (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
+      style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.3)" }}>
+      <Shield className="w-4 h-4 text-primary flex-shrink-0" />
+      <span className="text-sm font-mono font-bold text-primary">Admin — unlimited deployments, no coins required</span>
+    </div>
+  ) : (
     <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
       style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
       <div className="flex items-center gap-2.5">
@@ -173,7 +185,7 @@ export default function Deploy() {
                   </div>
                   <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(74,222,128,0.08)" }}>
                     <div className="flex items-center gap-1 text-[9px] font-mono" style={{ color: "rgba(74,222,128,0.6)" }}>
-                      <Coins className="w-2.5 h-2.5" /> 100 coins · 30 days
+                      {isAdmin ? <><Shield className="w-2.5 h-2.5" /> Free (Admin)</> : <><Coins className="w-2.5 h-2.5" /> 100 coins · 30 days</>}
                     </div>
                     <div className="py-1 px-2.5 rounded-lg font-mono text-[9px] font-bold text-primary flex items-center gap-1" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}>
                       <Rocket className="w-2.5 h-2.5" /> Deploy
@@ -271,7 +283,7 @@ export default function Deploy() {
             </div>
 
             <div className="mt-6">
-              {!canAfford && (
+              {!isAdmin && !canAfford && (
                 <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl mb-3 text-xs font-mono"
                   style={{ background: "rgba(239,68,68,0.07)", border: "1px solid rgba(239,68,68,0.25)", color: "#f87171" }}>
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
@@ -283,16 +295,18 @@ export default function Deploy() {
                 disabled={deployMutation.isPending || !canAfford}
                 className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{
-                  background: canAfford ? "rgba(74,222,128,0.15)" : "rgba(107,114,128,0.1)",
-                  border: `1px solid ${canAfford ? "rgba(74,222,128,0.4)" : "rgba(107,114,128,0.3)"}`,
+                  background: "rgba(74,222,128,0.15)",
+                  border: "1px solid rgba(74,222,128,0.4)",
                 }}>
                 {deployMutation.isPending ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /><span className="text-primary">Deploying…</span></>
+                ) : isAdmin ? (
+                  <><Shield className="w-4 h-4 text-primary" /><span className="text-primary">Admin Deploy — Free</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
                 ) : (
                   <><Rocket className="w-4 h-4 text-primary" /><span className="text-primary">Deploy — 100 coins · 30 days</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
                 )}
               </button>
-              {canAfford && (
+              {!isAdmin && canAfford && (
                 <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
                   Balance after deploy: <span className="text-primary">{balance - 100} coins</span>
                 </p>

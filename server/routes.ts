@@ -513,11 +513,13 @@ export async function registerRoutes(
 
     const { botId, envVars, plan } = result.data;
     const userId = getUserId(req) || undefined;
+    const adminUser = userId ? await isAdmin(userId) : false;
 
     const cost = PLAN_COST[plan];
     const days = PLAN_DAYS[plan];
 
-    if (userId) {
+    /* Admins bypass all coin checks and deductions */
+    if (!adminUser && userId) {
       const balance = await getBalance(userId);
       if (balance < cost) {
         return res.status(402).json({
@@ -532,13 +534,18 @@ export async function registerRoutes(
     const bot = await storage.getBot(botId);
     if (!bot) return res.status(404).json({ error: "Bot not found" });
 
-    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    /* Admins get no expiry; regular users get plan-based expiry */
+    const expiresAt = adminUser
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year for admins
+      : new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
     const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId, plan, expiresAt);
 
-    if (userId) {
+    if (!adminUser && userId) {
       await deductCoins(userId, cost);
     }
 
+    console.log(`[deploy] ${adminUser ? "ADMIN" : "user"} ${userId} deployed ${bot.name} — ${adminUser ? "no coins deducted" : `${cost} coins deducted`}`);
     res.status(201).json(deployment);
   });
 
