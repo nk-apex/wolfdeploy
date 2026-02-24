@@ -9,6 +9,7 @@ import { storage } from "./storage";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import slowDown from "express-slow-down";
+import { scraperDefense, robotsHeaders, robotsTxt, sameOriginApiGuard } from "./scraper-defense";
 
 const app = express();
 const httpServer = createServer(app);
@@ -89,68 +90,27 @@ app.use((_req, res, next) => {
 });
 
 /* ═══════════════════════════════════════════════════════════
-   CORS — API only accepts same-origin by default
+   SAME-ORIGIN API GUARD
+   Validates Origin/Referer on sensitive API calls
 ════════════════════════════════════════════════════════════ */
-app.use("/api", (req, res, next) => {
-  const origin = req.headers.origin;
-  const host = req.headers.host;
-
-  // In production, reject cross-origin API requests that aren't from the same host
-  if (origin && host) {
-    try {
-      const originHost = new URL(origin).host;
-      if (originHost !== host) {
-        return res.status(403).json({ error: "Cross-origin API access not allowed" });
-      }
-    } catch (_) {
-      return res.status(403).json({ error: "Invalid origin" });
-    }
-  }
-  next();
-});
+app.use("/api", sameOriginApiGuard);
 
 /* ═══════════════════════════════════════════════════════════
-   BOT / SCRAPER BLOCKING — broad UA pattern list
+   ANTI-SCRAPING DEFENSE LAYER
+   - AI/LLM crawlers → honeypot fake content
+   - Scrapers/scanners → 403 blocked
+   - robots.txt → disallow all
+   - X-Robots-Tag → noindex on every response
 ════════════════════════════════════════════════════════════ */
-const BLOCKED_AGENTS = new RegExp(
-  [
-    // Scrapers & crawlers
-    "scrapy", "python-requests", "python-urllib", "python-httpx",
-    "go-http", "go http", "go/", "ruby", "perl",
-    "php/", "java/", "jakarta",
-    // Security scanners
-    "masscan", "nmap", "nikto", "sqlmap", "havij",
-    "zgrab", "zmap", "masscan", "nuclei", "dirbuster",
-    "gobuster", "wfuzz", "ffuf", "feroxbuster",
-    "burpsuite", "burp suite", "acunetix", "nessus",
-    "openvas", "w3af", "skipfish",
-    // Generic bots
-    "libwww", "lwp-", "httpclient",
-    "apachebench", "ab/", "siege/",
-    "wget/", "httrack", "webcopier",
-    "curl/7\\.[0-4]",
-    // Headless browsers when used for scraping
-    "headlesschrome", "phantomjs", "selenium", "webdriver",
-    "playwright", "puppeteer",
-    // Empty UA
-  ].join("|"),
-  "i"
-);
 
-app.use((req, res, next) => {
-  const ua = (req.headers["user-agent"] || "").trim();
+// robots.txt — must come before scraperDefense so crawlers can read it
+app.get("/robots.txt", robotsTxt);
 
-  // Block empty user agents on API routes
-  if (!ua && req.path.startsWith("/api") && req.path !== "/api/config") {
-    return res.status(403).json({ error: "Forbidden" });
-  }
+// Serve X-Robots-Tag on all responses
+app.use(robotsHeaders);
 
-  if (ua && BLOCKED_AGENTS.test(ua)) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-
-  next();
-});
+// Detect and intercept scrapers/AI crawlers (must run early, before rate limits)
+app.use(scraperDefense);
 
 /* ═══════════════════════════════════════════════════════════
    MALICIOUS PAYLOAD DETECTION

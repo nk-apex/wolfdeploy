@@ -106,12 +106,21 @@ export async function registerRoutes(
   });
 
   /* ── Bots (from DB) ─────────────────────────────────────── */
-  app.get("/api/bots", async (_req, res) => {
+  app.get("/api/bots", async (req, res) => {
     const bots = await storage.getBots();
-    res.json(bots);
+    const uid = getUserId(req);
+    // Authenticated users get the full payload; unauthenticated get a redacted version
+    if (uid) {
+      return res.json(bots);
+    }
+    // Strip GitHub repo URLs and detailed env var info from public response
+    const redacted = bots.map(({ repository: _r, env: _e, ...pub }) => pub);
+    return res.json(redacted);
   });
 
   app.get("/api/bots/:id", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
     const bot = await storage.getBot(req.params.id);
     if (!bot) return res.status(404).json({ error: "Bot not found" });
     res.json(bot);
