@@ -87,15 +87,21 @@ const DEFAULT_BOTS = [
   },
 ];
 
+const MAX_RESTART_ATTEMPTS = 3;
+const RESTART_DELAY_MS = 5000;
+const CLEANUP_DELAY_MS = 30000;
+
 class MemStorage implements IStorage {
   private deployments: Map<string, Deployment>;
   private processes: Map<string, ChildProcess>;
   private logFlushTimers: Map<string, NodeJS.Timeout>;
+  private deploymentMeta: Map<string, { repoUrl: string; restartCount: number }>;
 
   constructor() {
     this.deployments = new Map();
     this.processes = new Map();
     this.logFlushTimers = new Map();
+    this.deploymentMeta = new Map();
     mkdirSync(BASE_DIR, { recursive: true });
   }
 
@@ -283,6 +289,7 @@ class MemStorage implements IStorage {
         await this.updateDeploymentStatus(id, "failed");
       });
     } else {
+      this.deploymentMeta.set(id, { repoUrl: botRepo, restartCount: 0 });
       const deployDir = join(BASE_DIR, id);
       this.runDeployment(id, botRepo, deployDir, envVars).catch(async (err) => {
         await this.addDeploymentLog(id, "error", `Fatal: ${err.message}`);
@@ -349,13 +356,15 @@ class MemStorage implements IStorage {
     await this.updateDeploymentStatus(id, "running");
   }
 
-  private async runDeployment(
+  private async setupAndStartBot(
     id: string,
     repoUrl: string,
     deployDir: string,
     envVars: Record<string, string>
-  ): Promise<void> {
-    await this.updateDeploymentStatus(id, "deploying");
+  ): Promise<{ botProcess: ReturnType<typeof spawn>; fullEnv: Record<string, string> }> {
+    if (existsSync(deployDir)) {
+      rmSync(deployDir, { recursive: true, force: true });
+    }
 
     await this.addDeploymentLog(id, "info", `Cloning repository: ${repoUrl}`);
     await this.spawnStep(id, "git", ["clone", "--depth=1", repoUrl, deployDir], {});
@@ -402,6 +411,32 @@ class MemStorage implements IStorage {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
+    return { botProcess, fullEnv };
+  }
+
+  private cleanupDeployDir(id: string, deployDir: string): void {
+    setTimeout(() => {
+      try {
+        if (existsSync(deployDir)) {
+          rmSync(deployDir, { recursive: true, force: true });
+          console.log(`[cleanup] Cleaned up deployment files for ${id}`);
+        }
+      } catch (e: any) {
+        console.log(`[cleanup] Failed to clean ${id}: ${e.message}`);
+      }
+    }, CLEANUP_DELAY_MS);
+  }
+
+  private async runDeployment(
+    id: string,
+    repoUrl: string,
+    deployDir: string,
+    envVars: Record<string, string>
+  ): Promise<void> {
+    await this.updateDeploymentStatus(id, "deploying");
+
+    const { botProcess } = await this.setupAndStartBot(id, repoUrl, deployDir, envVars);
+
     this.processes.set(id, botProcess);
     await this.updateDeploymentStatus(id, "running");
 
@@ -413,6 +448,17 @@ class MemStorage implements IStorage {
 
     await this.addDeploymentLog(id, "success", `Bot process started (PID: ${botProcess.pid})`);
 
+    this.cleanupDeployDir(id, deployDir);
+
+    this.attachProcessHandlers(id, botProcess, deployDir, envVars);
+  }
+
+  private attachProcessHandlers(
+    id: string,
+    botProcess: ReturnType<typeof spawn>,
+    deployDir: string,
+    envVars: Record<string, string>
+  ): void {
     botProcess.stdout?.on("data", (chunk: Buffer) => {
       const lines = chunk.toString().split("\n").filter(l => l.trim());
       for (const line of lines) this.addDeploymentLog(id, "info", line.trim());
@@ -440,11 +486,32 @@ class MemStorage implements IStorage {
         }
         const dep = this.deployments.get(id);
         if (!dep || dep.status === "stopped") return;
-        if (code === 0) {
+
+        const meta = this.deploymentMeta.get(id);
+        if (code !== 0 && meta && meta.restartCount < MAX_RESTART_ATTEMPTS) {
+          meta.restartCount++;
+          await this.addDeploymentLog(id, "warn", `Bot crashed (code ${code ?? signal}). Auto-restarting... (attempt ${meta.restartCount}/${MAX_RESTART_ATTEMPTS})`);
+          await this.updateDeploymentStatus(id, "deploying");
+
+          setTimeout(async () => {
+            try {
+              const newDeployDir = join(BASE_DIR, id);
+              const { botProcess: newProc } = await this.setupAndStartBot(id, meta.repoUrl, newDeployDir, envVars);
+              this.processes.set(id, newProc);
+              await this.updateDeploymentStatus(id, "running");
+              await this.addDeploymentLog(id, "success", `Bot restarted successfully (PID: ${newProc.pid})`);
+              this.cleanupDeployDir(id, newDeployDir);
+              this.attachProcessHandlers(id, newProc, newDeployDir, envVars);
+            } catch (err: any) {
+              await this.addDeploymentLog(id, "error", `Auto-restart failed: ${err.message}`);
+              await this.updateDeploymentStatus(id, "failed");
+            }
+          }, RESTART_DELAY_MS);
+        } else if (code === 0) {
           await this.addDeploymentLog(id, "info", `Process exited cleanly (code 0).`);
           await this.updateDeploymentStatus(id, "stopped");
         } else {
-          await this.addDeploymentLog(id, "error", `Process exited with code ${code ?? signal}. Bot crashed.`);
+          await this.addDeploymentLog(id, "error", `Process exited with code ${code ?? signal}. Bot crashed. Max restart attempts reached.`);
           await this.updateDeploymentStatus(id, "failed");
         }
       }, 600);
@@ -524,6 +591,7 @@ class MemStorage implements IStorage {
         await this.addDeploymentLog(id, "warn", `Could not stop Pterodactyl server: ${e.message}`);
       }
     } else {
+      this.deploymentMeta.delete(id);
       const proc = this.processes.get(id);
       if (proc && !proc.killed) {
         await this.addDeploymentLog(id, "warn", "Received stop signal. Sending SIGTERM to bot process...");
@@ -533,6 +601,10 @@ class MemStorage implements IStorage {
       } else {
         await this.addDeploymentLog(id, "warn", "No running process found for this deployment.");
       }
+      const deployDir = join(BASE_DIR, id);
+      if (existsSync(deployDir)) {
+        try { rmSync(deployDir, { recursive: true, force: true }); } catch (_) {}
+      }
     }
 
     await this.addDeploymentLog(id, "info", "Bot stopped.");
@@ -541,6 +613,7 @@ class MemStorage implements IStorage {
 
   async deleteDeployment(id: string): Promise<boolean> {
     const dep = this.deployments.get(id);
+    this.deploymentMeta.delete(id);
 
     if (dep?.pterodactylId) {
       try {

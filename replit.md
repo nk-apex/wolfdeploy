@@ -45,7 +45,10 @@ Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `ge
 ### Deployment Backends
 Two deployment modes — automatically selected based on env config:
 1. **Pterodactyl** (preferred): When `PTERODACTYL_URL` + `PTERODACTYL_API_KEY` set → creates managed game-server VPS via Pterodactyl Application API
-2. **Local process** (fallback): Clones GitHub repo, runs npm install + node index.js locally
+2. **Local process** (fallback): Clones GitHub/GitLab repo, runs npm install + npm install pg + node index.js locally
+   - **Auto-restart**: On crash, re-clones repo, reinstalls deps, restarts bot (up to 3 attempts)
+   - **Auto-cleanup**: Deployment files (repo + node_modules) cleaned up 30s after bot starts to save disk space
+   - Crashed bots auto-restart with full re-clone cycle; stopped bots need manual redeploy
 
 ### Authentication
 - Supabase Auth (email/password + email confirmation)
