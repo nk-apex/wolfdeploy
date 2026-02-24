@@ -198,7 +198,7 @@ export default function RegisterBot() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         {[
           { icon: Coins, label: "Listing Fee", value: "100 Coins", desc: "One-time fee per submission" },
-          { icon: Gift, label: "Approval Reward", value: "5 Coins", desc: "Earned when your bot is approved" },
+          { icon: Gift, label: "Approval Reward", value: "100 Coins", desc: "Earned when your bot is approved" },
           { icon: Clock, label: "Claim Window", value: "7 Days", desc: "Claim your reward before it expires" },
         ].map(card => (
           <div

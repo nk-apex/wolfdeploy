@@ -904,7 +904,7 @@ export async function registerRoutes(
     }
   });
 
-  /* Submit a bot registration — costs 10 coins, grants 5-coin reward expiring in 7 days */
+  /* Submit a bot registration — costs 100 coins, grants 100-coin reward expiring in 7 days */
   app.post("/api/bot-registrations", botRegLimiter, async (req, res) => {
     const uid = getUserId(req);
     if (!uid) return res.status(401).json({ error: "Authentication required" });
@@ -961,7 +961,7 @@ export async function registerRoutes(
     res.json(regs);
   });
 
-  /* Redeem the 5-coin reward for an approved registration */
+  /* Redeem the 100-coin reward for an approved registration */
   app.post("/api/bot-registrations/:id/redeem", async (req, res) => {
     const uid = getUserId(req);
     if (!uid) return res.status(401).json({ error: "Authentication required" });
@@ -976,10 +976,10 @@ export async function registerRoutes(
       return res.status(410).json({ error: "Reward has expired" });
     }
 
-    const balance = await creditCoins(uid, 5);
+    const balance = await creditCoins(uid, 100);
     await db.update(botRegistrations).set({ rewardClaimed: true }).where(eq(botRegistrations.id, reg.id));
 
-    res.json({ success: true, coinsEarned: 5, balance });
+    res.json({ success: true, coinsEarned: 100, balance });
   });
 
   /* ── Admin: Bot Registrations ────────────────────────────── */
