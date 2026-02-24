@@ -93,6 +93,7 @@ type BotRegistration = {
   name: string;
   description: string;
   repository: string;
+  pairSiteUrl: string | null;
   status: string;
   rewardClaimed: boolean;
   rewardExpiresAt: string | null;
@@ -360,6 +361,17 @@ export default function AdminPage() {
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/bot-registrations"] }); toast({ title: "Registration deleted" }); },
   });
 
+  const savePairSiteMutation = useMutation({
+    mutationFn: ({ id, pairSiteUrl }: { id: string; pairSiteUrl: string }) =>
+      apiRequest("PATCH", `/api/admin/bot-registrations/${id}/pair-site`, { pairSiteUrl }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/bot-registrations"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bots"] });
+      toast({ title: "Pair site URL saved" });
+    },
+    onError: () => toast({ title: "Failed to save pair site URL", variant: "destructive" }),
+  });
+
   const deleteCommentMutation = useMutation({
     mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/comments/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/comments"] }); toast({ title: "Comment deleted" }); },
@@ -385,6 +397,7 @@ export default function AdminPage() {
   });
 
   const [regNotes, setRegNotes] = useState<Record<string, string>>({});
+  const [regPairSites, setRegPairSites] = useState<Record<string, string>>({});
 
   // Coin adjust inline state
   const [coinInputs, setCoinInputs] = useState<Record<string, string>>({});
@@ -892,6 +905,25 @@ export default function AdminPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
+                        <div className="flex gap-1.5">
+                          <Input
+                            data-testid={`input-pair-site-${reg.id}`}
+                            placeholder="Pair site URL (e.g. https://pair.example.com)"
+                            value={regPairSites[reg.id] ?? reg.pairSiteUrl ?? ""}
+                            onChange={e => setRegPairSites(p => ({ ...p, [reg.id]: e.target.value }))}
+                            className="bg-white/5 border-white/10 text-xs font-mono h-7 flex-1"
+                          />
+                          <Button
+                            data-testid={`button-save-pair-site-${reg.id}`}
+                            size="sm"
+                            disabled={savePairSiteMutation.isPending}
+                            onClick={() => savePairSiteMutation.mutate({ id: reg.id, pairSiteUrl: regPairSites[reg.id] ?? reg.pairSiteUrl ?? "" })}
+                            className="text-xs font-mono h-7 px-2.5"
+                            style={{ background: "rgba(74,222,128,0.12)", color: "#4ade80", border: "1px solid rgba(74,222,128,0.3)" }}
+                          >
+                            <Globe size={11} className="mr-1" /> Save URL
+                          </Button>
+                        </div>
                         <Input
                           data-testid={`input-reg-notes-${reg.id}`}
                           placeholder="Review notes (optional)"

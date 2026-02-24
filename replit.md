@@ -1,7 +1,7 @@
 # WolfDeploy - WhatsApp Bot Deployment Platform
 
 ## Overview
-A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs. Coin-based billing via Paystack (10 coins = 1 deployment).
+A Heroku-style platform for deploying WhatsApp bots. Users sign up/log in via Supabase Auth, select from a catalog of bot templates, configure environment variables, and deploy them with real-time logs. Coin-based billing via Paystack — time-based model: 1 coin deducted per running bot every 2.5 hours (100 coins ≈ 10.4 days runtime per bot). Minimum 50 KES = 100 coins. Bots are auto-stopped when the user's balance hits 0.
 
 ## UI Style & Theming
 Multi-theme system stored in localStorage, toggled via Settings → Appearance:

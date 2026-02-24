@@ -11,7 +11,8 @@ import {
   Bot as BotIcon, ArrowLeft, Coins, AlertCircle, ShoppingCart,
 } from "lucide-react";
 
-const COINS_PER_BOT = 10;
+/* Coins are deducted over time: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
+const MIN_COINS = 1;
 
 export default function Deploy() {
   const [, navigate] = useLocation();
@@ -36,7 +37,7 @@ export default function Deploy() {
   });
 
   const balance = coinData?.balance ?? 0;
-  const hasCoins = balance >= COINS_PER_BOT;
+  const hasCoins = balance >= MIN_COINS;
 
   const deployMutation = useMutation({
     mutationFn: async (data: { botId: string; envVars: Record<string, string> }) => {
@@ -55,7 +56,7 @@ export default function Deploy() {
     },
     onError: (err: Error) => {
       if (err.message === "Insufficient coins") {
-        toast({ title: "Not enough coins", description: `You need ${COINS_PER_BOT} coins to deploy a bot. Buy more coins on the Billing page.`, variant: "destructive" });
+        toast({ title: "Not enough coins", description: "You need at least 1 coin to deploy a bot. Buy coins on the Billing page.", variant: "destructive" });
       } else {
         toast({ title: "Deployment failed", description: err.message, variant: "destructive" });
       }
@@ -68,7 +69,7 @@ export default function Deploy() {
   const handleDeploy = () => {
     if (!selectedBot) return;
     if (!hasCoins) {
-      toast({ title: "Insufficient coins", description: `You need ${COINS_PER_BOT} coins. Current balance: ${balance}.`, variant: "destructive" });
+      toast({ title: "Insufficient coins", description: `You need at least 1 coin to deploy. Current balance: ${balance}.`, variant: "destructive" });
       return;
     }
     const missing = Object.entries(selectedBot.env)
@@ -111,7 +112,7 @@ export default function Deploy() {
         <div>
           <span className="text-sm font-mono font-bold text-white">{balance} coins</span>
           <span className="text-[10px] font-mono ml-2" style={{ color: hasCoins ? "rgba(74,222,128,0.7)" : "#f97316" }}>
-            {hasCoins ? `= ${Math.floor(balance / 10)} bot${Math.floor(balance / 10) !== 1 ? "s" : ""}` : "— top up to deploy"}
+            {hasCoins ? `≈ ${Math.round(balance * 2.5)}h runtime` : "— top up to deploy"}
           </span>
         </div>
       </div>
@@ -147,7 +148,7 @@ export default function Deploy() {
             </div>
             <h3 className="text-white font-bold text-base mb-2 font-mono">Insufficient Coins</h3>
             <p className="text-gray-400 text-xs font-mono mb-5 max-w-xs mx-auto">
-              You need at least <strong className="text-white">{COINS_PER_BOT} coins</strong> to deploy a bot. Your current balance is <strong className="text-white">{balance} coins</strong>.
+              You need at least <strong className="text-white">1 coin</strong> to deploy a bot. Your current balance is <strong className="text-white">{balance} coins</strong>.
             </p>
             <Link href="/billing">
               <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono font-bold text-sm transition-all"
@@ -196,7 +197,7 @@ export default function Deploy() {
                   </div>
                   <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(74,222,128,0.08)" }}>
                     <div className="flex items-center gap-1 text-[9px] font-mono" style={{ color: "rgba(74,222,128,0.6)" }}>
-                      <Coins className="w-2.5 h-2.5" /> {COINS_PER_BOT} coins
+                      <Coins className="w-2.5 h-2.5" /> time-based
                     </div>
                     <div className="py-1 px-2.5 rounded-lg font-mono text-[9px] font-bold text-primary flex items-center gap-1" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}>
                       <Rocket className="w-2.5 h-2.5" /> Deploy
@@ -252,6 +253,14 @@ export default function Deploy() {
                 <ExternalLink className="w-3 h-3 flex-shrink-0" />
                 <span className="truncate">{selectedBot.repository.replace("https://", "")}</span>
               </a>
+              {selectedBot.pairSiteUrl && (
+                <a href={selectedBot.pairSiteUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-[10px] font-mono hover:underline rounded-lg px-2.5 py-1.5"
+                  style={{ color: "#34d399", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
+                  <ExternalLink className="w-3 h-3 flex-shrink-0" />
+                  <span>Generate Session ID</span>
+                </a>
+              )}
               <div style={{ borderTop: "1px solid rgba(74,222,128,0.1)", paddingTop: "12px" }}>
                 <p className="text-[9px] text-gray-600 font-mono uppercase tracking-widest mb-2">Required Config</p>
                 {Object.entries(selectedBot.env).map(([key, cfg]) => (
@@ -264,7 +273,7 @@ export default function Deploy() {
               </div>
               <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.12)", borderRadius: "8px", padding: "6px 10px" }}>
                 <Coins className="w-3 h-3 text-primary flex-shrink-0" />
-                <span className="text-gray-400">Costs <strong className="text-white">{COINS_PER_BOT} coins</strong> · Balance: <strong className="text-primary">{balance}</strong></span>
+                <span className="text-gray-400">1 coin / 2.5h · Balance: <strong className="text-primary">{balance} coins</strong></span>
               </div>
             </div>
           </div>
@@ -302,7 +311,7 @@ export default function Deploy() {
                 {deployMutation.isPending ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /><span className="text-primary">Deploying…</span></>
                 ) : (
-                  <><Rocket className="w-4 h-4 text-primary" /><span className="text-primary">Deploy Bot ({COINS_PER_BOT} coins)</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
+                  <><Rocket className="w-4 h-4 text-primary" /><span className="text-primary">Deploy Bot</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
                 )}
               </button>
               {!hasCoins && (
@@ -312,7 +321,7 @@ export default function Deploy() {
               )}
               {hasCoins && (
                 <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
-                  Balance after deploy: <span className="text-primary">{balance - COINS_PER_BOT} coins</span>
+                  Billed at 1 coin / 2.5h while running · Balance: <span className="text-primary">{balance} coins</span>
                 </p>
               )}
             </div>

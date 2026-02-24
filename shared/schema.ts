@@ -8,6 +8,7 @@ export const botSchema = z.object({
   description: z.string(),
   repository: z.string(),
   logo: z.string().optional(),
+  pairSiteUrl: z.string().optional(),
   keywords: z.array(z.string()),
   env: z.record(z.object({
     description: z.string(),
@@ -84,6 +85,7 @@ export const platformBots = pgTable("platform_bots", {
   description: text("description").notNull(),
   repository: varchar("repository").notNull(),
   logo: varchar("logo"),
+  pairSiteUrl: varchar("pair_site_url"),
   keywords: text("keywords").array().notNull().default(sql`'{}'::text[]`),
   category: varchar("category").default("WhatsApp Bot"),
   stars: integer("stars").default(0),

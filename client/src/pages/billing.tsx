@@ -13,7 +13,7 @@ const KES_RATES: Record<string, number> = {
   XAF: 5.4, ZMW: 0.077, EGP: 0.36, ETB: 0.42, USD: 0.0077,
 };
 
-const KES_PER_COIN = 7; /* Base: 10 coins = 70 KES */
+const KES_PER_COIN = 0.5; /* 100 coins = KES 50 (minimum purchase) */
 
 function coinsToPrice(coins: number, currency: string): number {
   const rate = KES_RATES[currency] ?? KES_RATES.USD;
@@ -30,9 +30,9 @@ function priceToCoins(price: number, currency: string): number {
 }
 
 const PACKAGES = [
-  { id: "mini",    coins: 10,  bots: 1,  bonus: 0,  label: "Mini Pack",    icon: Bot,     popular: false, tagline: "Get started with 1 bot" },
-  { id: "starter", coins: 50,  bots: 5,  bonus: 0,  label: "Starter Pack", icon: Zap,     popular: false, tagline: "Run up to 5 bots" },
-  { id: "power",   coins: 100, bots: 10, bonus: 10, label: "Power Pack",   icon: Star,    popular: true,  tagline: "10 bots + 10 bonus coins" },
+  { id: "starter", coins: 100, days: 10, bonus: 0,  label: "Starter Pack", icon: Bot,  popular: false, tagline: "~1.5 weeks for 1 bot" },
+  { id: "power",   coins: 250, days: 26, bonus: 25, label: "Power Pack",   icon: Zap,  popular: true,  tagline: "~3.5 weeks + 25 bonus coins" },
+  { id: "ultra",   coins: 600, days: 63, bonus: 100,label: "Ultra Pack",   icon: Star, popular: false, tagline: "~9 weeks + 100 bonus coins" },
 ];
 
 /* directCharge: true  = Paystack Charge API works (Ghana, Rwanda, Uganda)
@@ -856,7 +856,7 @@ export default function Billing() {
                 </div>
                 <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.12)}` }}>
                   <Bot className="w-3.5 h-3.5 flex-shrink-0" style={{ color: t.accent }} />
-                  <span className="text-xs font-mono text-white">Supports <strong>{pkg.bots}</strong> bot{pkg.bots > 1 ? "s" : ""}</span>
+                  <span className="text-xs font-mono text-white">~<strong>{pkg.days}</strong> days runtime{pkg.bonus > 0 ? ` + ${pkg.bonus} bonus` : ""}</span>
                 </div>
                 <p className="text-[10px] font-mono mb-4 flex-1" style={{ color: t.textMuted }}>{pkg.tagline}</p>
                 <button data-testid={`button-buy-${pkg.id}`} onClick={() => openPackModal(pkg)}

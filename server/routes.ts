@@ -38,7 +38,8 @@ function sanitize(s: unknown, maxLen = 1000): string {
     .slice(0, maxLen);
 }
 
-const COINS_PER_BOT = 10;
+/* Coins are now deducted over time (1 coin per 2.5h per running bot), not upfront */
+const MIN_COINS_TO_DEPLOY = 1;
 
 async function getBalance(userId: string): Promise<number> {
   const rows = await db.select().from(userCoins).where(eq(userCoins.userId, userId));
@@ -425,7 +426,7 @@ export async function registerRoutes(
     }
   });
 
-  /* ── Deploy — requires coins ──────────────────────────────── */
+  /* ── Deploy — requires at least 1 coin (coins deducted over time, not upfront) ── */
   app.post("/api/deploy", async (req, res) => {
     const result = deployRequestSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.message });
@@ -433,12 +434,12 @@ export async function registerRoutes(
     const { botId, envVars, userId } = result.data as typeof result.data & { userId?: string };
 
     if (userId) {
-      const deductResult = await deductCoins(userId, COINS_PER_BOT);
-      if (!deductResult.ok) {
+      const balance = await getBalance(userId);
+      if (balance < MIN_COINS_TO_DEPLOY) {
         return res.status(402).json({
           error: "Insufficient coins",
-          balance: deductResult.balance,
-          required: COINS_PER_BOT,
+          balance,
+          required: MIN_COINS_TO_DEPLOY,
         });
       }
     }
@@ -863,23 +864,55 @@ export async function registerRoutes(
     if (!reg) return res.status(404).json({ error: "Registration not found" });
 
     if (status === "approved") {
-      const exists = await db.select().from(platformBots).where(eq(platformBots.id, reg.id));
-      if (exists.length === 0) {
-        await db.insert(platformBots).values({
-          id: reg.id,
-          name: reg.name,
-          description: reg.description,
-          repository: reg.repository,
-          logo: reg.logo || null,
-          keywords: reg.keywords,
-          category: reg.category || "WhatsApp Bot",
-          stars: 0,
-          env: (reg.env as any) || {},
-          active: true,
-        }).onConflictDoNothing();
-      }
+      await db.insert(platformBots).values({
+        id: reg.id,
+        name: reg.name,
+        description: reg.description,
+        repository: reg.repository,
+        logo: reg.logo || null,
+        pairSiteUrl: reg.pairSiteUrl || null,
+        keywords: reg.keywords,
+        category: reg.category || "WhatsApp Bot",
+        stars: 0,
+        env: (reg.env as any) || {},
+        active: true,
+      }).onConflictDoUpdate({
+        target: platformBots.id,
+        set: { name: reg.name, description: reg.description, pairSiteUrl: reg.pairSiteUrl || null, active: true },
+      });
     }
 
+    res.json(reg);
+  });
+
+  /* ── Admin: update pair site URL on a registration ─────────── */
+  app.patch("/api/admin/bot-registrations/:id/pair-site", async (req, res) => {
+    if (!(await requireAdmin(req, res))) return;
+    const { pairSiteUrl } = req.body;
+    const url = sanitize(pairSiteUrl || "", 500) || null;
+    const [reg] = await db.update(botRegistrations)
+      .set({ pairSiteUrl: url })
+      .where(eq(botRegistrations.id, req.params.id))
+      .returning();
+    if (!reg) return res.status(404).json({ error: "Registration not found" });
+    // Sync to platformBots if it exists there
+    await db.update(platformBots).set({ pairSiteUrl: url }).where(eq(platformBots.id, reg.id));
+    res.json(reg);
+  });
+
+  /* ── User: update their own pair site URL ───────────────────── */
+  app.patch("/api/bot-registrations/:id/pair-site", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+    const { pairSiteUrl } = req.body;
+    const url = sanitize(pairSiteUrl || "", 500) || null;
+    const [reg] = await db.update(botRegistrations)
+      .set({ pairSiteUrl: url })
+      .where(and(eq(botRegistrations.id, req.params.id), eq(botRegistrations.userId, uid)))
+      .returning();
+    if (!reg) return res.status(404).json({ error: "Registration not found or not yours" });
+    // Sync to platformBots if approved
+    await db.update(platformBots).set({ pairSiteUrl: url }).where(eq(platformBots.id, reg.id));
     res.json(reg);
   });
 
@@ -1043,6 +1076,59 @@ export async function registerRoutes(
 
     res.json({ key: req.params.key, value: String(value) });
   });
+
+  /* ═══════════════════════════════════════════════════════════
+     TIME-BASED COIN DEDUCTION JOB
+     Rate: 1 coin per running bot per 150 minutes (2.5 hours)
+     → 100 coins = 250 hours ≈ 10.4 days ≈ 1.5 weeks per bot
+  ════════════════════════════════════════════════════════════ */
+  const COIN_DEDUCTION_INTERVAL_MS = 150 * 60 * 1000; // 2.5 hours
+
+  setInterval(async () => {
+    try {
+      const allDeployments = await storage.getAllDeployments();
+      const running = allDeployments.filter(d => d.status === "running" && d.userId);
+
+      // Group by userId → count running bots per user
+      const byUser: Record<string, string[]> = {};
+      for (const dep of running) {
+        if (!dep.userId) continue;
+        (byUser[dep.userId] ??= []).push(dep.id);
+      }
+
+      for (const [userId, depIds] of Object.entries(byUser)) {
+        const coinsToDeduct = depIds.length; // 1 coin per running bot per interval
+        const result = await deductCoins(userId, coinsToDeduct);
+
+        if (!result.ok) {
+          // Out of coins — stop all bots and notify user
+          for (const depId of depIds) {
+            await storage.stopDeployment(depId);
+            await storage.addDeploymentLog(depId, "warn", "Bot stopped automatically: coin balance ran out. Top up on the Billing page to restart.");
+          }
+          const botCount = depIds.length;
+          await db.insert(notifications).values({
+            id: randomUUID(),
+            title: "⚠ Bot stopped — out of coins",
+            message: `Your ${botCount > 1 ? `${botCount} bots were` : "bot was"} automatically stopped because your coin balance ran out. Top up on the Billing page to restart.`,
+            type: "warning",
+            active: true,
+          }).onConflictDoNothing();
+        } else if (result.balance <= 10) {
+          // Low balance warning
+          await db.insert(notifications).values({
+            id: randomUUID(),
+            title: "🪙 Low coin balance",
+            message: `Your coin balance is low (${result.balance} coins remaining). Top up soon to keep your bots running.`,
+            type: "warning",
+            active: true,
+          }).onConflictDoNothing();
+        }
+      }
+    } catch (err) {
+      console.error("[coin-job] Error during coin deduction:", err);
+    }
+  }, COIN_DEDUCTION_INTERVAL_MS);
 
   return httpServer;
 }
