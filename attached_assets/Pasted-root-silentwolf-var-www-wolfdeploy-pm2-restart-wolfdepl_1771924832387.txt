@@ -1,0 +1,48 @@
+root@silentwolf:/var/www/wolfdeploy# pm2 restart wolfdeploy && sleep 3
+ && curl -s http://localhost:3002/api/admin/stats -H "x-user-id: fc5a1
+9f2-58cd-4539-8299-4da9f6de7422" -H "User-Agent: Mozilla/5.0"
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [wolfdeploy](ids: [ 10 ]
+)
+[PM2] [wolfdeploy](10) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──
+────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ m
+emory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──
+────────┤
+│ 2  │ pairwolf           │ fork     │ 3    │ online    │ 0%       │ 7
+1.3mb   │
+│ 10 │ wolfdeploy         │ fork     │ 33   │ online    │ 0%       │ 2
+1.2mb   │
+│ 7  │ wolfhost-backend   │ fork     │ 2    │ online    │ 0%       │ 7
+2.6mb   │
+│ 8  │ wolfhost-frontend  │ fork     │ 0    │ online    │ 0%       │ 7
+1.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──
+────────┘
+{"error":"Failed to fetch stats"}root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# pm2 restart wolfdeploy && sleep 3
+ && curl -s http://localhost:3002/api/admin/stats -H "x-user-id: fc5a1
+9f2-58cd-4539-8299-4da9f6de7422" -H "User-Agent: Mozilla/5.0"
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [wolfdeploy](ids: [ 10 ]
+)
+[PM2] [wolfdeploy](10) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──
+────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ m
+emory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──
+────────┤
+│ 2  │ pairwolf           │ fork     │ 3    │ online    │ 0%       │ 7
+1.3mb   │
+│ 10 │ wolfdeploy         │ fork     │ 34   │ online    │ 0%       │ 1
+5.4mb   │
+│ 7  │ wolfhost-backend   │ fork     │ 2    │ online    │ 0%       │ 7
+2.6mb   │
+│ 8  │ wolfhost-frontend  │ fork     │ 0    │ online    │ 0%       │ 7
+1.8mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──
+────────┘
+{"error":"Failed to fetch stats"}root@silentwolf:/var/www/wolfdeploy#
