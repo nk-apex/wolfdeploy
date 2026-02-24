@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
-import pg from "pg";
+
 import {
   userCoins,
   adminUsers,
@@ -94,6 +94,49 @@ async function requireAdmin(req: any, res: any): Promise<boolean> {
     return false;
   }
   return true;
+}
+
+/* ── Supabase Admin API helpers ────────────────────────────
+   Use the service role key to hit the Supabase Auth Admin API
+   This avoids the broken direct-DB pg connection issue.
+══════════════════════════════════════════════════════════ */
+type SupabaseAuthUser = {
+  id: string;
+  email: string;
+  created_at: string;
+  last_sign_in_at: string | null;
+};
+
+async function fetchSupabaseUsers(): Promise<SupabaseAuthUser[]> {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!supabaseUrl || !serviceKey) return [];
+
+  const allUsers: SupabaseAuthUser[] = [];
+  let page = 1;
+  const perPage = 200;
+
+  while (true) {
+    try {
+      const r = await fetch(
+        `${supabaseUrl}/auth/v1/admin/users?per_page=${perPage}&page=${page}`,
+        { headers: { Authorization: `Bearer ${serviceKey}`, apikey: serviceKey } }
+      );
+      if (!r.ok) {
+        console.warn("[supabase] Admin API error:", r.status, await r.text());
+        break;
+      }
+      const data = await r.json() as { users?: SupabaseAuthUser[]; total?: number };
+      if (!data.users || data.users.length === 0) break;
+      allUsers.push(...data.users);
+      if (data.users.length < perPage) break;
+      page++;
+    } catch (e) {
+      console.warn("[supabase] fetchSupabaseUsers error:", e);
+      break;
+    }
+  }
+  return allUsers;
 }
 
 export async function registerRoutes(
@@ -530,41 +573,30 @@ export async function registerRoutes(
   app.get("/api/admin/stats", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      const [coinRows, botRows, txRows, notifRows] = await Promise.all([
+      const [[coinRows], botRows, txRows, notifRows, supabaseUsers] = await Promise.all([
         db.select({ total: sql<number>`SUM(balance)` }).from(userCoins),
         db.select().from(platformBots),
         db.select().from(paymentTransactions),
         db.select().from(notifications),
+        fetchSupabaseUsers(),
       ]);
-
-      // Fetch real user count from Supabase auth.users
-      let totalUsers = 0;
-      const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
-      if (supabaseDbUrl) {
-        const supaPool = new pg.Pool({ connectionString: supabaseDbUrl, max: 2, idleTimeoutMillis: 5000 });
-        try {
-          const { rows } = await supaPool.query<{ count: string }>(`SELECT COUNT(*) as count FROM auth.users`);
-          totalUsers = parseInt(rows[0]?.count ?? "0", 10);
-        } catch (e) {
-          console.warn("[admin/stats] Could not count Supabase auth.users:", e);
-          // Fall back to local user_coins count
-          const fallback = await db.select().from(userCoins);
-          totalUsers = fallback.length;
-        } finally {
-          await supaPool.end();
-        }
-      } else {
-        const fallback = await db.select().from(userCoins);
-        totalUsers = fallback.length;
-      }
 
       const allDeployments = await storage.getAllDeployments();
       const successTxs = txRows.filter(t => t.status === "success");
       const totalRevenue = successTxs.reduce((sum, t) => sum + t.amount, 0);
 
+      // Sync new users into local DB so coin balances exist
+      for (const u of supabaseUsers) {
+        await db.insert(userCoins).values({ userId: u.id, balance: 0 }).onConflictDoNothing();
+        await db.insert(userProfiles).values({ userId: u.id, email: u.email }).onConflictDoNothing();
+      }
+
+      // Re-fetch coin total after sync
+      const [freshCoin] = await db.select({ total: sql<number>`SUM(balance)` }).from(userCoins);
+
       res.json({
-        totalUsers,
-        totalCoinsInCirculation: Number(coinRows[0]?.total ?? 0),
+        totalUsers: supabaseUsers.length,
+        totalCoinsInCirculation: Number(freshCoin?.total ?? 0),
         totalBots: botRows.length,
         activeBots: botRows.filter(b => b.active).length,
         totalDeployments: allDeployments.length,
@@ -576,6 +608,7 @@ export async function registerRoutes(
         totalNotifications: notifRows.length,
       });
     } catch (err) {
+      console.error("[admin/stats] error:", err);
       res.status(500).json({ error: "Failed to fetch stats" });
     }
   });
@@ -584,35 +617,17 @@ export async function registerRoutes(
   app.get("/api/admin/users", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      const [coinRows, ipRows, adminList, userRows] = await Promise.all([
-        db.select().from(userCoins),
+      // Fetch all auth users from Supabase via service role API
+      const [supabaseUsers, ipRows, adminList] = await Promise.all([
+        fetchSupabaseUsers(),
         db.select().from(ipRegistrations),
         db.select().from(adminUsers),
-        db.select().from(userProfiles),
       ]);
 
-      // Fetch auth users directly from Supabase PostgreSQL (auth.users table)
-      const supabaseAuthMap = new Map<string, { email: string; createdAt: Date }>();
-      const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
-      if (supabaseDbUrl) {
-        const supaPool = new pg.Pool({ connectionString: supabaseDbUrl, max: 2, idleTimeoutMillis: 5000 });
-        try {
-          const { rows: authRows } = await supaPool.query<{ id: string; email: string; created_at: Date }>(
-            `SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC`
-          );
-          for (const row of authRows) {
-            supabaseAuthMap.set(row.id, { email: row.email, createdAt: row.created_at });
-          }
-          // Ensure every Supabase auth user has a coins row so they appear in the list
-          for (const row of authRows) {
-            await db.insert(userCoins).values({ userId: row.id, balance: 0 }).onConflictDoNothing();
-            await db.insert(userProfiles).values({ userId: row.id, email: row.email }).onConflictDoNothing();
-          }
-        } catch (e) {
-          console.warn("[admin/users] Could not query Supabase auth.users:", e);
-        } finally {
-          await supaPool.end();
-        }
+      // Sync every Supabase auth user into local DB
+      for (const u of supabaseUsers) {
+        await db.insert(userCoins).values({ userId: u.id, balance: 0 }).onConflictDoNothing();
+        await db.insert(userProfiles).values({ userId: u.id, email: u.email }).onConflictDoNothing();
       }
 
       // Re-fetch updated local rows after seeding
@@ -625,13 +640,14 @@ export async function registerRoutes(
       const adminIds = new Set(adminList.map(a => a.userId));
       const coinMap = new Map(freshCoinRows.map(c => [c.userId, c.balance]));
       const userMap = new Map(freshUserRows.map(u => [u.userId, u]));
+      const supabaseAuthMap = new Map(supabaseUsers.map(u => [u.id, u]));
 
-      // Collect all unique userIds from coins, ip registrations, users table, and Supabase auth
+      // Build union of all user IDs (Supabase is the source of truth)
       const allUserIds = new Set([
+        ...supabaseUsers.map(u => u.id),
         ...freshCoinRows.map(c => c.userId),
         ...ipRows.map(r => r.userId),
         ...freshUserRows.map(u => u.userId),
-        ...Array.from(supabaseAuthMap.keys()),
       ]);
 
       const usersWithMeta = Array.from(allUserIds).map(userId => {
@@ -639,19 +655,21 @@ export async function registerRoutes(
         const authMeta = supabaseAuthMap.get(userId);
         return {
           userId,
-          email: meta?.email ?? authMeta?.email ?? null,
+          email: authMeta?.email ?? meta?.email ?? null,
           displayName: meta?.displayName ?? null,
           country: meta?.country ?? null,
           balance: coinMap.get(userId) ?? 0,
           isAdmin: adminIds.has(userId),
           deploymentCount: allDeployments.filter(d => d.userId === userId).length,
           runningBots: allDeployments.filter(d => d.userId === userId && d.status === "running").length,
-          joinedAt: meta?.createdAt ?? authMeta?.createdAt ?? null,
+          joinedAt: authMeta?.created_at ? new Date(authMeta.created_at) : meta?.createdAt ?? null,
+          lastSignIn: authMeta?.last_sign_in_at ?? null,
         };
       }).sort((a, b) => b.balance - a.balance);
 
       res.json(usersWithMeta);
-    } catch {
+    } catch (e) {
+      console.error("[admin/users] error:", e);
       res.status(500).json({ error: "Failed to fetch users" });
     }
   });
