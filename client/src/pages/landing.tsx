@@ -30,27 +30,33 @@ const FEATURES = [
 const PLANS = [
   {
     name: "Starter",
-    price: "$5",
-    period: "/server",
-    features: ["1 Bot Instance", "512MB RAM", "Shared CPU", "Community Support"],
+    coins: 10,
+    price: "KES 70",
+    period: "one-time",
+    features: ["10 Coins", "Deploy 1 Bot", "Real-time Logs", "Community Support"],
     cta: "Get Started",
     highlight: false,
+    badge: null,
+  },
+  {
+    name: "Popular",
+    coins: 50,
+    price: "KES 300",
+    period: "one-time",
+    features: ["50 Coins", "Deploy 5 Bots", "Real-time Logs", "Priority Support"],
+    cta: "Buy 50 Coins",
+    highlight: true,
+    badge: "MOST POPULAR",
   },
   {
     name: "Pro",
-    price: "$15",
-    period: "/server",
-    features: ["Unlimited Bots", "2GB RAM", "Dedicated CPU", "Priority Support"],
-    cta: "Go Pro",
-    highlight: true,
-  },
-  {
-    name: "Enterprise",
-    price: "$49",
-    period: "/server",
-    features: ["Unlimited Bots", "8GB RAM", "Dedicated Server", "24/7 Support"],
-    cta: "Contact Us",
+    coins: 100,
+    price: "KES 550",
+    period: "one-time",
+    features: ["100 Coins", "Deploy 10 Bots", "Real-time Logs", "24/7 Support"],
+    cta: "Buy 100 Coins",
     highlight: false,
+    badge: "BEST VALUE",
   },
 ];
 
@@ -266,7 +272,8 @@ export default function Landing() {
         <section className="px-6 sm:px-10 py-16 max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-[10px] text-primary font-bold tracking-widest uppercase mb-2">PRICING</p>
-            <h2 className="text-2xl sm:text-3xl font-black text-white">Simple, transparent pricing</h2>
+            <h2 className="text-2xl sm:text-3xl font-black text-white">Coin-based — pay as you go</h2>
+            <p className="text-xs text-gray-500 font-mono mt-3">10 coins = 1 bot deployment · New users get 5 free trial coins</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {PLANS.map((plan) => (
@@ -280,19 +287,20 @@ export default function Landing() {
                   boxShadow: plan.highlight ? "0 0 30px rgba(74,222,128,0.06)" : "none",
                 }}
               >
-                {plan.highlight && (
+                {plan.badge && (
                   <div
                     className="absolute top-0 right-0 text-[9px] text-primary px-2 py-0.5 font-bold rounded-bl-lg"
                     style={{ background: "rgba(74,222,128,0.15)", borderLeft: "1px solid rgba(74,222,128,0.3)", borderBottom: "1px solid rgba(74,222,128,0.3)" }}
                   >
-                    MOST POPULAR
+                    {plan.badge}
                   </div>
                 )}
                 <h3 className="font-black text-white mb-1">{plan.name}</h3>
-                <div className="mb-4">
+                <div className="mb-1">
                   <span className="text-3xl font-black text-primary">{plan.price}</span>
                   <span className="text-xs text-gray-500 ml-1">{plan.period}</span>
                 </div>
+                <p className="text-[11px] text-primary font-mono font-bold mb-4 opacity-70">{plan.coins} coins</p>
                 <div className="space-y-2 mb-6">
                   {plan.features.map((f) => (
                     <div key={f} className="flex items-center gap-2">
@@ -316,6 +324,9 @@ export default function Landing() {
               </div>
             ))}
           </div>
+          <p className="text-center text-[10px] text-gray-700 font-mono mt-6">
+            Prices shown in KES · NGN / GHS / UGX / other currencies available at checkout via Paystack
+          </p>
         </section>
 
         {/* CTA */}

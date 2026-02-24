@@ -13,6 +13,9 @@ import slowDown from "express-slow-down";
 const app = express();
 const httpServer = createServer(app);
 
+// Trust proxy — required for rate limiting + IP detection behind Replit/nginx proxy
+app.set("trust proxy", 1);
+
 declare module "http" {
   interface IncomingMessage {
     rawBody: unknown;

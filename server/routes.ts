@@ -12,6 +12,8 @@ import {
   userComments,
   chatMessages,
   platformSettings,
+  ipRegistrations,
+  userTrials,
 } from "@shared/schema";
 import { deployRequestSchema } from "@shared/schema";
 import { eq, desc, sql, and, gt } from "drizzle-orm";
@@ -329,8 +331,54 @@ export async function registerRoutes(
   /* ── Coin endpoints ─────────────────────────────────────── */
   app.get("/api/coins/:userId", async (req, res) => {
     try {
-      const balance = await getBalance(req.params.userId);
-      res.json({ balance });
+      const uid = req.params.userId;
+
+      // Check trial state and possibly expire it
+      const trialRows = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
+      const trial = trialRows[0];
+
+      if (trial && !trial.expired && trial.expiresAt && new Date() > trial.expiresAt) {
+        // Trial has expired — mark it, delete their bots, notify admin
+        await db.update(userTrials).set({ expired: true }).where(eq(userTrials.userId, uid));
+
+        const allDeps = await storage.getAllDeployments();
+        const userDeps = allDeps.filter(d => d.userId === uid);
+        for (const dep of userDeps) {
+          try { await storage.deleteDeployment(dep.id); } catch (_) {}
+        }
+
+        // Create a user-facing notification about trial expiry
+        await db.insert(notifications).values({
+          id: randomUUID(),
+          title: "Trial Expired — Top Up to Continue",
+          message: "Your 2-day free trial has ended and your bot deployments have been paused. Add coins in the Billing section to deploy again.",
+          type: "warning",
+          active: true,
+        }).onConflictDoNothing();
+
+        // Alert admin
+        await db.insert(notifications).values({
+          id: randomUUID(),
+          title: `[ADMIN] Trial Expired for User ${uid.slice(0, 8)}`,
+          message: `User ${uid} trial expired. ${userDeps.length} deployment(s) removed. Bot deployments were automatically cleaned up.`,
+          type: "error",
+          active: false,
+        }).onConflictDoNothing();
+      }
+
+      // Auto-grant 5 trial coins to first-time users
+      const existingCoins = await db.select().from(userCoins).where(eq(userCoins.userId, uid));
+      const existingTrial = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
+
+      if (existingCoins.length === 0 && existingTrial.length === 0) {
+        const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
+        await db.insert(userCoins).values({ userId: uid, balance: 5 });
+        await db.insert(userTrials).values({ userId: uid, coinsGranted: 5, expiresAt });
+      }
+
+      const balance = await getBalance(uid);
+      const newTrial = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
+      res.json({ balance, trial: newTrial[0] || null });
     } catch {
       res.status(500).json({ error: "Failed to fetch balance" });
     }
@@ -642,12 +690,56 @@ export async function registerRoutes(
 
   const botRegLimiter = rateLimit({ windowMs: 24 * 60 * 60 * 1000, max: 5, message: { error: "Bot registration limit reached for today." } });
 
+  /* Fetch app.json config from a GitHub repo */
+  app.get("/api/bot-registrations/fetch-config", async (req, res) => {
+    const uid = getUserId(req);
+    if (!uid) return res.status(401).json({ error: "Authentication required" });
+
+    const { repo } = req.query as { repo?: string };
+    if (!repo) return res.status(400).json({ error: "repo query parameter is required" });
+
+    try {
+      // Extract owner/repo from GitHub URL
+      const match = repo.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/.*)?$/);
+      if (!match) return res.status(400).json({ error: "Invalid GitHub repository URL" });
+
+      const repoPath = match[1];
+      let appJson: Record<string, any> | null = null;
+
+      // Try main branch first, then master
+      for (const branch of ["main", "master"]) {
+        try {
+          const r = await fetch(`https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`);
+          if (r.ok) {
+            appJson = await r.json();
+            break;
+          }
+        } catch (_) {}
+      }
+
+      if (!appJson) {
+        return res.json({ found: false, message: "No app.json found. Fill in details manually." });
+      }
+
+      res.json({
+        found: true,
+        name: appJson.name || "",
+        description: appJson.description || "",
+        keywords: Array.isArray(appJson.keywords) ? appJson.keywords.slice(0, 10) : [],
+        env: appJson.env || {},
+        logo: appJson.image || null,
+      });
+    } catch {
+      res.status(500).json({ error: "Failed to fetch repository configuration" });
+    }
+  });
+
   /* Submit a bot registration — costs 10 coins, grants 5-coin reward expiring in 7 days */
   app.post("/api/bot-registrations", botRegLimiter, async (req, res) => {
     const uid = getUserId(req);
     if (!uid) return res.status(401).json({ error: "Authentication required" });
 
-    const { name, description, repository, logo, keywords, category, env } = req.body;
+    const { name, description, repository, logo, keywords, category, env, developerName, pairSiteUrl } = req.body;
     if (!name || !description || !repository) {
       return res.status(400).json({ error: "name, description, and repository are required" });
     }
@@ -663,6 +755,8 @@ export async function registerRoutes(
     const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const [reg] = await db.insert(botRegistrations).values({
       userId: uid,
+      developerName: developerName?.trim().slice(0, 100) || null,
+      pairSiteUrl: pairSiteUrl?.trim().slice(0, 500) || null,
       name: name.trim().slice(0, 100),
       description: description.trim().slice(0, 1000),
       repository: repository.trim().slice(0, 500),
@@ -674,6 +768,15 @@ export async function registerRoutes(
       rewardClaimed: false,
       rewardExpiresAt,
     }).returning();
+
+    // Notify admin about new registration
+    await db.insert(notifications).values({
+      id: randomUUID(),
+      title: `[ADMIN] New Bot Registration: ${name.trim().slice(0, 50)}`,
+      message: `Developer ${developerName || uid.slice(0, 8)} submitted "${name.trim()}" for review. Check the Wolf Panel > Bot Registrations tab.`,
+      type: "info",
+      active: false,
+    }).onConflictDoNothing();
 
     res.status(201).json(reg);
   });
@@ -860,6 +963,35 @@ export async function registerRoutes(
     if (!(await requireAdmin(req, res))) return;
     await db.delete(chatMessages);
     res.json({ success: true });
+  });
+
+  /* ═══════════════════════════════════════════════════════════
+     IP REGISTRATION — one email per IP enforcement
+  ════════════════════════════════════════════════════════════ */
+  app.post("/api/auth/register-ip", async (req, res) => {
+    try {
+      const { userId } = req.body;
+      if (!userId) return res.status(400).json({ error: "userId required" });
+
+      const ip = (req.headers["x-forwarded-for"] as string || req.ip || "unknown").split(",")[0].trim();
+      const existing = await db.select().from(ipRegistrations).where(eq(ipRegistrations.ipAddress, ip));
+
+      if (existing.length > 0 && existing[0].userId !== userId) {
+        // Another account already registered from this IP
+        return res.status(409).json({
+          error: "An account is already registered from this location. Only one account per IP is allowed.",
+          blocked: true,
+        });
+      }
+
+      if (existing.length === 0) {
+        await db.insert(ipRegistrations).values({ ipAddress: ip, userId }).onConflictDoNothing();
+      }
+
+      res.json({ ok: true, ip });
+    } catch {
+      res.status(500).json({ error: "IP registration failed" });
+    }
   });
 
   /* ── Platform settings ───────────────────────────────────── */

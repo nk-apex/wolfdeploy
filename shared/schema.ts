@@ -140,6 +140,8 @@ export type PaymentTransaction = typeof paymentTransactions.$inferSelect;
 export const botRegistrations = pgTable("bot_registrations", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
+  developerName: varchar("developer_name"),
+  pairSiteUrl: varchar("pair_site_url"),
   name: varchar("name").notNull(),
   description: text("description").notNull(),
   repository: varchar("repository").notNull(),
@@ -184,3 +186,22 @@ export const platformSettings = pgTable("platform_settings", {
 });
 
 export type PlatformSetting = typeof platformSettings.$inferSelect;
+
+export const ipRegistrations = pgTable("ip_registrations", {
+  ipAddress: varchar("ip_address").primaryKey(),
+  userId: varchar("user_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type IpRegistration = typeof ipRegistrations.$inferSelect;
+
+export const userTrials = pgTable("user_trials", {
+  userId: varchar("user_id").primaryKey(),
+  coinsGranted: integer("coins_granted").notNull().default(5),
+  expiresAt: timestamp("expires_at").notNull(),
+  notified: boolean("notified").default(false),
+  expired: boolean("expired").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type UserTrial = typeof userTrials.$inferSelect;

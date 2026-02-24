@@ -30,10 +30,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       });
 
-      const { data } = sb.auth.onAuthStateChange((_event, sess) => {
+      const { data } = sb.auth.onAuthStateChange((event, sess) => {
         setSession(sess);
         setUser(sess?.user ?? null);
         setLoading(false);
+
+        // Register IP on first sign-in to enforce one-account-per-IP
+        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && sess?.user?.id) {
+          fetch("/api/auth/register-ip", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-user-id": sess.user.id },
+            body: JSON.stringify({ userId: sess.user.id }),
+          }).catch(() => {});
+        }
       });
       sub = data.subscription;
     });

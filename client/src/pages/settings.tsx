@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { User, Palette, Bell, Shield, Save, Check, LogOut } from "lucide-react";
+import { User, Palette, Bell, Shield, Save, Check, LogOut, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme, getThemeTokens, THEMES } from "@/lib/theme";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { getSupabase } from "@/lib/supabase";
 
 const SECTIONS = [
   { id: "profile", label: "Profile", icon: User },
@@ -29,6 +30,39 @@ export default function Settings() {
     billing: true,
     referrals: false,
   });
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  async function handleChangePassword() {
+    if (!newPassword || !confirmPassword) {
+      toast({ title: "Fill in all password fields", variant: "destructive" });
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast({ title: "Password too short", description: "Must be at least 6 characters.", variant: "destructive" });
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: "Passwords don't match", variant: "destructive" });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      const sb = await getSupabase();
+      const { error } = await sb.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast({ title: "Password changed!", description: "Your password has been updated successfully." });
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+    } catch (err: any) {
+      toast({ title: "Failed to change password", description: err?.message || "Please try again.", variant: "destructive" });
+    } finally {
+      setChangingPassword(false);
+    }
+  }
 
   const cardBg = t.glassEffect ? t.cardBg : "rgba(0,0,0,0.35)";
   const cardBorder = t.glassEffect ? t.cardBorder : t.accentFaded(0.15);
@@ -275,14 +309,82 @@ export default function Settings() {
                 </p>
               </div>
 
-              <button
-                data-testid="button-sign-out-settings"
-                onClick={async () => { await signOut(); navigate("/login"); }}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all"
-                style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
-              >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
-              </button>
+              {/* Change Password */}
+              <div className="pt-2">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-4">
+                  <Key className="w-4 h-4" style={{ color: t.accent }} /> Change Password
+                </h3>
+
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        data-testid="input-new-password"
+                        type={showNew ? "text" : "password"}
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        placeholder="Min. 6 characters"
+                        className="w-full px-4 py-3 rounded-xl font-mono text-sm text-white outline-none pr-10"
+                        style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.2)}` }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNew(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                        style={{ color: t.textMuted }}
+                      >
+                        {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>
+                      Confirm New Password
+                    </label>
+                    <input
+                      data-testid="input-confirm-password"
+                      type={showNew ? "text" : "password"}
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat new password"
+                      className="w-full px-4 py-3 rounded-xl font-mono text-sm text-white outline-none"
+                      style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.2)}` }}
+                    />
+                    {confirmPassword && newPassword !== confirmPassword && (
+                      <p className="text-[10px] font-mono mt-1" style={{ color: "#f87171" }}>Passwords don't match</p>
+                    )}
+                    {confirmPassword && newPassword === confirmPassword && confirmPassword.length >= 6 && (
+                      <p className="text-[10px] font-mono mt-1 text-primary">✓ Passwords match</p>
+                    )}
+                  </div>
+
+                  <button
+                    data-testid="button-change-password"
+                    onClick={handleChangePassword}
+                    disabled={changingPassword || !newPassword || !confirmPassword}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all"
+                    style={{ background: t.accentFaded(0.1), color: t.accent, border: `1px solid ${t.accentFaded(0.3)}` }}
+                  >
+                    {changingPassword ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Key className="w-3.5 h-3.5" />}
+                    {changingPassword ? "Updating…" : "Update Password"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t" style={{ borderColor: t.accentFaded(0.08) }}>
+                <button
+                  data-testid="button-sign-out-settings"
+                  onClick={async () => { await signOut(); navigate("/login"); }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all"
+                  style={{ background: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sign Out
+                </button>
+              </div>
             </div>
           )}
         </div>
