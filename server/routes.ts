@@ -933,35 +933,55 @@ export async function registerRoutes(
     const cost = selectedPlan === "trial" ? 5 : 100;
     const listingDays = selectedPlan === "trial" ? 7 : 30;
 
+    /* ── Check balance first without deducting ── */
+    const currentBalance = await getBalance(uid);
+    if (currentBalance < cost) {
+      return res.status(402).json({
+        error: `Insufficient coins. You need ${cost} coins for the ${selectedPlan} plan.`,
+        balance: currentBalance,
+        required: cost,
+      });
+    }
+
+    /* ── Insert registration first — deduct coins only after success ── */
+    let reg: any;
+    try {
+      const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      const listingExpiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000);
+
+      [reg] = await db.insert(botRegistrations).values({
+        userId: uid,
+        developerName: sanitize(developerName, 100) || null,
+        pairSiteUrl: sanitize(pairSiteUrl, 500) || null,
+        name: sanitize(name, 100),
+        description: sanitize(description, 1000),
+        repository: sanitize(repository, 500),
+        logo: sanitize(logo, 500) || null,
+        keywords: Array.isArray(keywords) ? keywords.slice(0, 10).map((k: string) => sanitize(k, 50)) : [],
+        category: sanitize(category, 50) || "WhatsApp Bot",
+        env: env || {},
+        status: "pending",
+        plan: selectedPlan,
+        listingExpiresAt,
+        rewardClaimed: false,
+        rewardExpiresAt,
+      }).returning();
+    } catch (err: any) {
+      console.error("[bot-registrations] DB insert failed — no coins deducted:", err?.message);
+      return res.status(500).json({ error: "Failed to save registration. No coins were deducted. Please try again." });
+    }
+
+    /* ── Deduct coins now that the insert succeeded ── */
     const deductResult = await deductCoins(uid, cost);
     if (!deductResult.ok) {
+      /* Extremely unlikely (race condition) — roll back the registration */
+      await db.delete(botRegistrations).where(eq(botRegistrations.id, reg.id)).catch(() => {});
       return res.status(402).json({
         error: `Insufficient coins. You need ${cost} coins for the ${selectedPlan} plan.`,
         balance: deductResult.balance,
         required: cost,
       });
     }
-
-    const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    const listingExpiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000);
-
-    const [reg] = await db.insert(botRegistrations).values({
-      userId: uid,
-      developerName: sanitize(developerName, 100) || null,
-      pairSiteUrl: sanitize(pairSiteUrl, 500) || null,
-      name: sanitize(name, 100),
-      description: sanitize(description, 1000),
-      repository: sanitize(repository, 500),
-      logo: sanitize(logo, 500) || null,
-      keywords: Array.isArray(keywords) ? keywords.slice(0, 10).map((k: string) => sanitize(k, 50)) : [],
-      category: sanitize(category, 50) || "WhatsApp Bot",
-      env: env || {},
-      status: "pending",
-      plan: selectedPlan,
-      listingExpiresAt,
-      rewardClaimed: false,
-      rewardExpiresAt,
-    }).returning();
 
     // Notify admin about new registration
     await db.insert(notifications).values({
