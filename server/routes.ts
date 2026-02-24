@@ -879,7 +879,7 @@ export async function registerRoutes(
 
   const botRegLimiter = rateLimit({ windowMs: 24 * 60 * 60 * 1000, max: 5, message: { error: "Bot registration limit reached for today." } });
 
-  /* Fetch app.json config from a GitHub repo */
+  /* Fetch app.json config from a GitHub or GitLab repo */
   app.get("/api/bot-registrations/fetch-config", async (req, res) => {
     const uid = getUserId(req);
     if (!uid) return res.status(401).json({ error: "Authentication required" });
@@ -888,22 +888,30 @@ export async function registerRoutes(
     if (!repo) return res.status(400).json({ error: "repo query parameter is required" });
 
     try {
-      // Extract owner/repo from GitHub URL
-      const match = repo.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/.*)?$/);
-      if (!match) return res.status(400).json({ error: "Invalid GitHub repository URL" });
-
-      const repoPath = match[1];
       let appJson: Record<string, any> | null = null;
 
-      // Try main branch first, then master
-      for (const branch of ["main", "master"]) {
-        try {
-          const r = await fetch(`https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`);
-          if (r.ok) {
-            appJson = await r.json();
-            break;
-          }
-        } catch (_) {}
+      const ghMatch = repo.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/.*)?$/);
+      const glMatch = repo.match(/gitlab\.com\/([^/]+(?:\/[^/]+)+?)(?:\.git)?(?:\/.*)?$/);
+
+      if (ghMatch) {
+        const repoPath = ghMatch[1];
+        for (const branch of ["main", "master"]) {
+          try {
+            const r = await fetch(`https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`);
+            if (r.ok) { appJson = await r.json(); break; }
+          } catch (_) {}
+        }
+      } else if (glMatch) {
+        const repoPath = glMatch[1];
+        const encoded = encodeURIComponent(repoPath);
+        for (const branch of ["main", "master"]) {
+          try {
+            const r = await fetch(`https://gitlab.com/api/v4/projects/${encoded}/repository/files/app.json/raw?ref=${branch}`);
+            if (r.ok) { appJson = await r.json(); break; }
+          } catch (_) {}
+        }
+      } else {
+        return res.status(400).json({ error: "Invalid repository URL. Supported: GitHub and GitLab." });
       }
 
       if (!appJson) {
@@ -916,7 +924,7 @@ export async function registerRoutes(
         description: appJson.description || "",
         keywords: Array.isArray(appJson.keywords) ? appJson.keywords.slice(0, 10) : [],
         env: appJson.env || {},
-        logo: appJson.image || null,
+        logo: appJson.logo || appJson.image || null,
       });
     } catch {
       res.status(500).json({ error: "Failed to fetch repository configuration" });

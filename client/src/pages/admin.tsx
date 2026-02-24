@@ -745,7 +745,7 @@ export default function AdminPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Input data-testid="input-bot-name" placeholder="Bot Name" className="bg-white/5 border-white/10" value={botForm.name} onChange={e => setBotForm(p => ({ ...p, name: e.target.value }))} />
                   <Input data-testid="input-bot-category" placeholder="Category" className="bg-white/5 border-white/10" value={botForm.category} onChange={e => setBotForm(p => ({ ...p, category: e.target.value }))} />
-                  <Input data-testid="input-bot-repo" placeholder="GitHub repo URL" className="bg-white/5 border-white/10 sm:col-span-2" value={botForm.repository} onChange={e => setBotForm(p => ({ ...p, repository: e.target.value }))} />
+                  <Input data-testid="input-bot-repo" placeholder="GitHub or GitLab repo URL" className="bg-white/5 border-white/10 sm:col-span-2" value={botForm.repository} onChange={e => setBotForm(p => ({ ...p, repository: e.target.value }))} />
                   <Input data-testid="input-bot-logo" placeholder="Logo URL (optional)" className="bg-white/5 border-white/10 sm:col-span-2" value={botForm.logo} onChange={e => setBotForm(p => ({ ...p, logo: e.target.value }))} />
                   <Textarea data-testid="input-bot-description" placeholder="Description" className="bg-white/5 border-white/10 sm:col-span-2 resize-none h-20" value={botForm.description} onChange={e => setBotForm(p => ({ ...p, description: e.target.value }))} />
                   <Input data-testid="input-bot-keywords" placeholder="Keywords (comma separated)" className="bg-white/5 border-white/10 sm:col-span-2" value={botForm.keywords} onChange={e => setBotForm(p => ({ ...p, keywords: e.target.value }))} />

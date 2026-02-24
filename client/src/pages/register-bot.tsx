@@ -7,9 +7,10 @@ import { Link } from "wouter";
 import {
   Bot, Gift, Clock, CheckCircle, XCircle, AlertCircle,
   ExternalLink, ChevronDown, ChevronUp, Search, Loader2,
-  Github, User, Link as LinkIcon, Tag, FileText, Package,
-  Star, ShoppingCart,
+  GitBranch, User, Link as LinkIcon, Tag, FileText, Package,
+  Star, ShoppingCart, Github,
 } from "lucide-react";
+import { SiGitlab } from "react-icons/si";
 
 type Plan = "trial" | "monthly";
 
@@ -347,7 +348,7 @@ export default function RegisterBot() {
             {/* Repo URL + auto-fetch */}
             <div>
               <label className="block text-[9px] font-mono uppercase tracking-widest text-gray-500 mb-1.5">
-                <Github className="w-3 h-3 inline mr-1" /> GitHub Repository URL *
+                <GitBranch className="w-3 h-3 inline mr-1" /> Repository URL (GitHub / GitLab) *
               </label>
               <div className="flex gap-2">
                 <input
@@ -355,7 +356,7 @@ export default function RegisterBot() {
                   type="url"
                   value={repository}
                   onChange={e => setRepository(e.target.value)}
-                  placeholder="https://github.com/you/your-bot"
+                  placeholder="https://github.com/you/your-bot  or  https://gitlab.com/you/your-bot"
                   className="flex-1 px-3 py-2.5 rounded-lg font-mono text-xs outline-none"
                   style={inputStyle}
                 />
@@ -370,7 +371,7 @@ export default function RegisterBot() {
                   Read Repo
                 </button>
               </div>
-              <p className="text-[9px] text-gray-600 font-mono mt-1">Automatically reads app.json from the repository to fill in details</p>
+              <p className="text-[9px] text-gray-600 font-mono mt-1">Supports GitHub &amp; GitLab — automatically reads app.json to fill in details</p>
             </div>
 
             {/* Logo URL */}
@@ -605,8 +606,8 @@ export default function RegisterBot() {
                             rel="noopener noreferrer"
                             className="flex items-center gap-1 text-[11px] text-primary hover:underline font-mono"
                           >
-                            <Github className="w-3 h-3" />
-                            {reg.repository.replace("https://github.com/", "")}
+                            {reg.repository.includes("gitlab.com") ? <SiGitlab className="w-3 h-3" /> : <Github className="w-3 h-3" />}
+                            {reg.repository.replace("https://github.com/", "").replace("https://gitlab.com/", "")}
                             <ExternalLink className="w-2.5 h-2.5" />
                           </a>
                         </div>
