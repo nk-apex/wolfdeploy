@@ -30,9 +30,9 @@ function priceToCoins(price: number, currency: string): number {
 }
 
 const PACKAGES = [
-  { id: "starter", coins: 100, days: 10, bonus: 0,  label: "Starter Pack", icon: Bot,  popular: false, tagline: "~1.5 weeks for 1 bot" },
-  { id: "power",   coins: 250, days: 26, bonus: 25, label: "Power Pack",   icon: Zap,  popular: true,  tagline: "~3.5 weeks + 25 bonus coins" },
-  { id: "ultra",   coins: 600, days: 63, bonus: 100,label: "Ultra Pack",   icon: Star, popular: false, tagline: "~9 weeks + 100 bonus coins" },
+  { id: "starter", coins: 100, bonus: 0,   label: "Starter Pack", icon: Bot,  popular: false, tagline: "100 coins = 1 bot running" },
+  { id: "power",   coins: 250, bonus: 25,  label: "Power Pack",   icon: Zap,  popular: true,  tagline: "275 coins = run 2+ bots" },
+  { id: "ultra",   coins: 600, bonus: 100, label: "Ultra Pack",   icon: Star, popular: false, tagline: "700 coins = run 7 bots" },
 ];
 
 /* directCharge: true  = Paystack Charge API works (Ghana, Rwanda, Uganda)
@@ -856,7 +856,7 @@ export default function Billing() {
                 </div>
                 <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg" style={{ background: t.accentFaded(0.06), border: `1px solid ${t.accentFaded(0.12)}` }}>
                   <Bot className="w-3.5 h-3.5 flex-shrink-0" style={{ color: t.accent }} />
-                  <span className="text-xs font-mono text-white">~<strong>{pkg.days}</strong> days runtime{pkg.bonus > 0 ? ` + ${pkg.bonus} bonus` : ""}</span>
+                  <span className="text-xs font-mono text-white">Run <strong>{Math.floor(totalCoins / 100)}</strong> bot{Math.floor(totalCoins / 100) !== 1 ? "s" : ""} simultaneously{pkg.bonus > 0 ? ` · +${pkg.bonus} bonus coins` : ""}</span>
                 </div>
                 <p className="text-[10px] font-mono mb-4 flex-1" style={{ color: t.textMuted }}>{pkg.tagline}</p>
                 <button data-testid={`button-buy-${pkg.id}`} onClick={() => openPackModal(pkg)}

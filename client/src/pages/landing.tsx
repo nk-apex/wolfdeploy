@@ -32,32 +32,29 @@ const PLANS = [
     name: "Starter",
     coins: 100,
     price: "KES 50",
-    period: "one-time",
-    runtime: "~1.5 weeks · 1 bot",
-    features: ["100 Coins", "1 Bot · ~1.5 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "Community Support"],
+    bots: 1,
+    features: ["100 Coins", "Run 1 Bot", "Auto coin-billing", "Real-time Logs", "Community Support"],
     cta: "Get Started — KES 50",
-    highlight: false,
-    badge: null,
-  },
-  {
-    name: "Power",
-    coins: 250,
-    price: "KES 125",
-    period: "one-time",
-    runtime: "~3.5 weeks · 1 bot",
-    features: ["250 Coins", "1 Bot · ~3.5 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "Priority Support"],
-    cta: "Buy Power Pack",
     highlight: true,
     badge: "MOST POPULAR",
   },
   {
-    name: "Ultra",
-    coins: 600,
-    price: "KES 300",
-    period: "one-time",
-    runtime: "~9 weeks · 1 bot",
-    features: ["600 Coins", "1 Bot · ~9 Weeks Runtime", "Auto-billed every 2.5 hrs", "Real-time Logs", "24/7 Support"],
-    cta: "Buy Ultra Pack",
+    name: "Double",
+    coins: 200,
+    price: "KES 100",
+    bots: 2,
+    features: ["200 Coins", "Run 2 Bots", "Auto coin-billing", "Real-time Logs", "Priority Support"],
+    cta: "Buy Double Pack",
+    highlight: false,
+    badge: null,
+  },
+  {
+    name: "Multi",
+    coins: 500,
+    price: "KES 250",
+    bots: 5,
+    features: ["500 Coins", "Run up to 5 Bots", "Auto coin-billing", "Real-time Logs", "24/7 Support"],
+    cta: "Buy Multi Pack",
     highlight: false,
     badge: "BEST VALUE",
   },
@@ -277,7 +274,7 @@ export default function Landing() {
             <p className="text-[10px] text-primary font-bold tracking-widest uppercase mb-2">PRICING</p>
             <h2 className="text-2xl sm:text-3xl font-black text-white">Simple coin-based billing</h2>
             <p className="text-xs text-gray-500 font-mono mt-3">
-              50 KES = 100 coins · 1 coin deducted per bot every 2.5 hours, automatically
+              50 KES = 100 coins · coins determine how many bots you can run
             </p>
           </div>
 
@@ -286,12 +283,12 @@ export default function Landing() {
             className="flex flex-wrap gap-4 justify-center mb-8 p-4 rounded-xl text-[11px] font-mono"
             style={{ border: "1px solid rgba(74,222,128,0.12)", background: "rgba(74,222,128,0.04)" }}
           >
-            <span className="text-gray-400"><span className="text-primary font-bold">50 KES</span> = 100 coins</span>
-            <span className="text-gray-700">→</span>
-            <span className="text-gray-400"><span className="text-primary font-bold">100 coins</span> = 1 bot · ~1.5 weeks</span>
-            <span className="text-gray-700">→</span>
-            <span className="text-gray-400">Billed <span className="text-primary font-bold">automatically</span> every 2.5 hrs</span>
-            <span className="text-gray-700">→</span>
+            <span className="text-gray-400"><span className="text-primary font-bold">100 coins</span> = 1 bot</span>
+            <span className="text-gray-700">·</span>
+            <span className="text-gray-400"><span className="text-primary font-bold">200 coins</span> = 2 bots</span>
+            <span className="text-gray-700">·</span>
+            <span className="text-gray-400">Billed <span className="text-primary font-bold">automatically</span></span>
+            <span className="text-gray-700">·</span>
             <span className="text-gray-400">Bot <span className="text-primary font-bold">auto-stops</span> at 0 coins</span>
           </div>
 
@@ -318,9 +315,9 @@ export default function Landing() {
                 <h3 className="font-black text-white mb-1">{plan.name}</h3>
                 <div className="mb-0.5">
                   <span className="text-3xl font-black text-primary">{plan.price}</span>
-                  <span className="text-xs text-gray-500 ml-1">{plan.period}</span>
+                  <span className="text-xs text-gray-500 ml-1">one-time</span>
                 </div>
-                <p className="text-[11px] text-primary font-mono font-bold opacity-70">{plan.coins} coins · {plan.runtime}</p>
+                <p className="text-[11px] text-primary font-mono font-bold opacity-70">{plan.coins} coins · {plan.bots} bot{plan.bots > 1 ? "s" : ""}</p>
                 <div className="w-full h-px my-3" style={{ background: "rgba(74,222,128,0.1)" }} />
                 <div className="space-y-2 mb-6">
                   {plan.features.map((f) => (
