@@ -247,6 +247,46 @@ export async function registerRoutes(
     res.json({ name: bot.name, description: bot.description, repository: bot.repository, keywords: bot.keywords, env: bot.env });
   });
 
+  app.get("/api/bots/:id/fetch-env", async (req, res) => {
+    const bot = await storage.getBot(req.params.id);
+    if (!bot) return res.status(404).json({ error: "Bot not found" });
+
+    const repoUrl = bot.repository;
+    try {
+      let appJson: Record<string, any> | null = null;
+
+      const ghMatch = repoUrl.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/.*)?$/);
+      const glMatch = repoUrl.match(/gitlab\.com\/([^/]+(?:\/[^/]+)+?)(?:\.git)?(?:\/.*)?$/);
+
+      if (ghMatch) {
+        const repoPath = ghMatch[1];
+        for (const branch of ["main", "master"]) {
+          try {
+            const r = await fetch(`https://raw.githubusercontent.com/${repoPath}/${branch}/app.json`);
+            if (r.ok) { appJson = await r.json(); break; }
+          } catch (_) {}
+        }
+      } else if (glMatch) {
+        const repoPath = glMatch[1];
+        const encoded = encodeURIComponent(repoPath);
+        for (const branch of ["main", "master"]) {
+          try {
+            const r = await fetch(`https://gitlab.com/api/v4/projects/${encoded}/repository/files/app.json/raw?ref=${branch}`);
+            if (r.ok) { appJson = await r.json(); break; }
+          } catch (_) {}
+        }
+      }
+
+      if (!appJson || !appJson.env) {
+        return res.json({ found: false, env: bot.env });
+      }
+
+      res.json({ found: true, env: appJson.env, pairSiteUrl: appJson.pair_site_url || appJson.pairSiteUrl || null });
+    } catch {
+      res.json({ found: false, env: bot.env });
+    }
+  });
+
   /* ── Deployments ────────────────────────────────────────── */
   app.get("/api/deployments", async (req, res) => {
     const uid = getUserId(req);
@@ -511,7 +551,7 @@ export async function registerRoutes(
     const result = deployRequestSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.message });
 
-    const { botId, envVars, plan } = result.data;
+    const { botId, envVars, plan, botAlias } = result.data;
     const userId = getUserId(req) || undefined;
     const adminUser = userId ? await isAdmin(userId) : false;
 
@@ -539,7 +579,8 @@ export async function registerRoutes(
       ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year for admins
       : new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
-    const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId, plan, expiresAt);
+    const displayName = botAlias?.trim() || bot.name;
+    const deployment = await storage.createDeployment(botId, displayName, bot.repository, envVars, userId, plan, expiresAt);
 
     if (!adminUser && userId) {
       await deductCoins(userId, cost);
@@ -560,6 +601,32 @@ export async function registerRoutes(
     console.log(`[stop] user=${uid} dep=${req.params.id} balanceBefore=${balanceBefore} — NO coin deduction on stop`);
     const deployment = await storage.stopDeployment(req.params.id);
     res.json(deployment);
+  });
+
+  app.post("/api/deployments/:id/restart", async (req, res) => {
+    const uid = getUserId(req);
+    const dep = await storage.getDeployment(req.params.id);
+    if (!dep) return res.status(404).json({ error: "Deployment not found" });
+    if (uid && dep.userId && dep.userId !== uid && !(await isAdmin(uid))) {
+      return res.status(403).json({ error: "Access denied" });
+    }
+    if (dep.status === "running" || dep.status === "deploying") {
+      return res.status(400).json({ error: "Bot is already running" });
+    }
+
+    const bot = await storage.getBot(dep.botId);
+    if (!bot) return res.status(404).json({ error: "Bot template not found" });
+
+    await storage.stopDeployment(dep.id).catch(() => {});
+
+    const adminUser = uid ? await isAdmin(uid) : false;
+    const expiresAt = adminUser
+      ? new Date(Date.now() + 365 * 24 * 60 * 60 * 1000)
+      : dep.expiresAt ? new Date(dep.expiresAt) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    const newDep = await storage.createDeployment(dep.botId, dep.botName, bot.repository, dep.envVars, uid || undefined, dep.plan || "monthly", expiresAt);
+    console.log(`[restart] user=${uid} old=${dep.id} new=${newDep.id}`);
+    res.status(201).json(newDep);
   });
 
   app.delete("/api/deployments/:id", async (req, res) => {

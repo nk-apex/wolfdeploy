@@ -106,9 +106,11 @@ Two deployment modes — automatically selected based on env config:
 - `GET /api/config` — Supabase public config
 - `GET /api/bots` — Bot catalog (from DB)
 - `GET /api/bots/:id` — Single bot
+- `GET /api/bots/:id/fetch-env` — Fetch app.json env vars from repo (GitHub/GitLab)
 - `GET /api/deployments` — User deployments
-- `POST /api/deploy` — Create deployment (deducts 10 coins)
+- `POST /api/deploy` — Create deployment (deducts coins, supports botAlias)
 - `POST /api/deployments/:id/stop` — Stop deployment
+- `POST /api/deployments/:id/restart` — Restart stopped/failed deployment (creates new deployment)
 - `DELETE /api/deployments/:id` — Delete deployment
 - `GET /api/coins/:userId` — Coin balance
 - `POST /api/coins/credit` — Credit coins

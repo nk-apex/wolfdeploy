@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,10 @@ import type { Bot, Deployment } from "@shared/schema";
 import {
   Rocket, ExternalLink, Lock, ArrowUpRight,
   ArrowLeft, Coins, ShoppingCart, AlertCircle, Shield,
+  Loader2, Tag,
 } from "lucide-react";
+
+type EnvConfig = Record<string, { description: string; required: boolean; value?: string; placeholder?: string }>;
 
 export default function Deploy() {
   const [, navigate] = useLocation();
@@ -19,6 +22,10 @@ export default function Deploy() {
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
   const [launching, setLaunching] = useState(false);
+  const [botAlias, setBotAlias] = useState("");
+  const [liveEnv, setLiveEnv] = useState<EnvConfig | null>(null);
+  const [liveEnvLoading, setLiveEnvLoading] = useState(false);
+  const [livePairSiteUrl, setLivePairSiteUrl] = useState<string | null>(null);
 
   const { data: bots = [], isLoading } = useQuery<Bot[]>({ queryKey: ["/api/bots"] });
 
@@ -42,8 +49,36 @@ export default function Deploy() {
   const balance = coinData?.balance ?? 0;
   const canAfford = isAdmin || balance >= 100;
 
+  useEffect(() => {
+    if (!selectedBot) {
+      setLiveEnv(null);
+      setLivePairSiteUrl(null);
+      return;
+    }
+    setLiveEnvLoading(true);
+    fetch(`/api/bots/${selectedBot.id}/fetch-env`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.env) {
+          setLiveEnv(data.env);
+          if (data.pairSiteUrl) setLivePairSiteUrl(data.pairSiteUrl);
+          const defaults: Record<string, string> = {};
+          for (const [key, cfg] of Object.entries(data.env as EnvConfig)) {
+            if (cfg.value) defaults[key] = cfg.value;
+          }
+          setEnvVars(defaults);
+        } else {
+          setLiveEnv(selectedBot.env as unknown as EnvConfig);
+        }
+      })
+      .catch(() => {
+        setLiveEnv(selectedBot.env as unknown as EnvConfig);
+      })
+      .finally(() => setLiveEnvLoading(false));
+  }, [selectedBot]);
+
   const deployMutation = useMutation({
-    mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: string }) => {
+    mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: string; botAlias?: string }) => {
       const res = await apiRequest("POST", "/api/deploy", { ...data, userId: user?.id });
       if (!res.ok) {
         const body = await res.json();
@@ -62,12 +97,19 @@ export default function Deploy() {
     },
   });
 
-  const handleSelectBot = (bot: Bot) => { setSelectedBot(bot); setEnvVars({}); };
+  const handleSelectBot = (bot: Bot) => {
+    setSelectedBot(bot);
+    setEnvVars({});
+    setBotAlias("");
+  };
   const handleBack = () => { setSelectedBot(null); };
+
+  const activeEnv = liveEnv || (selectedBot?.env as unknown as EnvConfig) || {};
+  const pairUrl = livePairSiteUrl || selectedBot?.pairSiteUrl;
 
   const handleDeploy = () => {
     if (!selectedBot) return;
-    const missing = Object.entries(selectedBot.env)
+    const missing = Object.entries(activeEnv)
       .filter(([, v]) => v.required)
       .map(([k]) => k)
       .filter(k => !envVars[k]?.trim());
@@ -75,10 +117,9 @@ export default function Deploy() {
       toast({ title: "Missing required fields", description: `Please fill in: ${missing.join(", ")}`, variant: "destructive" });
       return;
     }
-    deployMutation.mutate({ botId: selectedBot.id, envVars, plan: "monthly" });
+    deployMutation.mutate({ botId: selectedBot.id, envVars, plan: "monthly", botAlias: botAlias.trim() || undefined });
   };
 
-  /* ── Launching overlay ── */
   if (launching) {
     return (
       <div className="p-4 sm:p-6 flex items-center justify-center min-h-[70vh]">
@@ -96,7 +137,6 @@ export default function Deploy() {
     );
   }
 
-  /* ── Coin balance strip ── */
   const CoinStrip = () => isAdmin ? (
     <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-6"
       style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.3)" }}>
@@ -120,7 +160,6 @@ export default function Deploy() {
     </div>
   );
 
-  /* ── Step 1: Bot catalog ── */
   if (!selectedBot) {
     return (
       <div className="p-4 sm:p-6 max-w-5xl mx-auto">
@@ -200,7 +239,6 @@ export default function Deploy() {
     );
   }
 
-  /* ── Step 2: Configure env vars ── */
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="mb-6 sm:mb-8 flex items-center gap-3">
@@ -220,7 +258,6 @@ export default function Deploy() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-        {/* Left — Bot info */}
         <div className="lg:col-span-2">
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
             <div className="relative w-full h-36 overflow-hidden" style={{ borderBottom: "1px solid rgba(74,222,128,0.1)" }}>
@@ -235,8 +272,8 @@ export default function Deploy() {
                 <p className="font-display font-bold text-white text-sm sm:text-base">{selectedBot.name}</p>
                 <p className="text-[11px] text-gray-400 font-mono leading-relaxed mt-1">{selectedBot.description}</p>
               </div>
-              {selectedBot.pairSiteUrl && (
-                <a href={selectedBot.pairSiteUrl} target="_blank" rel="noopener noreferrer"
+              {pairUrl && (
+                <a href={pairUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-[10px] font-mono hover:underline rounded-lg px-2.5 py-1.5"
                   style={{ color: "#34d399", background: "rgba(52,211,153,0.08)", border: "1px solid rgba(52,211,153,0.2)" }}>
                   <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -245,41 +282,72 @@ export default function Deploy() {
               )}
               <div style={{ borderTop: "1px solid rgba(74,222,128,0.1)", paddingTop: "12px" }}>
                 <p className="text-[9px] text-gray-600 font-mono uppercase tracking-widest mb-2">Required Config</p>
-                {Object.entries(selectedBot.env).map(([key, cfg]) => (
-                  <div key={key} className="flex items-center gap-2 py-1">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                    <span className="text-[10px] text-gray-300 font-mono flex-1">{key}</span>
-                    {cfg.required && <span className="text-[8px] text-primary font-mono" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 4px", borderRadius: "3px" }}>REQUIRED</span>}
+                {liveEnvLoading ? (
+                  <div className="flex items-center gap-2 py-2">
+                    <Loader2 className="w-3 h-3 text-primary animate-spin" />
+                    <span className="text-[10px] text-gray-500 font-mono">Fetching from repository...</span>
                   </div>
-                ))}
+                ) : (
+                  Object.entries(activeEnv).map(([key, cfg]) => (
+                    <div key={key} className="flex items-center gap-2 py-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
+                      <span className="text-[10px] text-gray-300 font-mono flex-1">{key}</span>
+                      {cfg.required && <span className="text-[8px] text-primary font-mono" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 4px", borderRadius: "3px" }}>REQUIRED</span>}
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right — Config form */}
         <div className="lg:col-span-3">
           <div className="p-4 sm:p-6 rounded-2xl" style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
-            <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-5 font-mono">
-              <Lock className="w-4 h-4 text-primary" /> Environment Variables
-            </h3>
-            <div className="space-y-5">
-              {Object.entries(selectedBot.env).map(([key, config]) => (
-                <div key={key}>
-                  <label htmlFor={`env-${key}`} className="flex items-center gap-2 text-[10px] text-gray-300 uppercase tracking-widest font-mono mb-2 font-bold">
-                    {key}
-                    {config.required && <span className="text-[8px] text-primary font-mono normal-case tracking-normal" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 5px", borderRadius: "3px" }}>REQUIRED</span>}
-                  </label>
-                  <Input id={`env-${key}`} data-testid={`input-env-${key.toLowerCase()}`}
-                    type={key.includes("KEY") || key.includes("SECRET") || key.includes("TOKEN") ? "password" : "text"}
-                    placeholder={config.placeholder || config.description}
-                    className="font-mono text-sm text-white placeholder:text-gray-700 rounded-xl"
-                    style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
-                    value={envVars[key] || ""}
-                    onChange={e => setEnvVars(prev => ({ ...prev, [key]: e.target.value }))} />
-                  <p className="text-[10px] text-gray-600 font-mono mt-1">{config.description}</p>
+            <div className="mb-5">
+              <label htmlFor="bot-alias" className="flex items-center gap-2 text-[10px] text-gray-300 uppercase tracking-widest font-mono mb-2 font-bold">
+                <Tag className="w-3 h-3 text-primary" /> Bot Identity
+                <span className="text-[8px] text-gray-600 font-mono normal-case tracking-normal">(optional)</span>
+              </label>
+              <Input id="bot-alias" data-testid="input-bot-alias"
+                placeholder={`e.g. BOT-1, My ${selectedBot.name}, etc.`}
+                className="font-mono text-sm text-white placeholder:text-gray-700 rounded-xl"
+                style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
+                maxLength={30}
+                value={botAlias}
+                onChange={e => setBotAlias(e.target.value)} />
+              <p className="text-[10px] text-gray-600 font-mono mt-1">Give your bot a custom name to identify it (defaults to {selectedBot.name})</p>
+            </div>
+
+            <div style={{ borderTop: "1px solid rgba(74,222,128,0.1)", paddingTop: "16px" }}>
+              <h3 className="text-sm font-bold text-white flex items-center gap-2 mb-5 font-mono">
+                <Lock className="w-4 h-4 text-primary" /> Environment Variables
+              </h3>
+
+              {liveEnvLoading ? (
+                <div className="flex items-center justify-center gap-2 py-10">
+                  <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  <span className="text-sm text-gray-400 font-mono">Reading app.json from repository...</span>
                 </div>
-              ))}
+              ) : (
+                <div className="space-y-5">
+                  {Object.entries(activeEnv).map(([key, config]) => (
+                    <div key={key}>
+                      <label htmlFor={`env-${key}`} className="flex items-center gap-2 text-[10px] text-gray-300 uppercase tracking-widest font-mono mb-2 font-bold">
+                        {key}
+                        {config.required && <span className="text-[8px] text-primary font-mono normal-case tracking-normal" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 5px", borderRadius: "3px" }}>REQUIRED</span>}
+                      </label>
+                      <Input id={`env-${key}`} data-testid={`input-env-${key.toLowerCase()}`}
+                        type={key.includes("KEY") || key.includes("SECRET") || key.includes("TOKEN") ? "password" : "text"}
+                        placeholder={config.placeholder || config.description}
+                        className="font-mono text-sm text-white placeholder:text-gray-700 rounded-xl"
+                        style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
+                        value={envVars[key] || ""}
+                        onChange={e => setEnvVars(prev => ({ ...prev, [key]: e.target.value }))} />
+                      <p className="text-[10px] text-gray-600 font-mono mt-1">{config.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="mt-6">
@@ -292,7 +360,7 @@ export default function Deploy() {
                 </div>
               )}
               <button data-testid="button-deploy" onClick={handleDeploy}
-                disabled={deployMutation.isPending || !canAfford}
+                disabled={deployMutation.isPending || !canAfford || liveEnvLoading}
                 className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{
                   background: "rgba(74,222,128,0.15)",

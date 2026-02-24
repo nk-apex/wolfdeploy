@@ -7,7 +7,8 @@ import type { Deployment } from "@shared/schema";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Bot, Rocket, Plus, ScrollText, StopCircle, Trash2,
-  ExternalLink, Clock, Cpu, MemoryStick, Activity, Coins, ShoppingCart
+  ExternalLink, Clock, Cpu, MemoryStick, Activity, Coins, ShoppingCart,
+  RotateCcw,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -61,6 +62,25 @@ export default function MyBots() {
       queryClient.invalidateQueries({ queryKey: ["/api/deployments"] });
       queryClient.invalidateQueries({ queryKey: ["/api/coins", user?.id] });
       toast({ title: "Bot stopped", description: "No coins were deducted." });
+    },
+  });
+
+  const restartMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/deployments/${id}/restart`, {});
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || "Restart failed");
+      }
+      return res.json();
+    },
+    onSuccess: (newDep: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/deployments"] });
+      toast({ title: "Bot restarting", description: `New deployment created. Redirecting to logs...` });
+      setTimeout(() => { window.location.href = `/bots/${newDep.id}/logs`; }, 1500);
+    },
+    onError: (err: Error) => {
+      toast({ title: "Restart failed", description: err.message, variant: "destructive" });
     },
   });
 
@@ -211,6 +231,17 @@ export default function MyBots() {
                     >
                       <StopCircle className="w-3 h-3" />
                       Stop
+                    </button>
+                  )}
+                  {(dep.status === "stopped" || dep.status === "failed") && (
+                    <button
+                      data-testid={`button-restart-${dep.id}`}
+                      onClick={() => restartMutation.mutate(dep.id)}
+                      disabled={restartMutation.isPending}
+                      className="flex items-center gap-1 text-[9px] text-emerald-400 font-mono px-2 py-1 border border-emerald-500/20 rounded hover:border-emerald-500/40 transition-all disabled:opacity-50"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Restart
                     </button>
                   )}
                   <AlertDialog>

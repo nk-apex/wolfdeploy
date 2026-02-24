@@ -62,6 +62,7 @@ export const deployRequestSchema = z.object({
   botId: z.string(),
   envVars: z.record(z.string()),
   plan: deployPlanSchema.default("trial"),
+  botAlias: z.string().max(30).optional(),
 });
 
 export type DeployRequest = z.infer<typeof deployRequestSchema>;
