@@ -4,7 +4,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Bot, Coins, Gift, Clock, CheckCircle, XCircle, AlertCircle,
+  Bot, Gift, Clock, CheckCircle, XCircle, AlertCircle,
   ExternalLink, ChevronDown, ChevronUp, Search, Loader2,
   Github, User, Link as LinkIcon, Tag, FileText, Package
 } from "lucide-react";
@@ -192,30 +192,6 @@ export default function RegisterBot() {
         >
           + Register Bot (100 coins)
         </button>
-      </div>
-
-      {/* Info cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        {[
-          { icon: Coins, label: "Listing Fee", value: "100 Coins", desc: "One-time fee per submission" },
-          { icon: Gift, label: "Approval Reward", value: "100 Coins", desc: "Earned when your bot is approved" },
-          { icon: Clock, label: "Claim Window", value: "7 Days", desc: "Claim your reward before it expires" },
-        ].map(card => (
-          <div
-            key={card.label}
-            className="p-4 rounded-xl"
-            style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <div className="p-1.5 rounded-lg" style={{ background: "rgba(74,222,128,0.1)" }}>
-                <card.icon className="w-4 h-4 text-primary" />
-              </div>
-              <span className="text-[10px] font-mono uppercase tracking-widest text-gray-500">{card.label}</span>
-            </div>
-            <p className="text-lg font-bold text-primary font-mono">{card.value}</p>
-            <p className="text-[10px] text-gray-500 font-mono mt-0.5">{card.desc}</p>
-          </div>
-        ))}
       </div>
 
       {!canAfford && (
