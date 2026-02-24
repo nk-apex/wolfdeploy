@@ -256,8 +256,9 @@ export async function registerRoutes(
     try {
       let appJson: Record<string, any> | null = null;
 
-      const ghMatch = repoUrl.match(/github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/.*)?$/);
-      const glMatch = repoUrl.match(/gitlab\.com\/([^/]+(?:\/[^/]+)+?)(?:\.git)?(?:\/.*)?$/);
+      const cleanUrl = repoUrl.replace(/\.git\s*$/, "").replace(/\/+$/, "");
+      const ghMatch = cleanUrl.match(/github\.com\/([^/]+\/[^/]+?)$/);
+      const glMatch = cleanUrl.match(/gitlab\.com\/([^/]+(?:\/[^/]+)+?)$/);
 
       if (ghMatch) {
         const repoPath = ghMatch[1];
