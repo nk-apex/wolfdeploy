@@ -112,7 +112,7 @@ export default function Deploy() {
         <div>
           <span className="text-sm font-mono font-bold text-white">{balance} coins</span>
           <span className="text-[10px] font-mono ml-2" style={{ color: hasCoins ? "rgba(74,222,128,0.7)" : "#f97316" }}>
-            {hasCoins ? `${Math.floor(balance / 100) || 1} bot${Math.floor(balance / 100) > 1 ? "s" : ""} available` : "— top up to deploy"}
+            {hasCoins ? `${Math.max(1, Math.floor(balance / 100))} bot${Math.max(1, Math.floor(balance / 100)) > 1 ? "s" : ""} available` : "— top up to deploy"}
           </span>
         </div>
       </div>
