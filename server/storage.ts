@@ -417,10 +417,27 @@ class MemStorage implements IStorage {
   private cleanupDeployDir(id: string, deployDir: string): void {
     setTimeout(() => {
       try {
-        if (existsSync(deployDir)) {
-          rmSync(deployDir, { recursive: true, force: true });
-          console.log(`[cleanup] Cleaned up deployment files for ${id}`);
+        if (!existsSync(deployDir)) return;
+
+        const nodeModules = join(deployDir, "node_modules");
+        const gitDir = join(deployDir, ".git");
+        let freed = 0;
+        if (existsSync(nodeModules)) {
+          rmSync(nodeModules, { recursive: true, force: true });
+          freed++;
         }
+        if (existsSync(gitDir)) {
+          rmSync(gitDir, { recursive: true, force: true });
+          freed++;
+        }
+        if (freed > 0) {
+          console.log(`[cleanup] Removed node_modules/.git for ${id} (kept working dirs)`);
+        }
+
+        const logsDir = join(deployDir, "logs");
+        const tmpDir = join(deployDir, "tmp");
+        if (!existsSync(logsDir)) mkdirSync(logsDir, { recursive: true });
+        if (!existsSync(tmpDir)) mkdirSync(tmpDir, { recursive: true });
       } catch (e: any) {
         console.log(`[cleanup] Failed to clean ${id}: ${e.message}`);
       }

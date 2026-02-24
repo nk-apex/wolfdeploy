@@ -1,0 +1,281 @@
+ARN ]
+parameters: {}
+02:35:11
+[WARN ]
+}
+02:35:46
+[INFO ]
+✦ ✦ ✦ { K E I T H - M D } ✦ ✦ ✦
+02:35:46
+[INFO ]
+╔════════════════════════════╗
+02:35:46
+[INFO ]
+║ ✉ N E W M E S S A G E ✉ ║
+02:35:46
+[INFO ]
+╚════════════════════════════╝
+02:35:46
+[INFO ]
+👤 Private Chat with: [Unknown User] (254703397679)
+02:35:46
+[INFO ]
+📋 Message Type: protocolMessage
+02:35:46
+[INFO ]
+⚠️ Error in logMessage: ENOENT: no such file or directory, open '/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/logs/messages_2026-02-24.log'
+02:35:46
+[ERROR]
+Error saving chat data: Error: ENOENT: no such file or directory, open '/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/tmp/254703397679@s_whatsapp_net.json'
+02:35:46
+[WARN ]
+at Object.writeFileSync (node:fs:2437:20)
+02:35:46
+[WARN ]
+at saveChatData (eval at fetchAlphaUrl (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/index.js:5:2686), <anonymous>:1588:12)
+02:35:46
+[WARN ]
+at EventEmitter.eval (eval at fetchAlphaUrl (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/index.js:5:2686), <anonymous>:1722:9)
+02:35:46
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+02:35:46
+[WARN ]
+errno: -2,
+02:35:46
+[WARN ]
+code: 'ENOENT',
+02:35:46
+[WARN ]
+syscall: 'open',
+02:35:46
+[WARN ]
+path: '/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/tmp/254703397679@s_whatsapp_net.json'
+02:35:46
+[WARN ]
+}
+02:35:46
+[ERROR]
+Error getting chatbot settings: Error
+02:35:46
+[WARN ]
+at Query.run (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+02:35:46
+[WARN ]
+at /tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/sequelize.js:315:28
+02:35:46
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+02:35:46
+[WARN ]
+at async PostgresQueryInterface.select (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+02:35:46
+[WARN ]
+at async chatbot_settings.findAll (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/model.js:1140:21)
+02:35:46
+[WARN ]
+at async chatbot_settings.findOne (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/model.js:1240:12)
+02:35:46
+[WARN ]
+at async chatbot_settings.findOrCreate (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/sequelize/lib/model.js:1411:21)
+02:35:46
+[WARN ]
+at async getChatbotSettings (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/database/chatbot.js:182:37)
+02:35:46
+[WARN ]
+at async handleChatbot (eval at fetchAlphaUrl (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/index.js:5:2686), <anonymous>:370:26)
+02:35:46
+[WARN ]
+at async EventEmitter.eval (eval at fetchAlphaUrl (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/index.js:5:2686), <anonymous>:2222:5) {
+02:35:46
+[ERROR]
+name: 'SequelizeDatabaseError',
+02:35:46
+[ERROR]
+parent: error: column "chat_jid" does not exist
+02:35:46
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:305:11)
+02:35:46
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:143:27)
+02:35:46
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:37:38)
+02:35:46
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/index.js:11:42)
+02:35:46
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+02:35:46
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+02:35:46
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+02:35:46
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+02:35:46
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+02:35:46
+[WARN ]
+length: 108,
+02:35:46
+[ERROR]
+severity: 'ERROR',
+02:35:46
+[WARN ]
+code: '42703',
+02:35:46
+[WARN ]
+detail: undefined,
+02:35:46
+[WARN ]
+hint: undefined,
+02:35:46
+[WARN ]
+position: '14',
+02:35:46
+[WARN ]
+internalPosition: undefined,
+02:35:46
+[WARN ]
+internalQuery: undefined,
+02:35:46
+[WARN ]
+where: undefined,
+02:35:46
+[WARN ]
+schema: undefined,
+02:35:46
+[WARN ]
+table: undefined,
+02:35:46
+[WARN ]
+column: undefined,
+02:35:46
+[WARN ]
+dataType: undefined,
+02:35:46
+[WARN ]
+constraint: undefined,
+02:35:46
+[WARN ]
+file: 'parse_relation.c',
+02:35:46
+[WARN ]
+line: '3716',
+02:35:46
+[ERROR]
+routine: 'errorMissingColumn',
+02:35:46
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:35:46
+[WARN ]
+parameters: undefined
+02:35:46
+[WARN ]
+},
+02:35:46
+[ERROR]
+original: error: column "chat_jid" does not exist
+02:35:46
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:305:11)
+02:35:46
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:143:27)
+02:35:46
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/parser.js:37:38)
+02:35:46
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/44aff81d-1dbb-4e63-91b1-372d61c68a44/node_modules/pg-protocol/dist/index.js:11:42)
+02:35:46
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+02:35:46
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+02:35:46
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+02:35:46
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+02:35:46
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+02:35:46
+[WARN ]
+length: 108,
+02:35:46
+[ERROR]
+severity: 'ERROR',
+02:35:46
+[WARN ]
+code: '42703',
+02:35:46
+[WARN ]
+detail: undefined,
+02:35:46
+[WARN ]
+hint: undefined,
+02:35:46
+[WARN ]
+position: '14',
+02:35:46
+[WARN ]
+internalPosition: undefined,
+02:35:46
+[WARN ]
+internalQuery: undefined,
+02:35:46
+[WARN ]
+where: undefined,
+02:35:46
+[WARN ]
+schema: undefined,
+02:35:46
+[WARN ]
+table: undefined,
+02:35:46
+[WARN ]
+column: undefined,
+02:35:46
+[WARN ]
+dataType: undefined,
+02:35:46
+[WARN ]
+constraint: undefined,
+02:35:46
+[WARN ]
+file: 'parse_relation.c',
+02:35:46
+[WARN ]
+line: '3716',
+02:35:46
+[ERROR]
+routine: 'errorMissingColumn',
+02:35:46
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:35:46
+[WARN ]
+parameters: undefined
+02:35:46
+[WARN ]
+},
+02:35:46
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:35:46
+[WARN ]
+parameters: {}
+02:35:46
+[WARN ]
+}
