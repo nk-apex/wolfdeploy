@@ -47,3 +47,4 @@ waitForPort = 5000
 [userenv.shared]
 VITE_PAYSTACK_PUBLIC_KEY = "pk_live_088049698ee943a439abd25e20173c85503afa02"
 PTERODACTYL_URL = "https://panel.xwolf.space"
+ADMIN_USER_IDS = "fc5a19f2-58cd-4539-8299-4da9f6de7422"
