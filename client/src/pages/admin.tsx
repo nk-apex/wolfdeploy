@@ -12,7 +12,7 @@ import {
   ChevronUp, CheckCircle, XCircle, Clock, AlertTriangle,
   Coins, TrendingUp, Activity, RefreshCw, Edit, X, Check,
   UserCheck, UserX, Eye, EyeOff, Package, MessageSquare, Globe,
-  Lock, ToggleLeft, ToggleRight, ExternalLink
+  Lock, ToggleLeft, ToggleRight, ExternalLink, ArrowUpRight, ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -126,8 +126,9 @@ const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "users", label: "Users", icon: Users },
   { id: "bots", label: "Bot Catalog", icon: Bot },
+  { id: "deploy-bot", label: "Deploy Bot", icon: Rocket },
   { id: "registrations", label: "Bot Registrations", icon: Package },
-  { id: "deployments", label: "Deployments", icon: Rocket },
+  { id: "deployments", label: "Deployments", icon: Activity },
   { id: "payments", label: "Payments", icon: CreditCard },
   { id: "comments", label: "Feedback", icon: Lock },
   { id: "chat", label: "Chat", icon: Globe },
@@ -237,6 +238,14 @@ export default function AdminPage() {
     refetchInterval: 5000,
   });
 
+  const { data: deployableBots = [], isLoading: deployableBotsLoading } = useQuery<PlatformBot[]>({
+    queryKey: ["/api/bots"],
+    enabled: activeTab === "deploy-bot" && !!adminCheck?.isAdmin,
+  });
+
+  const [adminDeployBot, setAdminDeployBot] = useState<PlatformBot | null>(null);
+  const [adminDeployEnvVars, setAdminDeployEnvVars] = useState<Record<string, string>>({});
+
   const { data: chatStatus } = useQuery<{ enabled: boolean }>({
     queryKey: ["/api/chat/status"],
     enabled: !!adminCheck?.isAdmin,
@@ -284,6 +293,25 @@ export default function AdminPage() {
     mutationFn: (id: string) => apiRequest("DELETE", `/api/admin/bots/${id}`),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/admin/bots"] }); queryClient.invalidateQueries({ queryKey: ["/api/bots"] }); queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] }); toast({ title: "Bot deleted" }); },
     onError: () => toast({ title: "Failed to delete bot", variant: "destructive" }),
+  });
+
+  const adminDeployMutation = useMutation({
+    mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: string }) => {
+      const res = await apiRequest("POST", "/api/deploy", { ...data, userId });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.error || "Deployment failed");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/deployments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      setAdminDeployBot(null);
+      setAdminDeployEnvVars({});
+      toast({ title: "Bot deployed successfully", description: "Admin deployment started with no coin cost." });
+    },
+    onError: (e: any) => toast({ title: "Deployment failed", description: e.message, variant: "destructive" }),
   });
 
   const stopDepMutation = useMutation({
@@ -787,6 +815,119 @@ export default function AdminPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── DEPLOY BOT (ADMIN) ───────────────────────────── */}
+        {activeTab === "deploy-bot" && (
+          <div>
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl mb-5"
+              style={{ background: "rgba(74,222,128,0.07)", border: "1px solid rgba(74,222,128,0.25)" }}>
+              <Shield size={16} className="text-primary flex-shrink-0" />
+              <span className="text-sm font-mono font-semibold text-primary">Admin Deploy — no coins required, 1-year expiry</span>
+            </div>
+
+            {/* Step 1 — Bot selection */}
+            {!adminDeployBot && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-widest mb-4">Select a Bot to Deploy</h3>
+                {deployableBotsLoading ? (
+                  <div className="text-gray-500 text-sm flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Loading bots…</div>
+                ) : deployableBots.length === 0 ? (
+                  <div className="text-gray-600 text-sm">No active bots in catalog.</div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {deployableBots.map(bot => (
+                      <button
+                        key={bot.id}
+                        data-testid={`button-admin-deploy-bot-${bot.id}`}
+                        onClick={() => { setAdminDeployBot(bot); setAdminDeployEnvVars({}); }}
+                        className="text-left rounded-xl p-4 transition-all hover:scale-[1.02]"
+                        style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(74,222,128,0.15)" }}
+                      >
+                        <div className="flex items-start gap-3 mb-2">
+                          {bot.logo ? (
+                            <img src={bot.logo} alt={bot.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                              style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)" }}>
+                              <Bot size={18} className="text-primary" />
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="font-semibold text-sm text-white truncate">{bot.name}</div>
+                            {bot.category && <div className="text-[10px] font-mono text-primary">{bot.category}</div>}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-gray-500 leading-relaxed line-clamp-2">{bot.description}</p>
+                        <div className="flex items-center gap-1 mt-3 text-[9px] font-mono text-primary">
+                          <Shield size={10} /> Free (Admin) · 1 year
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2 — Configure & Deploy */}
+            {adminDeployBot && (
+              <div>
+                <div className="flex items-center gap-3 mb-5">
+                  <button
+                    data-testid="button-admin-deploy-back"
+                    onClick={() => { setAdminDeployBot(null); setAdminDeployEnvVars({}); }}
+                    className="flex items-center gap-1.5 text-xs font-mono text-gray-500 hover:text-white transition-colors"
+                  >
+                    <ArrowLeft size={14} /> Back
+                  </button>
+                  <span className="text-gray-700">·</span>
+                  <span className="text-sm font-semibold">{adminDeployBot.name}</span>
+                </div>
+
+                {Object.keys(adminDeployBot.env ?? {}).length > 0 ? (
+                  <div className="space-y-4 mb-6">
+                    <h4 className="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">Environment Variables</h4>
+                    {Object.entries(adminDeployBot.env).map(([key, cfg]) => (
+                      <div key={key}>
+                        <label className="flex items-center gap-2 text-[10px] text-gray-400 uppercase tracking-widest font-mono mb-1.5 font-bold">
+                          {key}
+                          {cfg.required && (
+                            <span className="text-[8px] text-primary font-mono normal-case tracking-normal"
+                              style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 5px", borderRadius: "3px" }}>REQUIRED</span>
+                          )}
+                        </label>
+                        <Input
+                          data-testid={`input-admin-env-${key.toLowerCase()}`}
+                          type={key.includes("KEY") || key.includes("SECRET") || key.includes("TOKEN") ? "password" : "text"}
+                          placeholder={cfg.placeholder || cfg.description}
+                          className="font-mono text-sm bg-white/5 border-white/10"
+                          value={adminDeployEnvVars[key] || ""}
+                          onChange={e => setAdminDeployEnvVars(prev => ({ ...prev, [key]: e.target.value }))}
+                        />
+                        <p className="text-[10px] text-gray-600 font-mono mt-1">{cfg.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-gray-500 font-mono mb-5">This bot requires no environment variables.</p>
+                )}
+
+                <button
+                  data-testid="button-admin-deploy-submit"
+                  onClick={() => adminDeployMutation.mutate({ botId: adminDeployBot.id, envVars: adminDeployEnvVars, plan: "monthly" })}
+                  disabled={adminDeployMutation.isPending}
+                  className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)" }}
+                >
+                  {adminDeployMutation.isPending ? (
+                    <><div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /><span className="text-primary">Deploying…</span></>
+                  ) : (
+                    <><Shield size={16} className="text-primary" /><span className="text-primary">Admin Deploy — Free</span><ArrowUpRight size={16} className="text-primary" /></>
+                  )}
+                </button>
               </div>
             )}
           </div>
