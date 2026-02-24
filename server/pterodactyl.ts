@@ -34,7 +34,14 @@ export async function createServer(params: {
   botRepo: string;
   envVars: Record<string, string>;
 }): Promise<PteroServer> {
+  const userEnv = { ...params.envVars };
+  delete userEnv.NODE_PACKAGES;
+  delete userEnv.MAIN_FILE;
+  delete userEnv.GIT_ADDRESS;
+  delete userEnv.BRANCH;
+
   const environment: Record<string, string> = {
+    ...userEnv,
     GIT_ADDRESS: params.botRepo,
     BRANCH: process.env.PTERODACTYL_BRANCH ?? "main",
     USER_UPLOAD: "0",
@@ -45,7 +52,6 @@ export async function createServer(params: {
     NODE_ARGS: "",
     USERNAME: "",
     ACCESS_TOKEN: "",
-    ...params.envVars,
   };
 
   const body = {
@@ -59,6 +65,10 @@ export async function createServer(params: {
     feature_limits: { databases: 0, allocations: 1, backups: 0 },
     deploy: { locations: [LOCATION_ID], dedicated_ip: false, port_range: [] },
   };
+
+  console.log(`[ptero] Creating server with startup: ${STARTUP_CMD}`);
+  console.log(`[ptero] NODE_PACKAGES: ${environment.NODE_PACKAGES}`);
+  console.log(`[ptero] MAIN_FILE: ${environment.MAIN_FILE}`);
 
   const res = await fetch(`${PANEL_URL}/api/application/servers`, {
     method: "POST",
