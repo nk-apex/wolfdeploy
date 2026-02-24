@@ -1,7 +1,7 @@
 import { type Bot, type Deployment, type DeploymentStatus, platformBots, deployments as deploymentsTable } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { spawn, type ChildProcess } from "child_process";
-import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync, symlinkSync } from "fs";
+import { mkdirSync, rmSync, existsSync, writeFileSync, unlinkSync } from "fs";
 import { join } from "path";
 import { tmpdir } from "os";
 import { db } from "./db";
@@ -354,16 +354,6 @@ class MemStorage implements IStorage {
     await this.addDeploymentLog(id, "info", "Installing Node.js dependencies...");
     await this.spawnStep(id, "npm", ["install", "--legacy-peer-deps", "--no-audit", "--prefer-offline"], { cwd: deployDir });
     await this.addDeploymentLog(id, "info", "Dependencies installed.");
-
-    try {
-      const tmpNodeModules = "/tmp/node_modules";
-      const botNodeModules = join(deployDir, "node_modules");
-      try { unlinkSync(tmpNodeModules); } catch { /* ok */ }
-      try { rmSync(tmpNodeModules, { recursive: true, force: true }); } catch { /* ok */ }
-      symlinkSync(botNodeModules, tmpNodeModules);
-    } catch (e) {
-      await this.addDeploymentLog(id, "warn", `Could not create /tmp/node_modules symlink: ${e}`);
-    }
 
     await this.addDeploymentLog(id, "info", "Setting environment variables...");
 
