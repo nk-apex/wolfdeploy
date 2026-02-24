@@ -1,0 +1,171 @@
+root@silentwolf:/var/www/wolfdeploy# # Check what error caused the cra
+sh
+root@silentwolf:/var/www/wolfdeploy# pm2 logs wolfdeploy --lines 50
+w/wolfdeploy && npm run build 2>&1 | tail -30[TAILING] Tailing last 50
+ lines for [wolfdeploy] process (change the value with --lines option)
+/root/.pm2/logs/wolfdeploy-error.log last 50 lines:
+10|wolfdep |   routine: 'errorMissingColumn'
+10|wolfdep | }
+10|wolfdep | [admin/users] error: error: relation "ip_registrations" d
+oes not exist
+10|wolfdep |     at /var/www/wolfdeploy/dist/index.cjs:70:13326
+10|wolfdep |     at process.processTicksAndRejections (node:internal/p
+rocess/task_queues:105:5)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:76:36804
+10|wolfdep |     at async Promise.all (index 1)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:82:26643
+{
+10|wolfdep |   length: 115,
+10|wolfdep |   severity: 'ERROR',
+10|wolfdep |   code: '42P01',
+10|wolfdep |   detail: undefined,
+10|wolfdep |   hint: undefined,
+10|wolfdep |   position: '51',
+10|wolfdep |   internalPosition: undefined,
+10|wolfdep |   internalQuery: undefined,
+10|wolfdep |   where: undefined,
+10|wolfdep |   schema: undefined,
+10|wolfdep |   table: undefined,
+10|wolfdep |   column: undefined,
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   file: 'parse_relation.c',
+10|wolfdep |   line: '1449',
+10|wolfdep |   routine: 'parserOpenTable'
+10|wolfdep | }
+10|wolfdep | [admin/stats] error: error: column "pair_site_url" does n
+ot exist
+10|wolfdep |     at /var/www/wolfdeploy/dist/index.cjs:70:13326
+10|wolfdep |     at process.processTicksAndRejections (node:internal/p
+rocess/task_queues:105:5)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:76:36804
+10|wolfdep |     at async Promise.all (index 1)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:82:25645
+{
+10|wolfdep |   length: 113,
+10|wolfdep |   severity: 'ERROR',
+10|wolfdep |   code: '42703',
+10|wolfdep |   detail: undefined,
+10|wolfdep |   hint: undefined,
+10|wolfdep |   position: '59',
+10|wolfdep |   internalPosition: undefined,
+10|wolfdep |   internalQuery: undefined,
+10|wolfdep |   where: undefined,
+10|wolfdep |   schema: undefined,
+10|wolfdep |   table: undefined,
+10|wolfdep |   column: undefined,
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   file: 'parse_relation.c',
+10|wolfdep |   line: '3716',
+10|wolfdep |   routine: 'errorMissingColumn'
+10|wolfdep | }
+
+/root/.pm2/logs/wolfdeploy-out.log last 50 lines:
+10|wolfdep | 9:52:17 AM [express] GET /api/chat/status 304 in 2ms
+10|wolfdep | 9:52:17 AM [express] GET /api/admin/stats 304 in 108ms ::
+ {"totalUsers":4,"totalCoinsInCirculation":6110,"totalBots":4,"activeB
+ots":4,"totalDeployments":0,"runningDeployments":0,"failedDeployments"
+:0,"totalTransactions":2,"successTransactions":2,"totalRevenue":12000,
+"totalNotifications":1}
+10|wolfdep | 
+10|wolfdep | > rest-express@1.0.0 start
+10|wolfdep | > NODE_ENV=production node dist/index.cjs
+10|wolfdep | 
+10|wolfdep | [admin] Seeded 1 admin user(s) from ADMIN_USER_IDS
+10|wolfdep | [storage] Loaded 0 deployments from database.
+10|wolfdep | 9:53:22 AM [express] serving on port 3002
+10|wolfdep | 
+10|wolfdep | > rest-express@1.0.0 start
+10|wolfdep | > NODE_ENV=production node dist/index.cjs
+10|wolfdep | 
+10|wolfdep | [admin] Seeded 1 admin user(s) from ADMIN_USER_IDS
+10|wolfdep | [storage] Loaded 0 deployments from database.
+10|wolfdep | 9:54:39 AM [express] serving on port 3002
+10|wolfdep | 9:54:55 AM [express] GET /api/admin/check 304 in 8ms :: {
+"isAdmin":true}
+10|wolfdep | 9:54:55 AM [express] GET /api/deployments 304 in 1ms :: [
+]
+10|wolfdep | 9:54:55 AM [express] POST /api/auth/register-ip 500 in 33
+ms
+10|wolfdep | 9:54:55 AM [express] GET /api/notifications 304 in 62ms :
+: [{"id":"504b455d-e545-4d7f-a955-8e8403b75f66","title":"Concerning de
+ployment","message":"Works like Heroku, all you do is upload your sess
+ion ID among the necessary , that depends with the type of bot.\nI hav
+e confirmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.\n","type":"info","active":true,"createdAt":"20
+26-02-23T23:25:48.181Z"}]
+10|wolfdep | 9:54:55 AM [express] POST /api/auth/register-ip 500 in 51
+ms
+10|wolfdep | 9:54:55 AM [express] GET /api/chat/status 200 in 39ms ::
+{"enabled":true}
+10|wolfdep | 9:54:55 AM [express] GET /api/admin/stats 500 in 128ms ::
+ {"error":"Failed to fetch stats"}
+10|wolfdep | 9:54:57 AM [express] GET /api/config 304 in 2ms :: {"supa
+baseUrl":"https://adexftqqxmqrkurqleai.supabase.co","supabaseAnonKey":
+"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6
+ImFkZXhmdHFxeG1xcmt1cnFsZWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4NDg5OD
+EsImV4cCI6MjA4NzQyNDk4MX0.9YTktxvhaS5C_4D6y_ZoQzvolxKdoAuwjry-FBxBmDI"
+}
+10|wolfdep | 9:54:58 AM [express] POST /api/auth/register-ip 500 in 8m
+s
+10|wolfdep | 9:54:58 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 9:54:58 AM [express] POST /api/auth/register-ip 500 in 14
+ms
+10|wolfdep | 9:54:58 AM [express] GET /api/admin/check 200 in 1ms :: {
+"isAdmin":true}
+10|wolfdep | 9:54:58 AM [express] GET /api/notifications 200 in 13ms :
+: [{"id":"504b455d-e545-4d7f-a955-8e8403b75f66","title":"Concerning de
+ployment","message":"Works like Heroku, all you do is upload your sess
+ion ID among the necessary , that depends with the type of bot.\nI hav
+e confirmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.\n","type":"info","active":true,"createdAt":"20
+26-02-23T23:25:48.181Z"}]
+10|wolfdep | 9:54:58 AM [express] POST /api/auth/register-ip 500 in 7m
+s
+10|wolfdep | 9:54:58 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 9:54:58 AM [express] GET /api/admin/check 200 in 0ms :: {
+"isAdmin":true}
+10|wolfdep | 9:54:58 AM [express] GET /api/notifications 200 in 13ms :
+: [{"id":"504b455d-e545-4d7f-a955-8e8403b75f66","title":"Concerning de
+ployment","message":"Works like Heroku, all you do is upload your sess
+ion ID among the necessary , that depends with the type of bot.\nI hav
+e confirmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.\n","type":"info","active":true,"createdAt":"20
+26-02-23T23:25:48.181Z"}]
+10|wolfdep | 9:54:58 AM [express] GET /api/admin/stats 500 in 8ms :: {
+"error":"Failed to fetch stats"}
+10|wolfdep | 9:54:58 AM [express] GET /api/admin/settings 200 in 35ms
+:: {}
+10|wolfdep | 9:54:58 AM [express] GET /api/chat/status 200 in 37ms ::
+{"enabled":true}
+10|wolfdep | 9:55:04 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 9:55:04 AM [express] GET /api/admin/users 500 in 16ms ::
+{"error":"Failed to fetch users"}
+10|wolfdep | 9:55:08 AM [express] GET /api/chat/status 200 in 9ms :: {
+"enabled":true}
+10|wolfdep | 9:55:08 AM [express] GET /api/admin/stats 500 in 41ms ::
+{"error":"Failed to fetch stats"}
+10|wolfdep | 9:55:10 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 9:55:13 AM [express] GET /api/notifications 200 in 14ms :
+: [{"id":"504b455d-e545-4d7f-a955-8e8403b75f66","title":"Concerning de
+ployment","message":"Works like Heroku, all you do is upload your sess
+ion ID among the necessary , that depends with the type of bot.\nI hav
+e confirmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.\n","type":"info","active":true,"createdAt":"20
+26-02-23T23:25:48.181Z"}]
+10|wolfdep | 9:55:16 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 
+10|wolfdep | > rest-express@1.0.0 start
+10|wolfdep | > NODE_ENV=production node dist/index.cjs
+10|wolfdep | 
+10|wolfdep | [admin] Seeded 1 admin user(s) from ADMIN_USER_IDS
+10|wolfdep | [storage] Loaded 0 deployments from database.
+10|wolfdep | 9:57:51 AM [express] serving on port 3002
+
+
