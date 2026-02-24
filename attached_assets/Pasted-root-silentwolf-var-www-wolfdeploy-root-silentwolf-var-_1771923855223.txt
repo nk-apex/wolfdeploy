@@ -1,0 +1,321 @@
+root@silentwolf:/var/www/wolfdeploy# root@silentwolf:/var/www/wolfdepl
+oy# ^C
+twolf:/var/www/wolfdeploy# # See current live errors-bash: root@silent
+wolf:/var/www/wolfdeploy#: No such file or directory
+root@silentwolf:/var/www/wolfdeploy# root@silentwolf:/var/www/wolfdepl
+oy# # See current live errors
+-bash: root@silentwolf:/var/www/wolfdeploy#: No such file or directory
+ploy --lines 30 --
+nostream
+S
+curl -s "https://adexftroot@silentwolf:/var/www/wolfdeploy# root@silen
+twolf:/var/www/wolfdeploy# pm2 logs wolfdeploy --lines 30 --
+qqxmqrkurqleai.supabase.co/auth/v1/admin/users?
+per_pa-bash: root@silentwolf:/var/www/wolfdeploy#: No such file or dir
+ectory
+ge=5" \
+  -H "Authorization: Bearer $(grep -m1 'root@silentwolf:/var/www/wolfd
+eploy# nostream
+-bash: nostream: command not found
+root@silentwolf:/var/www/wolfdeploy# S
+SUPABASE_SERVICE_ROLE_KEY' /va
+-bash: S: command not found
+r/www/wolfdeploy/.env | cut -d= -f2-)" \
+  -H "apikroot@silentwolf:/var/www/wolfdeploy# curl -s "https://adexft
+qqxmqrkurqleai.supabase.co/auth/v1/admin/users?
+> per_page=5" \
+>   -H "Authorization: Bearer $(grep -m1 'SUPABASE_SERVICE_ROLE_KEY' /
+va
+> r/www/wolfdeploy/.env | cut -d= -f2-)" \
+>   -H "apikey: $(grep -m1 'SUPABASE_SERVICE_ROLE_KEY' /var/www/wolfde
+pl
+> oy/.env | cut -d= -f2-)" | head -c 200[TAILING] Tailing last 30 line
+s
+ith --lines option)
+/root/.pm2/logs/wolfdeploy-error.log last 30 lines:
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   filehead: invalid number of bytes: ‘200[TAILING]’
+: 'parse_relation.c',
+10|wolfdep |   line: '3716',
+grep: /va: No such file or directory
+10|wolfdep |   routine: 'errorMissingColumn'
+10|wo-bash: r/www/wolfdeploy/.env: No such file or directory
+lfdep | }
+10|wolfdep | [admin/users] error: error: relation "ip_registrations" d
+oes not exist
+10|wolfdep |     at /var/www/wolfdeploy/dist/index.cjs:70:13326
+10|wolfdep |     at process.processTicksAndRejections (node:internal/p
+rocess/task_queues:105:5)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/indgrep: /var/www/w
+olfdepl: No such file or directory
+ex.cjs:76:36804
+10|wolfdep |     at async Promise.a-bash: oy/.env: No such file or dir
+ectory
+ll (index 1)
+10|wolfdep |     at async /var/www/wolfdeploy/dist/index.cjs:82:26643
+{
+10|wolfdep |   length: 115,
+10|wolfdep |   severity: 'ERROR',
+10|wolfdep |   code: '42P01',
+10|wolfdep |   detail: undefined,
+10|wolfdep |   hint: undefined,
+10|wolfdep |   position: '51',
+10|wolfdep |   internalPosition: undefined,
+10|wolfdep |   internalQuery: undefined,
+10|wolfdep |   where: undefined,
+10|wolfdep |   schema: undefined,
+10|wolfdep |   table: undefined,
+10|wolfdep |   column: undefined,
+10|wolfdep |   dataType: undefined,
+10|wolfdep |   constraint: undefined,
+10|wolfdep |   file: 'parse_relation.c',
+10|wolfdep |   line: '1449',
+10|wolfdep |   routine: 'parserOpenTable'
+10|wolfdep | }
+
+/root/.pm2/logs/root@silentwolf:/var/www/wolfdeploy# for [wolfdeploy]
+process (change the value with --lines option)
+-bash: syntax error near unexpected token `process'
+root@silentwolf:/var/www/wolfdeploy# /root/.pm2/logs/wolfdeploy-error.
+log last 30 lines:
+wolfdeploy-out.log last 30 lines:
+10|wolfdep | 9:54:-bash: /root/.pm2/logs/wolfdeploy-error.log: Permiss
+ion denied
+58 AM [express] GET /api/chat/status 200 in 37ms :root@silentwolf:/var
+/www/wolfdeploy# 10|wolfdep |   dataType: undefined,
+:
+{"enabled":true}
+10|wolfdep | 9:55:04 AM -bash: wolfdep: command not found
+-bash: dataType:: command not found
+-bash: 10: command not found
+[express] GET /api/deployments 200 in 1ms :: [
+]
+10|wolfdep | 9:55:04 AM [express] GET /aproot@silentwolf:/var/www/wolf
+deploy# 10|wolfdep |   constraint: undefined,
+users 500 in 16ms ::
+{"error":"Failed to fetch users"}
+10|wolfdep | 9:55:08 AM [express]-bash: wolfdep: command not found
+ GET -bash: 10: command not found
+-bash: constraint:: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |   file: 'parse_relat
+ion.c',
+/api/chat/status 200 in 9ms :: {
+"enabled":true}
+-bash: wolfdep: command not found
+-bash: file:: command not found
+-bash: 10: command not found
+10|wolfdep | 9:55:08 AM [express] GET /api/admiroot@silentwolf:/var/ww
+w/wolfdeploy# 10|wolfdep |   line: '3716',
+-bash: wolfdep: command not found
+ stats"}
+10|wolfdep | 9:55:10 AM [express] GET-bash: line:: command not found
+-bash: 10: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |   routine: 'errorMis
+singColumn'
+55:13 AM [express] GET /api/notifications 200 in -bash: wolfdep: comma
+nd not found
+-bash: routine:: command not found
+-bash: 10: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | }
+-bash: syntax error near unexpected token `}'
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | [admin/users] error:
+ error: relation "ip_registrations" d
+5f66","title":"Concerning de
+ployment","message"-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: [admin/users]: No such file or directory
+root@silentwolf:/var/www/wolfdeploy# oes not exist
+-bash: oes: command not found
+:"Works like Heroku, all you do is upload your sessroot@silentwolf:/va
+r/www/wolfdeploy# 10|wolfdep |     at /var/www/wolfdeploy/dist/index.c
+js:70:13326
+
+ion ID among the necessary , that depends with the ty-bash: wolfdep: c
+ommand not found
+-bash: at: command not found
+-bash: 10: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |     at process.proce
+ssTicksAndRejections (node:internal/p
+-bash: syntax error near unexpected token `('
+root@silentwolf:/var/www/wolfdeploy# rocess/task_queues:105:5)
+-bash: syntax error near unexpected token `)'
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |     at async /var/ww
+w/wolfdeploy/dist/index.cjs:76:36804
+ to confirm others like JUNE-X, TRUTH -MD
+ ,-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: at: command not found
+ DAVE-X among others.\n","type":"info","actiroot@silentwolf:/var/www/w
+olfdeploy# 10|wolfdep |     at async Promise.all (index 1)
+-bash: syntax error near unexpected token `('
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |     at async /var/ww
+w/wolfdeploy/dist/index.cjs:82:26643
+:48.181-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: at: command not found
+Z"}]
+10|wolfdep | 9:55:16 AM [express] GET /root@silentwolf:/var/www/wolfde
+ploy# {
+> 10|wolfdep |   length: 115,
+> 10|wolfdep |   severity: 'ERROR',
+> 10|wolfdep |   code: '42P01',
+> 10|wolfdep |   detail: undefined,
+> 10|wolfdep |   hint: undefined,
+> 10|wolfdep |   position: '51',
+> 10|wolfdep |   internalPosition: undefined,
+> 10|wolfdep |   internalQuery: undefined,
+> 10|wolfdep |   where: undefined,
+> 10|wolfdep |   schema: undefined,
+> 10|wolfdep |   table: undefined,
+> 10|wolfdep |   column: undefined,
+> 10|wolfdep |   dataType: undefined,
+> 10|wolfdep |   constraint: undefined,
+> 10|wolfdep |   file: 'parse_relation.c',
+> 10|wolfdep |   line: '1449',
+> 10|wolfdep |   routine: 'parserOpenTable'
+> 10|wolfdep | }
+-bash: syntax error near unexpected token `}'
+root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# /root/.pm2/logs/wolfdeploy-out.lo
+g last 30 lines:
+) from ADMIN_USER_IDS
+10|wolfdep | [sto-bash: /root/.pm2/logs/wolfdeploy-out.log: Permission
+ denied
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:54:58 AM [express]
+ GET /api/chat/status 200 in 37ms ::
+ 9:57:51 AM [express] serving on port 3002
+10|wolf-bash: wolfdep: command not found
+-bash: 9:54:58: command not found
+dep | 9:59:46 AM [express] GET /api/conf-bash: 10: command not found
+ig 304 iroot@silentwolf:/var/www/wolfdeploy# {"enabled":true}
+n 2ms :: {"supa
+baseUrl":"https://adexftqqxmqrk-bash: {enabled:true}: command not foun
+d
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:55:04 AM [express]
+ GET /api/deployments 200 in 1ms :: [
+urqleai.supabase.co","supabaseAnonKey":
+"eyJhbG-bash: wolfdep: command not found
+ciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3M-bash: 10: command not found
+-bash: 9:55:04: command not found
+root@silentwolf:/var/www/wolfdeploy# ]
+iOiJzdXBhYmFzZSIsInJlZiI6
+ImFkZXhmdHF-bash: ]: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:55:04 AM [express]
+ GET /api/admin/users 500 in 16ms ::
+xeG1xcmt1cnFsZWFpIiwicm9sZSI6ImFub24iLCJpY-bash: wolfdep: command not
+found
+-bash: 10: command not found
+-bash: 9:55:04: command not found
+XQiOjE3NzE4NDg5OD
+EsImV4cCI6MjA4NzQyroot@silentwolf:/var/www/wolfdeploy# {"error":"Fail}
+-bash: {error:Failed to fetch users}: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:55:08 AM [express]
+ GET /api/chat/status 200 in 9ms :: {
+ry-FBxBmDI"
+}
+10|wolfdep | 9:59:46 AM [expr-bash: 10: command not found
+-bash: 9:55:08: command not found
+-bash: wolfdep: command not found
+ess] GET /api/deployments 200 in 1ms :: [
+]
+10|wolroot@silentwolf:/var/www/wolfdeploy# "enabled":true}
+-bash: enabled:true}: command not found
+fdep | 9:59:46 AM [express] GET /api/admin/checkroot@silentwolf:/var/w
+ww/wolfdeploy# 10|wolfdep | 9:55:08 AM [express] GET /api/admin/stats
+500 in 41ms ::
+ 200 in 2ms :: {
+"isAdmin":true}
+10|wolfdep | -bash: wolfdep: command not found
+9:59:46 AM [express] POST /api/auth/register-ip -bash: 9:55:08: comman
+d not found
+-bash: 10: command not found
+500 in 59
+ms
+10|wolfdep | 9:59:46 AM [express] POroot@silentwolf:/var/www/wolfdepl}
+fdep | -bash: {error:Failed to fetch stats}: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:55:10 AM [express]
+ GET /api/deployments 200 in 1ms :: [
+9:59:46 AM [express] POST /api/auth/register-ip -bash: wolfdep: comman
+d not found
+-bash: 10: command not found
+-bash: 9:55:10: command not found
+root@silentwolf:/var/www/wolfdeploy# ]
+500 in 49
+ms
+10|wolfdep | 9:59:46 AM [express] GET /api/notifications 200 in 61ms :
+: [{"id":"504b455d-e545-4d7f-a955-8e8403b75f66","title":"Conce-bash: ]
+: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | 9:55:13 AM [express]
+ GET /api/notifications 200 in 14ms :
+rning de
+ployment","message":"Works like Heroku, all you do is upload your sess
+ion ID among the necessary , that depends with the type of bot.\nI hav
+e confi-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: 9:55:13: command not found
+rmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.root@silentwolf:/var/www/wolfdeploy# : [{"id":"
+504b455d-e545-4d7f-a955-8e8403b75f66","title":"Concerning de
+> ployment","message":"Works like Heroku, all you do is upload your se
+ss
+> ion ID among the necessary , that depends with the type of bot.\nI h
+av
+> e confirmed WOLFBOT, I am yet to confirm others like JUNE-X, TRUTH -
+MD
+>  , DAVE-X among others.\n","type":"info","active":true,"createdAt":"
+20
+> 26-02-23T23:25:48.181Z"}]
+59:46 AM [express] GET /api/deployments 200 in 2msroot@silentwolf:/var
+/www/wolfdeploy# 10|wolfdep | 9:55:16 AM [express] GET /api/deployment
+s 200 in 1ms :: [
+ :: [
+]
+10|wolfdep | 9:59:46 AM [express] GET /api/admin/check 200 in 2ms :: {
+"isAdmin":true}-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: 9:55:16: command not found
+
+10|wolfdep | 9:59:46 AM [express] GET /api/noroot@silentwolf:/var/www/
+wolfdeploy# ]
+tifications 200 in 10ms :
+: [{"id":"504b455d-e545-bash: ]: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep |
+> 10|wolfdep | > rest-express@1.0.0 start
+-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: wolfdep: command not found
+-bash: 10: command not found
+-bash: start: command not found
+root@silentwolf:/var/www/wolfdeploy# 10|wolfdep | > NODE_ENV=productio
+n node dist/index.cjs
+depends with the type of bot.\nI hav
+e confirmed WOL-bash: wolfdep: command not found
+-bash: 10: command not found
+FBOT, I am yet to confirm others like JUNE-X, TRUTH -MD
+ , DAVE-X among others.\n","type":"info","active":true,"createdAt":"20
+26-02-23T23:25:48.181Z"}]
+10|wolfdep | 9:59:46 AM [express] GET /api/admin/settings 200 in 52ms
+:: {}
+10|wolfdep | 9:59:46 AM [express] GET /api/admin/stats 500 in 57ms ::
+{"error":"Failed to fetch stats"}
+10|wolfdep | 9:59:46 AM [express] GET /api/chat/status 200 in 7ms :: {
+"enabled":true}
+10|wolfdep | 9:59:50 AM [express] GET /api/admin/users 500 in 11ms ::
+{"error":"Failed to fetch users"}
+10|wolfdep | 9:59:52 AM [express] GET /api/deployments 200 in 1ms :: [
+]
+
+root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# # Test if Supabase API works from
+ your VPS
+root@silentwolf:/var/www/wolfdeploy# curl -s "https://adexftqqxmqrkurq
+leai.supabase.co/auth/v1/admin/users?per_page=5" \
+>   -H "Authorization: Bearer $(grep -m1 'SUPABASE_SERVICE_ROLE_KEY' /
+var/www/wolfdeploy/.env | cut -d= -f2-)" \
+>   -H "apikey: $(grep -m1 'SUPABASE_SERVICE_ROLE_KEY' /var/www/wolfde
+ploy/.env | cut -d= -f2-)" | head -c 200
+{"users":[{"id":"02c3fc89-cd47-4906-92a7-8209d624df5c","aud":"authenti
+cated","role":"authenticated","email":"kayzdedon@gmail.com","email_con
+firmed_at":"2026-02-24T07:07:20.28936Z","phone":"","confirmaroot@silen
+twolf:/var/www/wolfdeploy#
