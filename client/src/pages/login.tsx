@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
-import { Rocket, Eye, EyeOff, AlertCircle, Mail, CheckCircle2 } from "lucide-react";
+import { Rocket, Eye, EyeOff, AlertCircle, Mail, CheckCircle2, Clock } from "lucide-react";
 
-const EMAIL_NOT_CONFIRMED = "Email not confirmed";
+const RESEND_COOLDOWN = 60;
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -17,6 +17,22 @@ export default function Login() {
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendSent, setResendSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => { if (cooldownRef.current) clearInterval(cooldownRef.current); };
+  }, []);
+
+  const startCooldown = () => {
+    setResendCooldown(RESEND_COOLDOWN);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown(prev => {
+        if (prev <= 1) { clearInterval(cooldownRef.current!); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,11 +53,22 @@ export default function Login() {
   };
 
   const handleResend = async () => {
+    if (resendCooldown > 0) return;
     setResendLoading(true);
+    setError(null);
     const { error: err } = await resendConfirmation(email);
     setResendLoading(false);
-    if (!err) setResendSent(true);
-    else setError(err);
+    if (!err) {
+      setResendSent(true);
+      startCooldown();
+    } else {
+      const isRateLimit = err.toLowerCase().includes("rate") || err.toLowerCase().includes("too many") || err.toLowerCase().includes("limit");
+      setError(isRateLimit
+        ? "Email sending limit reached. Please wait a few minutes before requesting another confirmation email."
+        : err
+      );
+      startCooldown();
+    }
   };
 
   return (
@@ -97,7 +124,7 @@ export default function Login() {
                   </p>
                 </div>
               </div>
-              {resendSent ? (
+              {resendSent && resendCooldown === 0 ? (
                 <div className="flex items-center gap-1.5 text-[10px] text-primary font-mono">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Confirmation email resent! Check your inbox.
@@ -106,15 +133,22 @@ export default function Login() {
                 <button
                   data-testid="button-resend-confirmation"
                   onClick={handleResend}
-                  disabled={resendLoading}
-                  className="flex items-center gap-1.5 text-[10px] text-yellow-500 font-mono hover:text-yellow-300 transition-colors disabled:opacity-50"
+                  disabled={resendLoading || resendCooldown > 0}
+                  className="flex items-center gap-1.5 text-[10px] text-yellow-500 font-mono hover:text-yellow-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   {resendLoading ? (
                     <div className="w-3 h-3 rounded-full border border-yellow-500/30 border-t-yellow-500 animate-spin" />
+                  ) : resendCooldown > 0 ? (
+                    <Clock className="w-3 h-3" />
                   ) : (
                     <Mail className="w-3 h-3" />
                   )}
-                  Resend confirmation email
+                  {resendCooldown > 0
+                    ? `Resend available in ${resendCooldown}s`
+                    : resendSent
+                    ? "Resend again"
+                    : "Resend confirmation email"
+                  }
                 </button>
               )}
             </div>

@@ -35,8 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sess?.user ?? null);
         setLoading(false);
 
-        // Register user on sign-in — stores email, name, country for admin dashboard
-        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && sess?.user?.id) {
+        // Register user on sign-in or session restore — stores email, name, country for admin dashboard
+        if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "INITIAL_SESSION") && sess?.user?.id) {
           const u = sess.user;
           fetch("/api/auth/register-ip", {
             method: "POST",
