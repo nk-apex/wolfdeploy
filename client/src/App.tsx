@@ -37,6 +37,12 @@ function AppShell() {
   // Set synchronously so queries fired during this render include the header
   setCurrentUserId(user?.id ?? "");
 
+  // When the logged-in user changes (switch accounts), wipe the entire cache so
+  // no previous user's data leaks into the new session.
+  useEffect(() => {
+    queryClient.clear();
+  }, [user?.id]);
+
   useEffect(() => {
     if (!loading && !user && !isPublicPage) {
       navigate("/login");
