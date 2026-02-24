@@ -549,6 +549,8 @@ export async function registerRoutes(
     if (uid && dep.userId && dep.userId !== uid && !(await isAdmin(uid))) {
       return res.status(403).json({ error: "Access denied" });
     }
+    const balanceBefore = uid ? await getBalance(uid) : null;
+    console.log(`[stop] user=${uid} dep=${req.params.id} balanceBefore=${balanceBefore} — NO coin deduction on stop`);
     const deployment = await storage.stopDeployment(req.params.id);
     res.json(deployment);
   });

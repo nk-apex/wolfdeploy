@@ -7,7 +7,7 @@ import type { Deployment } from "@shared/schema";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Bot, Rocket, Plus, ScrollText, StopCircle, Trash2,
-  ExternalLink, Clock, Cpu, MemoryStick, Activity
+  ExternalLink, Clock, Cpu, MemoryStick, Activity, Coins, ShoppingCart
 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,6 +40,18 @@ export default function MyBots() {
     enabled: !!user,
   });
 
+  const { data: coinData } = useQuery<{ balance: number }>({
+    queryKey: ["/api/coins", user?.id],
+    enabled: !!user?.id,
+    queryFn: async () => {
+      const res = await fetch(`/api/coins/${user!.id}`);
+      return res.json();
+    },
+    staleTime: 0,
+    refetchInterval: 15000,
+  });
+  const balance = coinData?.balance ?? 0;
+
   const stopMutation = useMutation({
     mutationFn: async (id: string) => {
       const res = await apiRequest("POST", `/api/deployments/${id}/stop`, {});
@@ -47,7 +59,8 @@ export default function MyBots() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/deployments"] });
-      toast({ title: "Bot stopped successfully" });
+      queryClient.invalidateQueries({ queryKey: ["/api/coins", user?.id] });
+      toast({ title: "Bot stopped", description: "No coins were deducted." });
     },
   });
 
@@ -74,17 +87,26 @@ export default function MyBots() {
             {deployments.length} deployment{deployments.length !== 1 ? "s" : ""} total
           </p>
         </div>
-        <Link href="/deploy">
-          <button
-            className="group px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/30 rounded-lg hover:bg-primary/20 transition-all"
-            data-testid="button-new-deployment"
-          >
-            <div className="flex items-center text-xs sm:text-sm font-mono text-primary">
-              <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
-              New Deployment
-            </div>
-          </button>
-        </Link>
+        <div className="flex items-center gap-3">
+          {/* Coin balance pill */}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg"
+            style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
+            <Coins className="w-3.5 h-3.5 text-primary" />
+            <span className="text-xs font-mono font-bold text-white" data-testid="text-coin-balance">{balance}</span>
+            <span className="text-[10px] font-mono text-gray-500">coins</span>
+          </div>
+          <Link href="/deploy">
+            <button
+              className="group px-3 sm:px-4 py-1.5 sm:py-2 bg-primary/10 border border-primary/30 rounded-lg hover:bg-primary/20 transition-all"
+              data-testid="button-new-deployment"
+            >
+              <div className="flex items-center text-xs sm:text-sm font-mono text-primary">
+                <Plus className="w-4 h-4 mr-1.5 sm:mr-2" />
+                New Deployment
+              </div>
+            </button>
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
