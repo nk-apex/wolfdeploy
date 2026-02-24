@@ -60,7 +60,6 @@ export const deployRequestSchema = z.object({
 
 export type DeployRequest = z.infer<typeof deployRequestSchema>;
 
-export const users = {} as any;
 export type User = { id: string; username: string; password: string };
 export type InsertUser = Omit<User, "id">;
 export const insertUserSchema = z.object({ username: z.string(), password: z.string() });
@@ -196,6 +195,16 @@ export const ipRegistrations = pgTable("ip_registrations", {
 });
 
 export type IpRegistration = typeof ipRegistrations.$inferSelect;
+
+export const userProfiles = pgTable("user_profiles", {
+  userId: varchar("user_id").primaryKey(),
+  email: varchar("email"),
+  displayName: varchar("display_name"),
+  country: varchar("country", { length: 10 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type UserProfile = typeof userProfiles.$inferSelect;
 
 export const userTrials = pgTable("user_trials", {
   userId: varchar("user_id").primaryKey(),

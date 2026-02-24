@@ -32,12 +32,14 @@ Theme context: `client/src/lib/theme.tsx` → `ThemeProvider`, `useTheme()`, `ge
 - TanStack Query for data fetching (refetch intervals for live data)
 - Shadcn UI components
 - `x-user-id` header sent automatically via `setCurrentUserId()` in queryClient
+- Query cache cleared on user change (`queryClient.clear()` when `user?.id` changes) to prevent cross-account data leakage
 
 ### Backend
 - Express.js REST API
 - PostgreSQL via Drizzle ORM
 - In-memory deployment storage (MemStorage) for active processes
 - Bot catalog stored in `platform_bots` DB table
+- Auto-registration middleware: any authenticated request auto-creates `user_coins` + `user_profiles` rows so all users appear in admin panel
 - Security: Helmet.js, express-rate-limit, express-slow-down, bot/scraper filtering, honeypot endpoints
 
 ### Deployment Backends

@@ -36,10 +36,14 @@ type AdminStats = {
 
 type AdminUser = {
   userId: string;
+  email: string | null;
+  displayName: string | null;
+  country: string | null;
   balance: number;
   isAdmin: boolean;
   deploymentCount: number;
   runningBots: number;
+  joinedAt: string | null;
 };
 
 type PlatformBot = {
@@ -598,20 +602,27 @@ export default function AdminPage() {
             {usersLoading ? (
               <div className="text-gray-500 text-sm flex items-center gap-2"><RefreshCw size={14} className="animate-spin" /> Loading…</div>
             ) : users.length === 0 ? (
-              <div className="text-gray-600 text-sm">No users have purchased coins yet.</div>
+              <div className="text-gray-600 text-sm">No users have signed in yet.</div>
             ) : (
               <div className="space-y-2">
                 {users.map(u => (
                   <div key={u.userId} className={`${bg} ${border} rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3`} data-testid={`row-user-${u.userId}`}>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-mono text-xs text-gray-300 truncate" title={u.userId}>{u.userId.slice(0, 8)}…{u.userId.slice(-6)}</span>
+                        <span className="font-mono text-sm text-white truncate">
+                          {u.displayName || u.email?.split("@")[0] || u.userId.slice(0, 8) + "…"}
+                        </span>
                         {u.isAdmin && <Badge className="text-[10px] px-1.5 py-0 bg-yellow-500/15 text-yellow-400 border-yellow-500/30">Admin</Badge>}
                       </div>
+                      {u.email && (
+                        <div className="text-[10px] font-mono text-gray-500 mt-0.5">{u.email}</div>
+                      )}
                       <div className="flex items-center gap-4 mt-1 text-xs text-gray-500">
                         <span><Coins size={10} className="inline mr-0.5" />{u.balance} coins</span>
                         <span><Rocket size={10} className="inline mr-0.5" />{u.deploymentCount} deployments</span>
                         <span><Activity size={10} className="inline mr-0.5" />{u.runningBots} running</span>
+                        {u.country && <span className="uppercase">{u.country}</span>}
+                        {u.joinedAt && <span>Joined {new Date(u.joinedAt).toLocaleDateString()}</span>}
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">

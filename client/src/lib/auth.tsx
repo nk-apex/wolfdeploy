@@ -35,12 +35,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(sess?.user ?? null);
         setLoading(false);
 
-        // Register IP on first sign-in to enforce one-account-per-IP
+        // Register user on sign-in — stores email, name, country for admin dashboard
         if ((event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && sess?.user?.id) {
+          const u = sess.user;
           fetch("/api/auth/register-ip", {
             method: "POST",
-            headers: { "Content-Type": "application/json", "x-user-id": sess.user.id },
-            body: JSON.stringify({ userId: sess.user.id }),
+            headers: { "Content-Type": "application/json", "x-user-id": u.id },
+            body: JSON.stringify({
+              userId: u.id,
+              email: u.email,
+              displayName: u.user_metadata?.full_name || u.user_metadata?.name || null,
+              country: u.user_metadata?.country || null,
+            }),
           }).catch(() => {});
         }
       });

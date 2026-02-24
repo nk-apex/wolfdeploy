@@ -14,6 +14,7 @@ import {
   platformSettings,
   ipRegistrations,
   userTrials,
+  userProfiles,
 } from "@shared/schema";
 import { deployRequestSchema } from "@shared/schema";
 import { eq, desc, sql, and, gt } from "drizzle-orm";
@@ -98,6 +99,22 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  /* ── Auto-register all users ─────────────────────────────
+     Any authenticated API request ensures a user_coins row AND a users
+     row exists so all users appear in the admin panel automatically. */
+  const seenUsers = new Set<string>();
+  app.use(async (req, _res, next) => {
+    const uid = getUserId(req);
+    if (uid && isValidUUID(uid) && !seenUsers.has(uid)) {
+      seenUsers.add(uid);
+      Promise.all([
+        db.insert(userCoins).values({ userId: uid, balance: 0 }).onConflictDoNothing(),
+        db.insert(userProfiles).values({ userId: uid }).onConflictDoNothing(),
+      ]).catch(() => {});
+    }
+    next();
+  });
+
   /* ── Public config ──────────────────────────────────────── */
   app.get("/api/config", (_req, res) => {
     res.json({
@@ -542,29 +559,39 @@ export async function registerRoutes(
   app.get("/api/admin/users", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      const [coinRows, ipRows, adminList] = await Promise.all([
+      const [coinRows, ipRows, adminList, userRows] = await Promise.all([
         db.select().from(userCoins),
         db.select().from(ipRegistrations),
         db.select().from(adminUsers),
+        db.select().from(userProfiles),
       ]);
 
       const allDeployments = await storage.getAllDeployments();
       const adminIds = new Set(adminList.map(a => a.userId));
       const coinMap = new Map(coinRows.map(c => [c.userId, c.balance]));
+      const userMap = new Map(userRows.map(u => [u.userId, u]));
 
-      // Collect all unique userIds from both coins and ip registrations
+      // Collect all unique userIds from coins, ip registrations, and users table
       const allUserIds = new Set([
         ...coinRows.map(c => c.userId),
         ...ipRows.map(r => r.userId),
+        ...userRows.map(u => u.userId),
       ]);
 
-      const usersWithMeta = Array.from(allUserIds).map(userId => ({
-        userId,
-        balance: coinMap.get(userId) ?? 0,
-        isAdmin: adminIds.has(userId),
-        deploymentCount: allDeployments.filter(d => d.userId === userId).length,
-        runningBots: allDeployments.filter(d => d.userId === userId && d.status === "running").length,
-      })).sort((a, b) => b.balance - a.balance);
+      const usersWithMeta = Array.from(allUserIds).map(userId => {
+        const meta = userMap.get(userId);
+        return {
+          userId,
+          email: meta?.email ?? null,
+          displayName: meta?.displayName ?? null,
+          country: meta?.country ?? null,
+          balance: coinMap.get(userId) ?? 0,
+          isAdmin: adminIds.has(userId),
+          deploymentCount: allDeployments.filter(d => d.userId === userId).length,
+          runningBots: allDeployments.filter(d => d.userId === userId && d.status === "running").length,
+          joinedAt: meta?.createdAt ?? null,
+        };
+      }).sort((a, b) => b.balance - a.balance);
 
       res.json(usersWithMeta);
     } catch {
@@ -1075,17 +1102,32 @@ export async function registerRoutes(
       const { userId } = req.body;
       if (!userId) return res.status(400).json({ error: "userId required" });
 
-      // Always ensure the user has a userCoins row — this is how we track all users
-      await db.insert(userCoins)
-        .values({ userId, balance: 0 })
-        .onConflictDoNothing();
+      const { email, displayName, country } = req.body;
+
+      // Always ensure the user has a userCoins row and a users row
+      await Promise.all([
+        db.insert(userCoins).values({ userId, balance: 0 }).onConflictDoNothing(),
+        db.insert(userProfiles).values({
+          userId,
+          email: email ? sanitize(email, 255) : undefined,
+          displayName: displayName ? sanitize(displayName, 100) : undefined,
+          country: country ? sanitize(country, 10) : undefined,
+        }).onConflictDoNothing(),
+      ]);
+
+      // Update existing user record with latest info if provided
+      if (email || displayName || country) {
+        const updateData: Record<string, string> = {};
+        if (email) updateData.email = sanitize(email, 255);
+        if (displayName) updateData.displayName = sanitize(displayName, 100);
+        if (country) updateData.country = sanitize(country, 10);
+        await db.update(userProfiles).set(updateData).where(eq(userProfiles.userId, userId));
+      }
 
       const ip = (req.headers["x-forwarded-for"] as string || req.ip || "unknown").split(",")[0].trim();
       const existing = await db.select().from(ipRegistrations).where(eq(ipRegistrations.ipAddress, ip));
 
       if (existing.length > 0 && existing[0].userId !== userId) {
-        // Another account already registered from this IP — still allowed to use platform
-        // but flag it so admin can see (don't block, just note)
         return res.json({ ok: true, ip, multiAccount: true });
       }
 
