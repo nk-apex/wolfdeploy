@@ -1,0 +1,142 @@
+oot@silentwolf:/var/www/wolfdeploy# cd /var/www/wolfdeploy && git pul
+l && npm run build && pm2 restart wolfdeploy
+remote: Enumerating objects: 22, done.
+remote: Counting objects: 100% (22/22), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 12 (delta 10), reused 12 (delta 10), pack-reused 0 (from
+ 0)
+Unpacking objects: 100% (12/12), 32.02 KiB | 910.00 KiB/s, done.
+From https://github.com/nk-apex/wolfdeploy
+   a126136..13e4182  main       -> origin/main
+Updating a126136..13e4182
+Fast-forward
+ ...2026-02-24_at_15.26.24_1771936044247.jpeg | Bin 0 -> 41331 bytes
+ client/src/lib/auth.tsx                      |  31 ++++++----
+ client/src/pages/signup.tsx                  |  20 +++++--
+ server/routes.ts                             |  51 +++++++++++++++++
+ 4 files changed, 85 insertions(+), 17 deletions(-)
+ create mode 100644 attached_assets/WhatsApp_Image_2026-02-24_at_15.26
+.24_1771936044247.jpeg
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (5) ../node_modules/@tanstack/react-query/build/mode
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. Th
+is may cause imported assets to be incorrectly transformed. If you've
+recently added a PostCSS plugin that raised this warning, please conta
+ct the package author to fix the issue.
+✓ 2075 modules transformed.
+../dist/public/index.html                                     2.57 kB
+│ gzip:   0.98 kB
+../dist/public/assets/wolftech_1771881436325-D5rasrrx.jpeg   26.95 kB
+../dist/public/assets/index-6rZHhjZc.css                     86.31 kB
+│ gzip:  14.12 kB
+../dist/public/assets/index-D8zGJ5b7.js                     742.95 kB
+│ gzip: 207.89 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: htt
+ps://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningL
+imit.
+✓ built in 9.15s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 338ms
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [wolfdeploy](ids: [ 10 ]
+)
+[PM2] [wolfdeploy](10) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──
+────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ m
+emory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──
+────────┤
+│ 2  │ pairwolf           │ fork     │ 3    │ online    │ 0%       │ 7
+2.7mb   │
+│ 10 │ wolfdeploy         │ fork     │ 45   │ online    │ 0%       │ 2
+1.2mb   │
+│ 7  │ wolfhost-backend   │ fork     │ 2    │ online    │ 0%       │ 7
+3.8mb   │
+│ 8  │ wolfhost-frontend  │ fork     │ 0    │ online    │ 0%       │ 7
+3.0mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──
+────────┘
+root@silentwolf:/var/www/wolfdeploy# cd /var/www/wolfdeploy && git pul
+l && npm run build
+ the new plan and expires_at columns to the deployments table
+psql $DATABASE_URL -c "ALTER TABLE deployments ADD COLUMN IF NOT EXIST
+S plan VARCHAR DEFAULT 'trial';"
+psql $DATABASE_URL -c "ALTER TABLE deployments ADD COLUMN IF NOT EXIST
+S expires_at TIMESTAMP;"
+
+pm2 restart wolfdeployremote: Enumerating objects: 31, done.
+remote: Counting objects: 100% (31/31), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 19 (delta 16), reused 19 (delta 16), pack-reused 0 (from
+ 0)
+Unpacking objects: 100% (19/19), 103.42 KiB | 2.58 MiB/s, done.
+From https://github.com/nk-apex/wolfdeploy
+   13e4182..d2925da  main       -> origin/main
+Updating 13e4182..d2925da
+Fast-forward
+ attached_assets/image_1771936424791.png | Bin 0 -> 112849 bytes
+ client/src/pages/deploy.tsx             | 245 ++++++++++++++--------
+ client/src/pages/register-bot.tsx       |  26 +--
+ server/routes.ts                        |  97 ++++-----
+ server/storage.ts                       |  14 +-
+ shared/schema.ts                        |   8 +
+ 6 files changed, 224 insertions(+), 166 deletions(-)
+ create mode 100644 attached_assets/image_1771936424791.png
+
+> rest-express@1.0.0 build
+> tsx script/build.ts
+
+building client...
+vite v7.3.0 building client environment for production...
+transforming (5) ../node_modules/wouter/esm/index.js
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. Th
+is may cause imported assets to be incorrectly transformed. If you've
+recently added a PostCSS plugin that raised this warning, please conta
+ct the package author to fix the issue.
+✓ 2075 modules transformed.
+../dist/public/index.html                                     2.57 kB
+│ gzip:   0.97 kB
+../dist/public/assets/wolftech_1771881436325-D5rasrrx.jpeg   26.95 kB
+../dist/public/assets/index-BRHCGdOP.css                     86.77 kB
+│ gzip:  14.14 kB
+../dist/public/assets/index-CwNOegpm.js                     743.77 kB
+│ gzip: 208.07 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: htt
+ps://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningL
+imit.
+✓ built in 8.16s
+building server...
+
+  dist/index.cjs  1.1mb ⚠️
+
+⚡ Done in 213ms
+root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# # Add the new plan and expires_at
+ columns to the deployments table
+root@silentwolf:/var/www/wolfdeploy# psql $DATABASE_URL -c "ALTER TABL
+E deployments ADD COLUMN IF NOT EXISTS plan VARCHAR DEFAULT 'trial';"
+psql: error: connection to server on socket "/var/run/postgresql/.s.PG
+SQL.5432" failed: FATAL:  role "root" does not exist
+root@silentwolf:/var/www/wolfdeploy# psql $DATABASE_URL -c "ALTER TABL
+E deployments ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;"
+psql: error: connection to server on socket "/var/run/postgresql/.s.PG
+SQL.5432" failed: FATAL:  role "root" does not exist
+root@silentwolf:/var/www/wolfdeploy#
+root@silentwolf:/var/www/wolfdeploy# pm2 restart wolfdeploy

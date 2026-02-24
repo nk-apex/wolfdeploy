@@ -3,11 +3,40 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import {
   Bot, Gift, Clock, CheckCircle, XCircle, AlertCircle,
   ExternalLink, ChevronDown, ChevronUp, Search, Loader2,
-  Github, User, Link as LinkIcon, Tag, FileText, Package
+  Github, User, Link as LinkIcon, Tag, FileText, Package,
+  Star, ShoppingCart,
 } from "lucide-react";
+
+type Plan = "trial" | "monthly";
+
+const PLANS = {
+  trial: {
+    label: "Free Trial",
+    coins: 5,
+    days: 7,
+    price: "Free",
+    color: "rgba(74,222,128,0.12)",
+    border: "rgba(74,222,128,0.4)",
+    accent: "hsl(142 76% 42%)",
+    note: "Bot auto-removed after 7 days",
+    icon: Clock,
+  },
+  monthly: {
+    label: "Monthly",
+    coins: 100,
+    days: 30,
+    price: "50 KSH",
+    color: "rgba(251,191,36,0.08)",
+    border: "rgba(251,191,36,0.4)",
+    accent: "#fbbf24",
+    note: "Bot stays live for 30 days",
+    icon: Star,
+  },
+} as const;
 
 type BotRegistration = {
   id: string;
@@ -34,6 +63,7 @@ export default function RegisterBot() {
   const { toast } = useToast();
 
   const [showForm, setShowForm] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [developerName, setDeveloperName] = useState("");
   const [pairSiteUrl, setPairSiteUrl] = useState("");
   const [name, setName] = useState("");
@@ -68,8 +98,10 @@ export default function RegisterBot() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bot-registrations"] });
       queryClient.invalidateQueries({ queryKey: ["/api/coins", user?.id] });
-      toast({ title: "Bot submitted!", description: "Under review. You earn 5 coins when approved." });
+      const plan = selectedPlan ? PLANS[selectedPlan] : PLANS.monthly;
+      toast({ title: "Bot submitted!", description: `Under review. Listed for ${plan.days} days on the ${plan.label} plan.` });
       setShowForm(false);
+      setSelectedPlan(null);
       resetForm();
     },
     onError: (err: any) => {
@@ -137,7 +169,7 @@ export default function RegisterBot() {
       toast({ title: "Missing fields", description: "Developer name, bot name, description, and repository are required.", variant: "destructive" });
       return;
     }
-    submitMutation.mutate({ name, description, repository, logo: logo || undefined, keywords, category, developerName, pairSiteUrl: pairSiteUrl || undefined, env: {} });
+    submitMutation.mutate({ name, description, repository, logo: logo || undefined, keywords, category, developerName, pairSiteUrl: pairSiteUrl || undefined, env: {}, plan: selectedPlan ?? "monthly" });
   }
 
   function getTimeLeft(expiresAt: string | null): string {
@@ -150,7 +182,9 @@ export default function RegisterBot() {
   }
 
   const balance = coinData?.balance ?? 0;
-  const canAfford = balance >= 100;
+  const canAffordTrial = balance >= 5;
+  const canAffordMonthly = balance >= 100;
+  const canAfford = canAffordTrial; // can afford at least the trial
 
   const STATUS_COLORS: Record<string, string> = {
     pending: "#f59e0b",
@@ -182,30 +216,86 @@ export default function RegisterBot() {
         </div>
         <button
           data-testid="button-open-register-form"
-          onClick={() => { if (!canAfford) { toast({ title: "Insufficient coins", description: "You need 100 coins to register a bot.", variant: "destructive" }); return; } setShowForm(v => !v); }}
+          onClick={() => { setShowForm(v => !v); if (showForm) { setSelectedPlan(null); } }}
           className="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90"
-          style={{
-            background: canAfford ? "rgba(74,222,128,0.15)" : "rgba(107,114,128,0.1)",
-            border: `1px solid ${canAfford ? "rgba(74,222,128,0.4)" : "rgba(107,114,128,0.3)"}`,
-            color: canAfford ? "hsl(142 76% 42%)" : "#6b7280",
-          }}
+          style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)", color: "hsl(142 76% 42%)" }}
         >
-          + Register Bot (100 coins)
+          {showForm ? "✕ Cancel" : "+ Register Bot"}
         </button>
       </div>
 
-      {!canAfford && (
-        <div
-          className="flex items-center gap-2 p-3 rounded-xl mb-6 text-xs font-mono"
-          style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}
-        >
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          You need at least 100 coins to register. Top up your balance in Billing.
+      {/* Plan selection — shown when form is open but no plan chosen yet */}
+      {showForm && !selectedPlan && (
+        <div className="mb-6">
+          <p className="text-xs text-gray-400 font-mono mb-4">Choose a listing plan to continue:</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+            {(Object.entries(PLANS) as [Plan, typeof PLANS[Plan]][]).map(([key, plan]) => {
+              const canAffordPlan = key === "trial" ? canAffordTrial : canAffordMonthly;
+              const Icon = plan.icon;
+              return (
+                <button key={key} data-testid={`button-plan-${key}`}
+                  onClick={() => canAffordPlan && setSelectedPlan(key)}
+                  disabled={!canAffordPlan}
+                  className="text-left rounded-2xl p-5 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ background: plan.color, border: `1px solid ${plan.border}` }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="p-2 rounded-xl" style={{ background: "rgba(0,0,0,0.3)" }}>
+                      <Icon className="w-5 h-5" style={{ color: plan.accent }} />
+                    </div>
+                    <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg"
+                      style={{ background: "rgba(0,0,0,0.4)", color: plan.accent, border: `1px solid ${plan.border}` }}>
+                      {plan.price}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-white text-sm font-mono mb-1">{plan.label}</h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl font-bold font-mono" style={{ color: plan.accent }}>{plan.coins} coins</span>
+                    <span className="text-xs text-gray-400 font-mono">· {plan.days} days</span>
+                  </div>
+                  <p className="text-[11px] text-gray-400 font-mono">{plan.note}</p>
+                  {!canAffordPlan && (
+                    <div className="flex items-center gap-1.5 text-[10px] font-mono text-red-400 mt-2">
+                      <AlertCircle className="w-3 h-3" />
+                      Need {plan.coins} coins —{" "}
+                      <Link href="/billing" className="underline" onClick={e => e.stopPropagation()}>Buy coins</Link>
+                    </div>
+                  )}
+                  {canAffordPlan && (
+                    <div className="flex items-center gap-1 text-[10px] font-mono mt-2" style={{ color: plan.accent }}>
+                      <CheckCircle className="w-3 h-3" /> Select this plan →
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+          {!canAffordTrial && (
+            <div className="flex items-center gap-2 p-3 rounded-xl mt-4 text-xs font-mono max-w-2xl"
+              style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}>
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              You need at least 5 coins. <Link href="/billing" className="underline ml-1">Top up in Billing</Link>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Plan badge shown when plan is already selected */}
+      {showForm && selectedPlan && (
+        <div className="flex items-center gap-3 mb-4">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-mono font-bold"
+            style={{ background: PLANS[selectedPlan].color, border: `1px solid ${PLANS[selectedPlan].border}`, color: PLANS[selectedPlan].accent }}>
+            {selectedPlan === "trial" ? <Clock className="w-3 h-3" /> : <Star className="w-3 h-3" />}
+            {PLANS[selectedPlan].label} · {PLANS[selectedPlan].coins} coins · {PLANS[selectedPlan].days} days
+          </div>
+          <button onClick={() => setSelectedPlan(null)}
+            className="text-[10px] font-mono text-gray-500 hover:text-gray-300 underline">
+            Change plan
+          </button>
         </div>
       )}
 
       {/* Registration Form */}
-      {showForm && (
+      {showForm && selectedPlan && (
         <div
           className="rounded-xl mb-8 overflow-hidden"
           style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}

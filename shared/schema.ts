@@ -159,6 +159,8 @@ export const botRegistrations = pgTable("bot_registrations", {
   category: varchar("category").default("WhatsApp Bot"),
   env: jsonb("env").notNull().default(sql`'{}'::jsonb`),
   status: varchar("status").notNull().default("pending"),
+  plan: varchar("plan").default("monthly"),
+  listingExpiresAt: timestamp("listing_expires_at"),
   rewardClaimed: boolean("reward_claimed").default(false),
   rewardExpiresAt: timestamp("reward_expires_at"),
   reviewNotes: text("review_notes"),

@@ -959,12 +959,12 @@ export async function registerRoutes(
     }
   });
 
-  /* Submit a bot registration — costs 100 coins, grants 100-coin reward expiring in 7 days */
+  /* Submit a bot registration — trial: 5 coins/7 days | monthly: 100 coins/30 days */
   app.post("/api/bot-registrations", botRegLimiter, async (req, res) => {
     const uid = getUserId(req);
     if (!uid) return res.status(401).json({ error: "Authentication required" });
 
-    const { name, description, repository, logo, keywords, category, env, developerName, pairSiteUrl } = req.body;
+    const { name, description, repository, logo, keywords, category, env, developerName, pairSiteUrl, plan } = req.body;
     if (!name || !description || !repository) {
       return res.status(400).json({ error: "name, description, and repository are required" });
     }
@@ -972,12 +972,22 @@ export async function registerRoutes(
       return res.status(400).json({ error: "repository must be a valid URL" });
     }
 
-    const deductResult = await deductCoins(uid, 100);
+    const selectedPlan = plan === "trial" ? "trial" : "monthly";
+    const cost = selectedPlan === "trial" ? 5 : 100;
+    const listingDays = selectedPlan === "trial" ? 7 : 30;
+
+    const deductResult = await deductCoins(uid, cost);
     if (!deductResult.ok) {
-      return res.status(402).json({ error: "Insufficient coins. You need 100 coins to register a bot.", balance: deductResult.balance, required: 100 });
+      return res.status(402).json({
+        error: `Insufficient coins. You need ${cost} coins for the ${selectedPlan} plan.`,
+        balance: deductResult.balance,
+        required: cost,
+      });
     }
 
     const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const listingExpiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000);
+
     const [reg] = await db.insert(botRegistrations).values({
       userId: uid,
       developerName: sanitize(developerName, 100) || null,
@@ -990,6 +1000,8 @@ export async function registerRoutes(
       category: sanitize(category, 50) || "WhatsApp Bot",
       env: env || {},
       status: "pending",
+      plan: selectedPlan,
+      listingExpiresAt,
       rewardClaimed: false,
       rewardExpiresAt,
     }).returning();
