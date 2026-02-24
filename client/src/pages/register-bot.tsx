@@ -150,7 +150,7 @@ export default function RegisterBot() {
   }
 
   const balance = coinData?.balance ?? 0;
-  const canAfford = balance >= 10;
+  const canAfford = balance >= 100;
 
   const STATUS_COLORS: Record<string, string> = {
     pending: "#f59e0b",
@@ -182,7 +182,7 @@ export default function RegisterBot() {
         </div>
         <button
           data-testid="button-open-register-form"
-          onClick={() => { if (!canAfford) { toast({ title: "Insufficient coins", description: "You need 10 coins to register a bot.", variant: "destructive" }); return; } setShowForm(v => !v); }}
+          onClick={() => { if (!canAfford) { toast({ title: "Insufficient coins", description: "You need 100 coins to register a bot.", variant: "destructive" }); return; } setShowForm(v => !v); }}
           className="px-4 py-2 rounded-lg font-mono text-xs font-bold transition-all hover:opacity-90"
           style={{
             background: canAfford ? "rgba(74,222,128,0.15)" : "rgba(107,114,128,0.1)",
@@ -190,7 +190,7 @@ export default function RegisterBot() {
             color: canAfford ? "hsl(142 76% 42%)" : "#6b7280",
           }}
         >
-          + Register Bot (10 coins)
+          + Register Bot (100 coins)
         </button>
       </div>
 
@@ -224,7 +224,7 @@ export default function RegisterBot() {
           style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#f87171" }}
         >
           <AlertCircle className="w-4 h-4 flex-shrink-0" />
-          You need at least 10 coins to register. Top up your balance in Billing.
+          You need at least 100 coins to register. Top up your balance in Billing.
         </div>
       )}
 
@@ -441,7 +441,7 @@ export default function RegisterBot() {
                 style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)", color: "hsl(142 76% 42%)" }}
               >
                 {submitMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Package className="w-3.5 h-3.5" />}
-                {submitMutation.isPending ? "Submitting…" : "Submit for Review (10 coins)"}
+                {submitMutation.isPending ? "Submitting…" : "Submit for Review (100 coins)"}
               </button>
             </div>
           </div>

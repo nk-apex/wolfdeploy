@@ -530,20 +530,40 @@ export async function registerRoutes(
   app.get("/api/admin/stats", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     try {
-      const [userRows, coinRows, botRows, txRows, notifRows] = await Promise.all([
-        db.select().from(userCoins),
+      const [coinRows, botRows, txRows, notifRows] = await Promise.all([
         db.select({ total: sql<number>`SUM(balance)` }).from(userCoins),
         db.select().from(platformBots),
         db.select().from(paymentTransactions),
         db.select().from(notifications),
       ]);
 
+      // Fetch real user count from Supabase auth.users
+      let totalUsers = 0;
+      const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
+      if (supabaseDbUrl) {
+        const supaPool = new pg.Pool({ connectionString: supabaseDbUrl, max: 2, idleTimeoutMillis: 5000 });
+        try {
+          const { rows } = await supaPool.query<{ count: string }>(`SELECT COUNT(*) as count FROM auth.users`);
+          totalUsers = parseInt(rows[0]?.count ?? "0", 10);
+        } catch (e) {
+          console.warn("[admin/stats] Could not count Supabase auth.users:", e);
+          // Fall back to local user_coins count
+          const fallback = await db.select().from(userCoins);
+          totalUsers = fallback.length;
+        } finally {
+          await supaPool.end();
+        }
+      } else {
+        const fallback = await db.select().from(userCoins);
+        totalUsers = fallback.length;
+      }
+
       const allDeployments = await storage.getAllDeployments();
       const successTxs = txRows.filter(t => t.status === "success");
       const totalRevenue = successTxs.reduce((sum, t) => sum + t.amount, 0);
 
       res.json({
-        totalUsers: userRows.length,
+        totalUsers,
         totalCoinsInCirculation: Number(coinRows[0]?.total ?? 0),
         totalBots: botRows.length,
         activeBots: botRows.filter(b => b.active).length,
@@ -881,9 +901,9 @@ export async function registerRoutes(
       return res.status(400).json({ error: "repository must be a valid URL" });
     }
 
-    const deductResult = await deductCoins(uid, 10);
+    const deductResult = await deductCoins(uid, 100);
     if (!deductResult.ok) {
-      return res.status(402).json({ error: "Insufficient coins. You need 10 coins to register a bot.", balance: deductResult.balance, required: 10 });
+      return res.status(402).json({ error: "Insufficient coins. You need 100 coins to register a bot.", balance: deductResult.balance, required: 100 });
     }
 
     const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);

@@ -34,7 +34,6 @@ export default function Community() {
 
   const { data: chatData, isLoading: chatLoading, isError: chatError, refetch: refetchChat } = useQuery<{ messages: ChatMessage[]; enabled: boolean }>({
     queryKey: ["/api/chat/messages"],
-    enabled: !!user,
     refetchInterval: 4000,
     staleTime: 0,
     retry: 3,
