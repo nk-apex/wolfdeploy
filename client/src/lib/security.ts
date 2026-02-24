@@ -5,19 +5,10 @@
 
 const IS_PROD = import.meta.env.PROD;
 
-/* ── 1. Frame-busting — prevent embedding in iframes ─────── */
-function enforceNoFrame() {
-  if (window.self !== window.top) {
-    // We're inside an iframe — break out
-    try {
-      window.top!.location.href = window.self.location.href;
-    } catch (_) {
-      // Cross-origin parent blocked us — just blank the page
-      document.body.innerHTML = "";
-      document.title = "Access Denied";
-    }
-  }
-}
+/* ── 1. Frame protection — handled by CSP frame-ancestors header ─
+   No JS needed: the server already sends frameAncestors in the CSP
+   that restricts which origins can embed this page. Doing it in JS
+   too caused the Replit preview to go blank. ─────────────────── */
 
 /* ── 2. DevTools detection ───────────────────────────────── */
 let devtoolsOpen = false;
@@ -177,7 +168,6 @@ function blockDevToolsShortcuts() {
 
 /* ── INIT — call everything ──────────────────────────────── */
 export function initSecurity() {
-  enforceNoFrame();
   detectAutomation();
   setupConsoleTrap();
   setupContextMenuProtection();
