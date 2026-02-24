@@ -38,6 +38,7 @@ export async function createServer(params: {
     GIT_REPO: params.botRepo,
     USER_UPLOAD: process.env.PTERODACTYL_USER_UPLOAD ?? "0",
     AUTO_UPDATE: process.env.PTERODACTYL_AUTO_UPDATE ?? "0",
+    MAIN_FILE: process.env.PTERODACTYL_MAIN_FILE ?? "index.js",
     ...params.envVars,
   };
 
