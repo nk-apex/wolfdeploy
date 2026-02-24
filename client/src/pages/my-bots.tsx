@@ -57,7 +57,8 @@ export default function MyBots() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/deployments"] });
-      toast({ title: "Deployment deleted" });
+      queryClient.invalidateQueries({ queryKey: ["/api/coins", user?.id] });
+      toast({ title: "Deployment deleted", description: "5 coins have been deducted." });
     },
   });
 
@@ -204,7 +205,7 @@ export default function MyBots() {
                       <AlertDialogHeader>
                         <AlertDialogTitle className="text-white font-display">Delete Deployment</AlertDialogTitle>
                         <AlertDialogDescription className="text-gray-500 font-mono text-xs">
-                          Delete <span className="text-white">{dep.botName}</span>? This cannot be undone.
+                          Delete <span className="text-white">{dep.botName}</span>? This cannot be undone and will deduct <span className="text-red-400 font-bold">5 coins</span> from your balance.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>

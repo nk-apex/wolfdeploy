@@ -486,55 +486,8 @@ export async function registerRoutes(
     try {
       const uid = req.params.userId;
       if (!isValidUUID(uid)) return res.status(400).json({ error: "Invalid user ID" });
-
-      // Check trial state and possibly expire it
-      const trialRows = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
-      const trial = trialRows[0];
-
-      if (trial && !trial.expired && trial.expiresAt && new Date() > trial.expiresAt) {
-        // Trial has expired — mark it, delete their bots, notify admin
-        await db.update(userTrials).set({ expired: true }).where(eq(userTrials.userId, uid));
-
-        const allDeps = await storage.getAllDeployments();
-        const userDeps = allDeps.filter(d => d.userId === uid);
-        for (const dep of userDeps) {
-          try { await storage.deleteDeployment(dep.id); } catch (_) {}
-        }
-
-        // Create a user-facing notification about trial expiry
-        await db.insert(notifications).values({
-          id: randomUUID(),
-          title: "Trial Expired — Top Up to Continue",
-          message: "Your 2-day free trial has ended and your bot deployments have been paused. Add coins in the Billing section to deploy again.",
-          type: "warning",
-          active: true,
-        }).onConflictDoNothing();
-
-        // Alert admin
-        await db.insert(notifications).values({
-          id: randomUUID(),
-          title: `[ADMIN] Trial Expired for User ${uid.slice(0, 8)}`,
-          message: `User ${uid} trial expired. ${userDeps.length} deployment(s) removed. Bot deployments were automatically cleaned up.`,
-          type: "error",
-          active: false,
-        }).onConflictDoNothing();
-      }
-
-      // Auto-grant 5 trial coins to first-time users
-      // Check trial table only — user_coins may already exist with balance 0 from middleware,
-      // so checking existingCoins.length === 0 would incorrectly skip the trial grant.
-      const existingTrial = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
-
-      if (existingTrial.length === 0) {
-        const expiresAt = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000);
-        await db.insert(userCoins).values({ userId: uid, balance: 5 })
-          .onConflictDoUpdate({ target: userCoins.userId, set: { balance: sql`user_coins.balance + 5` } });
-        await db.insert(userTrials).values({ userId: uid, coinsGranted: 5, expiresAt });
-      }
-
       const balance = await getBalance(uid);
-      const newTrial = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
-      res.json({ balance, trial: newTrial[0] || null });
+      res.json({ balance });
     } catch {
       res.status(500).json({ error: "Failed to fetch balance" });
     }
@@ -609,6 +562,8 @@ export async function registerRoutes(
     }
     const ok = await storage.deleteDeployment(req.params.id);
     if (!ok) return res.status(404).json({ error: "Deployment not found" });
+    /* Deduct 5 coins from the owner for early deletion */
+    if (uid) await deductCoins(uid, 5);
     res.json({ success: true });
   });
 
