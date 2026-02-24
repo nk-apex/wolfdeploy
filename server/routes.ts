@@ -40,7 +40,9 @@ function sanitize(s: unknown, maxLen = 1000): string {
     .slice(0, maxLen);
 }
 
-/* 5 coins deducted on deploy. Ongoing drain: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
+/* Plans: trial = 5 coins / 7 days | monthly = 100 coins / 30 days */
+const PLAN_COST = { trial: 5, monthly: 100 };
+const PLAN_DAYS = { trial: 7, monthly: 30 };
 const MIN_COINS_TO_DEPLOY = 5;
 
 async function getBalance(userId: string): Promise<number> {
@@ -551,22 +553,25 @@ export async function registerRoutes(
     }
   });
 
-  /* ── Deploy — requires at least 1 coin (coins deducted over time, not upfront) ── */
+  /* ── Deploy — trial (5 coins/7 days) or monthly (100 coins/30 days) ── */
   app.post("/api/deploy", async (req, res) => {
     const result = deployRequestSchema.safeParse(req.body);
     if (!result.success) return res.status(400).json({ error: result.error.message });
 
-    const { botId, envVars } = result.data;
-    // Always get userId from the auth header — never trust the body (Zod strips unknown fields anyway)
+    const { botId, envVars, plan } = result.data;
     const userId = getUserId(req) || undefined;
+
+    const cost = PLAN_COST[plan];
+    const days = PLAN_DAYS[plan];
 
     if (userId) {
       const balance = await getBalance(userId);
-      if (balance < MIN_COINS_TO_DEPLOY) {
+      if (balance < cost) {
         return res.status(402).json({
           error: "Insufficient coins",
           balance,
-          required: MIN_COINS_TO_DEPLOY,
+          required: cost,
+          plan,
         });
       }
     }
@@ -574,11 +579,11 @@ export async function registerRoutes(
     const bot = await storage.getBot(botId);
     if (!bot) return res.status(404).json({ error: "Bot not found" });
 
-    const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId);
+    const expiresAt = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+    const deployment = await storage.createDeployment(botId, bot.name, bot.repository, envVars, userId, plan, expiresAt);
 
-    // Deduct 5 coins immediately on deploy — flat deploy fee
     if (userId) {
-      await deductCoins(userId, 5);
+      await deductCoins(userId, cost);
     }
 
     res.status(201).json(deployment);
@@ -1284,57 +1289,53 @@ export async function registerRoutes(
   });
 
   /* ═══════════════════════════════════════════════════════════
-     TIME-BASED COIN DEDUCTION JOB
-     Rate: 1 coin per running bot per 150 minutes (2.5 hours)
-     → 100 coins = 250 hours ≈ 10.4 days ≈ 1.5 weeks per bot
+     PLAN EXPIRY CLEANUP JOB
+     Checks every 30 minutes for expired deployments.
+     Trial (5 coins): expires after 7 days → bot stopped + deleted
+     Monthly (100 coins): expires after 30 days → bot stopped
   ════════════════════════════════════════════════════════════ */
-  const COIN_DEDUCTION_INTERVAL_MS = 150 * 60 * 1000; // 2.5 hours
+  const EXPIRY_CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 
   setInterval(async () => {
     try {
       const allDeployments = await storage.getAllDeployments();
-      const running = allDeployments.filter(d => d.status === "running" && d.userId);
+      const now = Date.now();
 
-      // Group by userId → count running bots per user
-      const byUser: Record<string, string[]> = {};
-      for (const dep of running) {
-        if (!dep.userId) continue;
-        (byUser[dep.userId] ??= []).push(dep.id);
-      }
+      for (const dep of allDeployments) {
+        if (dep.status !== "running" && dep.status !== "deploying") continue;
+        if (!dep.expiresAt) continue;
 
-      for (const [userId, depIds] of Object.entries(byUser)) {
-        const coinsToDeduct = depIds.length; // 1 coin per running bot per interval
-        const result = await deductCoins(userId, coinsToDeduct);
+        const expiredMs = new Date(dep.expiresAt).getTime();
+        if (now < expiredMs) continue; // not expired yet
 
-        if (!result.ok) {
-          // Out of coins — stop all bots and notify user
-          for (const depId of depIds) {
-            await storage.stopDeployment(depId);
-            await storage.addDeploymentLog(depId, "warn", "Bot stopped automatically: coin balance ran out. Top up on the Billing page to restart.");
-          }
-          const botCount = depIds.length;
-          await db.insert(notifications).values({
-            id: randomUUID(),
-            title: "⚠ Bot stopped — out of coins",
-            message: `Your ${botCount > 1 ? `${botCount} bots were` : "bot was"} automatically stopped because your coin balance ran out. Top up on the Billing page to restart.`,
-            type: "warning",
-            active: true,
-          }).onConflictDoNothing();
-        } else if (result.balance <= 10) {
-          // Low balance warning
-          await db.insert(notifications).values({
-            id: randomUUID(),
-            title: "🪙 Low coin balance",
-            message: `Your coin balance is low (${result.balance} coins remaining). Top up soon to keep your bots running.`,
-            type: "warning",
-            active: true,
-          }).onConflictDoNothing();
+        const plan = dep.plan ?? "trial";
+        await storage.addDeploymentLog(dep.id, "warn",
+          `Plan expired (${plan}). Bot has been stopped automatically.`
+        );
+        await storage.stopDeployment(dep.id);
+
+        if (plan === "trial") {
+          // Trial bots are deleted after expiry
+          await storage.deleteDeployment(dep.id);
         }
+
+        // Notify user via platform notification
+        await db.insert(notifications).values({
+          id: randomUUID(),
+          title: plan === "trial" ? "Trial Expired — Bot Deleted" : "Monthly Plan Expired — Bot Stopped",
+          message: plan === "trial"
+            ? `Your trial bot "${dep.botName}" has been deleted after 7 days. Buy 100 coins (50 KSH) to deploy for a full month.`
+            : `Your monthly bot "${dep.botName}" has been stopped after 30 days. Top up to redeploy.`,
+          type: "warning",
+          active: true,
+        }).onConflictDoNothing();
+
+        console.log(`[expiry-job] ${plan} deployment ${dep.id} expired — ${plan === "trial" ? "deleted" : "stopped"}.`);
       }
     } catch (err) {
-      console.error("[coin-job] Error during coin deduction:", err);
+      console.error("[expiry-job] Error during expiry check:", err);
     }
-  }, COIN_DEDUCTION_INTERVAL_MS);
+  }, EXPIRY_CHECK_INTERVAL_MS);
 
   return httpServer;
 }

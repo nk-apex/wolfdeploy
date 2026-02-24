@@ -8,11 +8,37 @@ import { useAuth } from "@/lib/auth";
 import type { Bot, Deployment } from "@shared/schema";
 import {
   Rocket, ExternalLink, Lock, CheckCircle2, ArrowUpRight,
-  Bot as BotIcon, ArrowLeft, Coins, AlertCircle, ShoppingCart,
+  Bot as BotIcon, ArrowLeft, Coins, AlertCircle, ShoppingCart, Clock, Star,
 } from "lucide-react";
 
-/* 5 coins deducted on deploy. Ongoing drain: 1 coin per bot per 2.5h → 100 coins ≈ 1.5 weeks */
-const MIN_COINS = 5;
+type Plan = "trial" | "monthly";
+
+const PLANS = {
+  trial: {
+    label: "Free Trial",
+    coins: 5,
+    days: 7,
+    price: "Free",
+    color: "rgba(74,222,128,0.15)",
+    border: "rgba(74,222,128,0.4)",
+    accent: "hsl(142 76% 42%)",
+    description: "Use your 5 signup coins. Bot runs for 7 days then auto-deleted.",
+    icon: Clock,
+    badge: "Included",
+  },
+  monthly: {
+    label: "Monthly Plan",
+    coins: 100,
+    days: 30,
+    price: "50 KSH",
+    color: "rgba(251,191,36,0.1)",
+    border: "rgba(251,191,36,0.4)",
+    accent: "#fbbf24",
+    description: "100 coins = 1 month of uptime. Bot stops (not deleted) after 30 days.",
+    icon: Star,
+    badge: "50 KSH",
+  },
+} as const;
 
 export default function Deploy() {
   const [, navigate] = useLocation();
@@ -20,6 +46,7 @@ export default function Deploy() {
   const { user } = useAuth();
 
   const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [envVars, setEnvVars] = useState<Record<string, string>>({});
   const [launching, setLaunching] = useState(false);
 
@@ -37,10 +64,11 @@ export default function Deploy() {
   });
 
   const balance = coinData?.balance ?? 0;
-  const hasCoins = balance >= MIN_COINS;
+  const canAffordTrial = balance >= 5;
+  const canAffordMonthly = balance >= 100;
 
   const deployMutation = useMutation({
-    mutationFn: async (data: { botId: string; envVars: Record<string, string> }) => {
+    mutationFn: async (data: { botId: string; envVars: Record<string, string>; plan: Plan }) => {
       const res = await apiRequest("POST", "/api/deploy", { ...data, userId: user?.id });
       if (!res.ok) {
         const body = await res.json();
@@ -55,23 +83,18 @@ export default function Deploy() {
       setTimeout(() => navigate(`/bots/${dep.id}/logs`), 2200);
     },
     onError: (err: Error) => {
-      if (err.message === "Insufficient coins") {
-        toast({ title: "Not enough coins", description: "You need at least 5 coins to deploy a bot. Buy coins on the Billing page.", variant: "destructive" });
-      } else {
-        toast({ title: "Deployment failed", description: err.message, variant: "destructive" });
-      }
+      toast({ title: "Deployment failed", description: err.message, variant: "destructive" });
     },
   });
 
-  const handleSelectBot = (bot: Bot) => { setSelectedBot(bot); setEnvVars({}); };
-  const handleBack = () => { setSelectedBot(null); setEnvVars({}); };
+  const handleSelectBot = (bot: Bot) => { setSelectedBot(bot); setSelectedPlan(null); setEnvVars({}); };
+  const handleBack = () => {
+    if (selectedPlan) { setSelectedPlan(null); return; }
+    setSelectedBot(null);
+  };
 
   const handleDeploy = () => {
-    if (!selectedBot) return;
-    if (!hasCoins) {
-      toast({ title: "Insufficient coins", description: `You need at least 5 coins to deploy. Current balance: ${balance}.`, variant: "destructive" });
-      return;
-    }
+    if (!selectedBot || !selectedPlan) return;
     const missing = Object.entries(selectedBot.env)
       .filter(([, v]) => v.required)
       .map(([k]) => k)
@@ -80,7 +103,7 @@ export default function Deploy() {
       toast({ title: "Missing required fields", description: `Please fill in: ${missing.join(", ")}`, variant: "destructive" });
       return;
     }
-    deployMutation.mutate({ botId: selectedBot.id, envVars });
+    deployMutation.mutate({ botId: selectedBot.id, envVars, plan: selectedPlan });
   };
 
   /* ── Launching overlay ── */
@@ -101,29 +124,21 @@ export default function Deploy() {
     );
   }
 
-  /* ── Coin balance strip (shown on both steps) ── */
+  /* ── Coin balance strip ── */
   const CoinStrip = () => (
-    <div
-      className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
-      style={{ background: hasCoins ? "rgba(74,222,128,0.06)" : "rgba(239,68,68,0.06)", border: `1px solid ${hasCoins ? "rgba(74,222,128,0.2)" : "rgba(239,68,68,0.2)"}` }}
-    >
+    <div className="flex items-center justify-between px-4 py-3 rounded-xl mb-6"
+      style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.2)" }}>
       <div className="flex items-center gap-2.5">
-        <Coins className="w-4 h-4" style={{ color: hasCoins ? "hsl(142 76% 42%)" : "#ef4444" }} />
-        <div>
-          <span className="text-sm font-mono font-bold text-white">{balance} coins</span>
-          <span className="text-[10px] font-mono ml-2" style={{ color: hasCoins ? "rgba(74,222,128,0.7)" : "#f97316" }}>
-            {hasCoins ? `${Math.max(1, Math.floor(balance / 100))} bot${Math.max(1, Math.floor(balance / 100)) > 1 ? "s" : ""} available` : "— top up to deploy"}
-          </span>
-        </div>
+        <Coins className="w-4 h-4 text-primary" />
+        <span className="text-sm font-mono font-bold text-white">{balance} coins</span>
+        <span className="text-[10px] font-mono text-gray-500">available</span>
       </div>
-      {!hasCoins && (
-        <Link href="/billing">
-          <button className="flex items-center gap-1.5 text-[11px] font-mono px-3 py-1.5 rounded-lg font-bold transition-all"
-            style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", color: "hsl(142 76% 42%)" }}>
-            <ShoppingCart className="w-3 h-3" /> Buy Coins
-          </button>
-        </Link>
-      )}
+      <Link href="/billing">
+        <button className="flex items-center gap-1.5 text-[11px] font-mono px-3 py-1.5 rounded-lg font-bold"
+          style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", color: "hsl(142 76% 42%)" }}>
+          <ShoppingCart className="w-3 h-3" /> Buy Coins
+        </button>
+      </Link>
     </div>
   );
 
@@ -140,36 +155,16 @@ export default function Deploy() {
 
         <CoinStrip />
 
-        {/* Insufficient coins wall */}
-        {!hasCoins && (
-          <div className="rounded-2xl p-8 text-center mb-6" style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)" }}>
-            <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center" style={{ background: "rgba(239,68,68,0.1)" }}>
-              <AlertCircle className="w-7 h-7 text-red-400" />
-            </div>
-            <h3 className="text-white font-bold text-base mb-2 font-mono">Insufficient Coins</h3>
-            <p className="text-gray-400 text-xs font-mono mb-5 max-w-xs mx-auto">
-              You need at least <strong className="text-white">5 coins</strong> to deploy a bot. Your current balance is <strong className="text-white">{balance} coins</strong>.
-            </p>
-            <Link href="/billing">
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-mono font-bold text-sm transition-all"
-                style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)", color: "hsl(142 76% 42%)" }}>
-                <ShoppingCart className="w-4 h-4" /> Buy Coins
-              </button>
-            </Link>
-          </div>
-        )}
-
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[1, 2, 3].map(i => <div key={i} className="h-36 rounded-xl animate-pulse" style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(74,222,128,0.1)" }} />)}
           </div>
         ) : (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ${!hasCoins ? "opacity-40 pointer-events-none select-none" : ""}`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {bots.map((bot) => (
-              <button key={bot.id} data-testid={`card-bot-${bot.id}`} onClick={() => hasCoins && handleSelectBot(bot)}
+              <button key={bot.id} data-testid={`card-bot-${bot.id}`} onClick={() => handleSelectBot(bot)}
                 className="text-left group rounded-xl overflow-hidden transition-all hover:scale-[1.01] active:scale-[0.99] flex flex-row sm:flex-col"
                 style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
-                {/* Image — horizontal on mobile, stacked on sm+ */}
                 <div className="relative w-24 sm:w-full flex-shrink-0 h-auto sm:h-32 overflow-hidden border-r sm:border-r-0 sm:border-b" style={{ borderColor: "rgba(74,222,128,0.12)" }}>
                   <img src={bot.logo} alt={bot.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 min-h-full"
                     onError={e => {
@@ -183,7 +178,6 @@ export default function Deploy() {
                     <span className="text-[8px] text-primary font-mono px-1.5 py-0.5 rounded" style={{ background: "rgba(0,0,0,0.7)", border: "1px solid rgba(74,222,128,0.3)" }}>{bot.category}</span>
                   </div>
                 </div>
-                {/* Content */}
                 <div className="p-3 flex-1 flex flex-col min-w-0">
                   <div className="flex items-start justify-between gap-1 mb-1">
                     <h3 className="font-display font-bold text-white text-sm leading-tight">{bot.name}</h3>
@@ -197,7 +191,7 @@ export default function Deploy() {
                   </div>
                   <div className="flex items-center justify-between pt-2" style={{ borderTop: "1px solid rgba(74,222,128,0.08)" }}>
                     <div className="flex items-center gap-1 text-[9px] font-mono" style={{ color: "rgba(74,222,128,0.6)" }}>
-                      <Coins className="w-2.5 h-2.5" /> time-based
+                      <Coins className="w-2.5 h-2.5" /> from 5 coins
                     </div>
                     <div className="py-1 px-2.5 rounded-lg font-mono text-[9px] font-bold text-primary flex items-center gap-1" style={{ background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)" }}>
                       <Rocket className="w-2.5 h-2.5" /> Deploy
@@ -212,29 +206,102 @@ export default function Deploy() {
     );
   }
 
-  /* ── Step 2: Configure ── */
+  /* ── Step 2: Plan selection ── */
+  if (!selectedPlan) {
+    return (
+      <div className="p-4 sm:p-6 max-w-2xl mx-auto">
+        <div className="mb-6 flex items-center gap-3">
+          <button data-testid="button-back-to-catalog" onClick={handleBack}
+            className="flex items-center gap-1.5 text-xs text-gray-500 font-mono hover:text-gray-300 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Back
+          </button>
+          <span className="text-gray-700 font-mono">/</span>
+          <span className="text-xs text-primary font-mono">{selectedBot.name}</span>
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 flex items-center gap-2">
+            <Coins className="w-5 h-5 text-primary" /> Choose a Plan
+          </h1>
+          <p className="text-gray-400 font-mono text-xs">Pick how long you want your bot to run</p>
+        </div>
+
+        <CoinStrip />
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {(Object.entries(PLANS) as [Plan, typeof PLANS[Plan]][]).map(([key, plan]) => {
+            const canAfford = key === "trial" ? canAffordTrial : canAffordMonthly;
+            const Icon = plan.icon;
+            return (
+              <button key={key} data-testid={`button-plan-${key}`}
+                onClick={() => canAfford && setSelectedPlan(key)}
+                disabled={!canAfford}
+                className="text-left rounded-2xl p-5 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ background: plan.color, border: `1px solid ${plan.border}`, backdropFilter: "blur(8px)" }}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="p-2 rounded-xl" style={{ background: "rgba(0,0,0,0.3)" }}>
+                    <Icon className="w-5 h-5" style={{ color: plan.accent }} />
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg" style={{ background: "rgba(0,0,0,0.4)", color: plan.accent, border: `1px solid ${plan.border}` }}>
+                    {plan.badge}
+                  </span>
+                </div>
+                <h3 className="font-bold text-white text-base font-mono mb-1">{plan.label}</h3>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-2xl font-bold font-mono" style={{ color: plan.accent }}>{plan.coins} coins</span>
+                  <span className="text-xs text-gray-400 font-mono">· {plan.days} days</span>
+                </div>
+                <p className="text-[11px] text-gray-400 font-mono leading-relaxed mb-3">{plan.description}</p>
+                {!canAfford && (
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono text-red-400 mt-2">
+                    <AlertCircle className="w-3 h-3" />
+                    Need {key === "trial" ? 5 : 100} coins — <Link href="/billing" className="underline" onClick={e => e.stopPropagation()}>Buy coins</Link>
+                  </div>
+                )}
+                {canAfford && (
+                  <div className="flex items-center gap-1.5 text-[10px] font-mono mt-2" style={{ color: plan.accent }}>
+                    <CheckCircle2 className="w-3 h-3" /> You have {balance} coins — ready to deploy
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="text-center text-[10px] text-gray-600 font-mono mt-6">
+          Trial bots are <strong className="text-gray-400">auto-deleted</strong> after 7 days. Monthly bots are <strong className="text-gray-400">stopped</strong> (not deleted) after 30 days.
+        </p>
+      </div>
+    );
+  }
+
+  /* ── Step 3: Configure env vars ── */
+  const plan = PLANS[selectedPlan];
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
       <div className="mb-6 sm:mb-8 flex items-center gap-3">
-        <button data-testid="button-back-to-catalog" onClick={handleBack}
+        <button data-testid="button-back-to-plan" onClick={handleBack}
           className="flex items-center gap-1.5 text-xs text-gray-500 font-mono hover:text-gray-300 transition-colors">
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         <span className="text-gray-700 font-mono">/</span>
-        <span className="text-xs text-primary font-mono">{selectedBot.name}</span>
+        <span className="text-xs text-gray-500 font-mono">{selectedBot.name}</span>
+        <span className="text-gray-700 font-mono">/</span>
+        <span className="text-xs font-mono font-bold" style={{ color: plan.accent }}>{plan.label}</span>
       </div>
 
       <div className="mb-6">
         <h1 className="text-xl sm:text-3xl font-bold text-white mb-1 flex items-center gap-2">
           <Rocket className="w-6 h-6 text-primary" /> Configure Deployment
         </h1>
-        <p className="text-gray-400 font-mono text-xs sm:text-sm">Fill in the environment variables then click Deploy</p>
+        <p className="text-gray-400 font-mono text-xs sm:text-sm">
+          Fill in the environment variables then deploy —
+          <span className="font-bold" style={{ color: plan.accent }}> {plan.coins} coins · {plan.days} days</span>
+        </p>
       </div>
 
-      <CoinStrip />
-
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-        {/* Left — Bot info */}
+        {/* Left — Bot info + plan summary */}
         <div className="lg:col-span-2">
           <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(74,222,128,0.2)", background: "rgba(0,0,0,0.3)", backdropFilter: "blur(8px)" }}>
             <div className="relative w-full h-36 overflow-hidden" style={{ borderBottom: "1px solid rgba(74,222,128,0.1)" }}>
@@ -249,10 +316,6 @@ export default function Deploy() {
                 <p className="font-display font-bold text-white text-sm sm:text-base">{selectedBot.name}</p>
                 <p className="text-[11px] text-gray-400 font-mono leading-relaxed mt-1">{selectedBot.description}</p>
               </div>
-              <a href={selectedBot.repository} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[10px] text-primary font-mono hover:underline">
-                <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                <span className="truncate">{selectedBot.repository.replace("https://", "")}</span>
-              </a>
               {selectedBot.pairSiteUrl && (
                 <a href={selectedBot.pairSiteUrl} target="_blank" rel="noopener noreferrer"
                   className="flex items-center gap-1.5 text-[10px] font-mono hover:underline rounded-lg px-2.5 py-1.5"
@@ -261,6 +324,17 @@ export default function Deploy() {
                   <span>Generate Session ID</span>
                 </a>
               )}
+              {/* Plan summary */}
+              <div className="rounded-xl p-3" style={{ background: plan.color, border: `1px solid ${plan.border}` }}>
+                <p className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: plan.accent }}>Selected Plan</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-white font-mono text-sm">{plan.label}</span>
+                  <span className="text-[10px] font-mono font-bold" style={{ color: plan.accent }}>{plan.coins} coins · {plan.days}d</span>
+                </div>
+                <p className="text-[10px] text-gray-400 font-mono mt-1">
+                  {selectedPlan === "trial" ? "Auto-deleted after 7 days" : "Stops after 30 days — not deleted"}
+                </p>
+              </div>
               <div style={{ borderTop: "1px solid rgba(74,222,128,0.1)", paddingTop: "12px" }}>
                 <p className="text-[9px] text-gray-600 font-mono uppercase tracking-widest mb-2">Required Config</p>
                 {Object.entries(selectedBot.env).map(([key, cfg]) => (
@@ -270,10 +344,6 @@ export default function Deploy() {
                     {cfg.required && <span className="text-[8px] text-primary font-mono" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 4px", borderRadius: "3px" }}>REQUIRED</span>}
                   </div>
                 ))}
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] font-mono" style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.12)", borderRadius: "8px", padding: "6px 10px" }}>
-                <Coins className="w-3 h-3 text-primary flex-shrink-0" />
-                <span className="text-gray-400">Balance: <strong className="text-primary">{balance} coins</strong> · auto-billed while running</span>
               </div>
             </div>
           </div>
@@ -293,7 +363,7 @@ export default function Deploy() {
                     {config.required && <span className="text-[8px] text-primary font-mono normal-case tracking-normal" style={{ border: "1px solid rgba(74,222,128,0.3)", padding: "1px 5px", borderRadius: "3px" }}>REQUIRED</span>}
                   </label>
                   <Input id={`env-${key}`} data-testid={`input-env-${key.toLowerCase()}`}
-                    type={key.includes("KEY") || key.includes("SECRET") ? "password" : "text"}
+                    type={key.includes("KEY") || key.includes("SECRET") || key.includes("TOKEN") ? "password" : "text"}
                     placeholder={config.placeholder || config.description}
                     className="font-mono text-sm text-white placeholder:text-gray-700 rounded-xl"
                     style={{ background: "rgba(0,0,0,0.5)", border: "1px solid rgba(74,222,128,0.2)" }}
@@ -305,25 +375,18 @@ export default function Deploy() {
             </div>
 
             <div className="mt-6">
-              <button data-testid="button-deploy" onClick={handleDeploy} disabled={deployMutation.isPending || !hasCoins}
+              <button data-testid="button-deploy" onClick={handleDeploy} disabled={deployMutation.isPending}
                 className="w-full py-3 rounded-xl font-mono text-sm font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                style={{ background: "rgba(74,222,128,0.15)", border: "1px solid rgba(74,222,128,0.4)" }}>
+                style={{ background: plan.color, border: `1px solid ${plan.border}` }}>
                 {deployMutation.isPending ? (
                   <><div className="w-4 h-4 rounded-full border-2 border-primary/30 border-t-primary animate-spin" /><span className="text-primary">Deploying…</span></>
                 ) : (
-                  <><Rocket className="w-4 h-4 text-primary" /><span className="text-primary">Deploy Bot</span><ArrowUpRight className="w-4 h-4 text-primary" /></>
+                  <><Rocket className="w-4 h-4" style={{ color: plan.accent }} /><span style={{ color: plan.accent }}>Deploy — {plan.coins} coins · {plan.days} days</span><ArrowUpRight className="w-4 h-4" style={{ color: plan.accent }} /></>
                 )}
               </button>
-              {!hasCoins && (
-                <p className="text-[10px] text-red-400 font-mono text-center mt-2 flex items-center justify-center gap-1">
-                  <AlertCircle className="w-3 h-3" /> Insufficient coins — <Link href="/billing" className="underline">buy more</Link>
-                </p>
-              )}
-              {hasCoins && (
-                <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
-                  Auto-billed while running · Balance: <span className="text-primary">{balance} coins</span>
-                </p>
-              )}
+              <p className="text-[10px] text-gray-600 font-mono text-center mt-2">
+                Balance after deploy: <span className="text-primary">{balance - plan.coins} coins</span>
+              </p>
             </div>
           </div>
         </div>

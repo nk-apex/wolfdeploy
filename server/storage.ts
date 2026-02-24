@@ -15,7 +15,7 @@ export interface IStorage {
   getAllDeployments(): Promise<Deployment[]>;
   getDeployments(userId?: string): Promise<Deployment[]>;
   getDeployment(id: string): Promise<Deployment | undefined>;
-  createDeployment(botId: string, botName: string, botRepo: string, envVars: Record<string, string>, userId?: string): Promise<Deployment>;
+  createDeployment(botId: string, botName: string, botRepo: string, envVars: Record<string, string>, userId?: string, plan?: "trial" | "monthly", expiresAt?: Date): Promise<Deployment>;
   updateDeploymentStatus(id: string, status: DeploymentStatus): Promise<Deployment | undefined>;
   addDeploymentLog(id: string, level: "info" | "warn" | "error" | "success", message: string): Promise<void>;
   stopDeployment(id: string): Promise<Deployment | undefined>;
@@ -111,6 +111,8 @@ class MemStorage implements IStorage {
           botName: row.botName,
           userId: row.userId ?? undefined,
           status: (row.status as DeploymentStatus) ?? "stopped",
+          plan: (row.plan as "trial" | "monthly") ?? "trial",
+          expiresAt: row.expiresAt?.toISOString() ?? undefined,
           envVars: (row.envVars as Record<string, string>) ?? {},
           url: row.url ?? undefined,
           pterodactylId: row.pterodactylId ?? undefined,
@@ -141,6 +143,8 @@ class MemStorage implements IStorage {
         botName: dep.botName,
         userId: dep.userId,
         status: dep.status,
+        plan: dep.plan ?? "trial",
+        expiresAt: dep.expiresAt ? new Date(dep.expiresAt) : undefined,
         envVars: dep.envVars,
         url: dep.url,
         pterodactylId: dep.pterodactylId,
@@ -153,6 +157,8 @@ class MemStorage implements IStorage {
         target: deploymentsTable.id,
         set: {
           status: dep.status,
+          plan: dep.plan ?? "trial",
+          expiresAt: dep.expiresAt ? new Date(dep.expiresAt) : undefined,
           url: dep.url,
           pterodactylId: dep.pterodactylId,
           pterodactylIdentifier: dep.pterodactylIdentifier,
@@ -244,7 +250,9 @@ class MemStorage implements IStorage {
     botName: string,
     botRepo: string,
     envVars: Record<string, string>,
-    userId?: string
+    userId?: string,
+    plan?: "trial" | "monthly",
+    expiresAt?: Date
   ): Promise<Deployment> {
     const id = randomUUID();
 
@@ -254,6 +262,8 @@ class MemStorage implements IStorage {
       botName,
       userId,
       status: "queued",
+      plan: plan ?? "trial",
+      expiresAt: expiresAt?.toISOString(),
       envVars,
       url: undefined,
       port: undefined,

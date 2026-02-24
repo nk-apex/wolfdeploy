@@ -25,12 +25,17 @@ export type Bot = z.infer<typeof botSchema>;
 export const deploymentStatusSchema = z.enum(["queued", "deploying", "running", "stopped", "failed"]);
 export type DeploymentStatus = z.infer<typeof deploymentStatusSchema>;
 
+export const deployPlanSchema = z.enum(["trial", "monthly"]);
+export type DeployPlan = z.infer<typeof deployPlanSchema>;
+
 export const deploymentSchema = z.object({
   id: z.string(),
   botId: z.string(),
   botName: z.string(),
   userId: z.string().optional(),
   status: deploymentStatusSchema,
+  plan: deployPlanSchema.optional(),
+  expiresAt: z.string().optional(),
   envVars: z.record(z.string()),
   url: z.string().optional(),
   port: z.number().optional(),
@@ -56,6 +61,7 @@ export type Deployment = z.infer<typeof deploymentSchema>;
 export const deployRequestSchema = z.object({
   botId: z.string(),
   envVars: z.record(z.string()),
+  plan: deployPlanSchema.default("trial"),
 });
 
 export type DeployRequest = z.infer<typeof deployRequestSchema>;
@@ -112,6 +118,8 @@ export const deployments = pgTable("deployments", {
   botName: varchar("bot_name").notNull(),
   userId: varchar("user_id"),
   status: varchar("status").notNull().default("queued"),
+  plan: varchar("plan").default("trial"),
+  expiresAt: timestamp("expires_at"),
   envVars: jsonb("env_vars").notNull().default(sql`'{}'::jsonb`),
   url: varchar("url"),
   pterodactylId: integer("pterodactyl_id"),
