@@ -36,6 +36,8 @@ export async function createServer(params: {
 }): Promise<PteroServer> {
   const environment: Record<string, string> = {
     GIT_REPO: params.botRepo,
+    USER_UPLOAD: process.env.PTERODACTYL_USER_UPLOAD ?? "0",
+    AUTO_UPDATE: process.env.PTERODACTYL_AUTO_UPDATE ?? "0",
     ...params.envVars,
   };
 
