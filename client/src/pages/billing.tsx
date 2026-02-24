@@ -672,7 +672,7 @@ function CustomPackCalculator({ country, t, onBuy }: CustomPackProps) {
 
       {!valid && coins > 0 && (
         <p className="text-[10px] font-mono mb-3 flex items-center gap-1.5" style={{ color: "#f97316" }}>
-          <AlertCircle className="w-3 h-3" /> Minimum is 10 coins (1 bot)
+          <AlertCircle className="w-3 h-3" /> Minimum is 100 coins (1 bot)
         </p>
       )}
 
@@ -757,7 +757,7 @@ export default function Billing() {
       <div>
         <h1 className="text-xl sm:text-3xl font-bold mb-1 text-white">Buy Coins</h1>
         <p className="text-xs sm:text-sm font-mono" style={{ color: t.textMuted }}>
-          Coins power your bots. 10 coins = 1 bot instance. Pay once, deploy anytime.
+          Coins power your bots. 100 coins = 1 bot instance. Pay once, deploy anytime.
         </p>
       </div>
 
@@ -776,7 +776,7 @@ export default function Billing() {
           <p className="text-[10px] font-mono uppercase tracking-widest mb-0.5" style={{ color: t.textMuted }}>Can deploy</p>
           <div className="flex items-center gap-1.5 justify-end">
             <Bot className="w-4 h-4" style={{ color: t.accent }} />
-            <span className="text-lg font-black text-white font-mono">{Math.floor(balance / 10)}</span>
+            <span className="text-lg font-black text-white font-mono">{Math.floor(balance / 100)}</span>
             <span className="text-xs font-mono" style={{ color: t.textMuted }}>bots</span>
           </div>
         </div>
@@ -882,13 +882,13 @@ export default function Billing() {
         <Coins className="w-4 h-4 flex-shrink-0 mt-0.5" style={{ color: t.accent }} />
         <div>
           <p className="text-xs font-mono text-white mb-0.5">
-            Base rate: <span style={{ color: t.accent }}>10 coins = KSh 70</span>
+            Base rate: <span style={{ color: t.accent }}>100 coins = KSh 50</span>
             {selectedCountry.currency !== "KES" && (
-              <> = <span style={{ color: t.accent }}>{selectedCountry.symbol}{coinsToPrice(10, selectedCountry.currency).toLocaleString()} {selectedCountry.currency}</span></>
+              <> = <span style={{ color: t.accent }}>{selectedCountry.symbol}{coinsToPrice(100, selectedCountry.currency).toLocaleString()} {selectedCountry.currency}</span></>
             )}
           </p>
           <p className="text-[10px] font-mono" style={{ color: t.textMuted }}>
-            Prices auto-converted from KES. 10 coins = 1 bot deployment. Payments secured by Paystack.
+            Prices auto-converted from KES. 100 coins = 1 bot deployment. Payments secured by Paystack.
           </p>
         </div>
       </div>
