@@ -32,7 +32,6 @@ app.use(
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://js.paystack.co"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
         connectSrc: [
           "'self'",
@@ -41,9 +40,10 @@ app.use(
           "wss://*.supabase.co",
           "https://raw.githubusercontent.com",
         ],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         frameSrc: ["'self'", "https://js.paystack.co", "https://checkout.paystack.com"],
-        frameAncestors: ["'none'"],
-        fontSrc: ["'self'", "data:"],
+        frameAncestors: ["'self'", "https://*.replit.dev", "https://*.replit.app", "https://*.repl.co"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
         objectSrc: ["'none'"],
         baseUri: ["'self'"],
         formAction: ["'self'"],
@@ -61,8 +61,8 @@ app.use(
     },
     // Prevent MIME-type sniffing
     noSniff: true,
-    // Prevent clickjacking
-    frameguard: { action: "deny" },
+    // Allow preview iframes (Replit preview) — frame-ancestors CSP handles finer control
+    frameguard: false,
     // Remove X-Powered-By: Express
     hidePoweredBy: true,
     // XSS filter for legacy browsers
