@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { db } from "./db";
+import pg from "pg";
 import {
   userCoins,
   adminUsers,
@@ -570,30 +571,62 @@ export async function registerRoutes(
         db.select().from(userProfiles),
       ]);
 
+      // Fetch auth users directly from Supabase PostgreSQL (auth.users table)
+      const supabaseAuthMap = new Map<string, { email: string; createdAt: Date }>();
+      const supabaseDbUrl = process.env.SUPABASE_DATABASE_URL;
+      if (supabaseDbUrl) {
+        const supaPool = new pg.Pool({ connectionString: supabaseDbUrl, max: 2, idleTimeoutMillis: 5000 });
+        try {
+          const { rows: authRows } = await supaPool.query<{ id: string; email: string; created_at: Date }>(
+            `SELECT id, email, created_at FROM auth.users ORDER BY created_at DESC`
+          );
+          for (const row of authRows) {
+            supabaseAuthMap.set(row.id, { email: row.email, createdAt: row.created_at });
+          }
+          // Ensure every Supabase auth user has a coins row so they appear in the list
+          for (const row of authRows) {
+            await db.insert(userCoins).values({ userId: row.id, balance: 0 }).onConflictDoNothing();
+            await db.insert(userProfiles).values({ userId: row.id, email: row.email }).onConflictDoNothing();
+          }
+        } catch (e) {
+          console.warn("[admin/users] Could not query Supabase auth.users:", e);
+        } finally {
+          await supaPool.end();
+        }
+      }
+
+      // Re-fetch updated local rows after seeding
+      const [freshCoinRows, freshUserRows] = await Promise.all([
+        db.select().from(userCoins),
+        db.select().from(userProfiles),
+      ]);
+
       const allDeployments = await storage.getAllDeployments();
       const adminIds = new Set(adminList.map(a => a.userId));
-      const coinMap = new Map(coinRows.map(c => [c.userId, c.balance]));
-      const userMap = new Map(userRows.map(u => [u.userId, u]));
+      const coinMap = new Map(freshCoinRows.map(c => [c.userId, c.balance]));
+      const userMap = new Map(freshUserRows.map(u => [u.userId, u]));
 
-      // Collect all unique userIds from coins, ip registrations, and users table
+      // Collect all unique userIds from coins, ip registrations, users table, and Supabase auth
       const allUserIds = new Set([
-        ...coinRows.map(c => c.userId),
+        ...freshCoinRows.map(c => c.userId),
         ...ipRows.map(r => r.userId),
-        ...userRows.map(u => u.userId),
+        ...freshUserRows.map(u => u.userId),
+        ...Array.from(supabaseAuthMap.keys()),
       ]);
 
       const usersWithMeta = Array.from(allUserIds).map(userId => {
         const meta = userMap.get(userId);
+        const authMeta = supabaseAuthMap.get(userId);
         return {
           userId,
-          email: meta?.email ?? null,
+          email: meta?.email ?? authMeta?.email ?? null,
           displayName: meta?.displayName ?? null,
           country: meta?.country ?? null,
           balance: coinMap.get(userId) ?? 0,
           isAdmin: adminIds.has(userId),
           deploymentCount: allDeployments.filter(d => d.userId === userId).length,
           runningBots: allDeployments.filter(d => d.userId === userId && d.status === "running").length,
-          joinedAt: meta?.createdAt ?? null,
+          joinedAt: meta?.createdAt ?? authMeta?.createdAt ?? null,
         };
       }).sort((a, b) => b.balance - a.balance);
 

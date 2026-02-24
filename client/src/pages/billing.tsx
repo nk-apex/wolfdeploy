@@ -112,7 +112,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
   const PkgIcon = pkg.icon;
   const price = coinsToPrice(pkg.coins, country.currency);
   const totalCoins = pkg.coins + pkg.bonus;
-  const bots = Math.floor(totalCoins / 10);
+  const bots = Math.floor(totalCoins / 100);
 
   useEffect(() => {
     const r = requestAnimationFrame(() => setVisible(true));
@@ -212,7 +212,7 @@ function PaymentModal({ pkg, country, userEmail, userId, onClose, onSuccess, t }
         /* ── Initialize + Paystack iframe (Kenya M-PESA, card, USSD, bank) ── */
         const ref = `WOLF-${Date.now()}-c${totalCoins}`;
         const initBody: Record<string, unknown> = {
-          email: isMobileMoney ? `${localPhone}@wolfdeploy.app` : email,
+          email: isMobileMoney ? `${intlPhone.replace("+", "")}@wolfdeploy.app` : email,
           amount: amountMinor,
           currency: country.currency,
           channels: [method],
@@ -591,8 +591,8 @@ function CustomPackCalculator({ country, t, onBuy }: CustomPackProps) {
     ? parseFloat(amountInput) || 0
     : coinsToPrice(coins, country.currency);
 
-  const bots = Math.floor(coins / 10);
-  const valid = coins >= 10;
+  const bots = Math.floor(coins / 100);
+  const valid = coins >= 100;
 
   return (
     <div className="rounded-2xl p-5" style={{ background: "rgba(0,0,0,0.25)", border: `2px dashed ${t.accentFaded(0.25)}` }}>

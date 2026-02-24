@@ -50,7 +50,7 @@ export default function Deploy() {
     },
     onSuccess: (dep) => {
       queryClient.invalidateQueries({ queryKey: ["/api/deployments"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/coins", user?.id] });
+      queryClient.refetchQueries({ queryKey: ["/api/coins", user?.id] });
       setLaunching(true);
       setTimeout(() => navigate(`/bots/${dep.id}/logs`), 2200);
     },
