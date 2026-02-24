@@ -8,7 +8,7 @@ const RAM_MB = parseInt(process.env.PTERODACTYL_RAM ?? "512", 10);
 const DISK_MB = parseInt(process.env.PTERODACTYL_DISK ?? "2048", 10);
 const CPU_PCT = parseInt(process.env.PTERODACTYL_CPU ?? "100", 10);
 const DOCKER_IMAGE = process.env.PTERODACTYL_DOCKER_IMAGE ?? "ghcr.io/pterodactyl/yolks:nodejs_18";
-const STARTUP_CMD = process.env.PTERODACTYL_STARTUP ?? "npm install --legacy-peer-deps && node index.js";
+const STARTUP_CMD = process.env.PTERODACTYL_STARTUP ?? "npm install --legacy-peer-deps && npm install pg && node index.js";
 
 export function isPterodactylConfigured(): boolean {
   return !!(PANEL_URL && APP_KEY);
