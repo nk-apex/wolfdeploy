@@ -24,6 +24,7 @@ import Community from "@/pages/community";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider, useTheme, getThemeTokens } from "@/lib/theme";
 import { useEffect } from "react";
+import { initSecurity } from "@/lib/security";
 
 function AppShell() {
   const { user, loading } = useAuth();
@@ -123,6 +124,7 @@ function AppShell() {
 function App() {
   useEffect(() => {
     document.documentElement.classList.add("dark");
+    initSecurity();
   }, []);
 
   return (

@@ -20,6 +20,24 @@ import { eq, desc, sql, and, gt } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import rateLimit from "express-rate-limit";
 
+/* ── Input helpers ──────────────────────────────────────── */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(id: string): boolean {
+  return UUID_RE.test(id);
+}
+
+/** Strip HTML/script tags and null bytes from a string */
+function sanitize(s: unknown, maxLen = 1000): string {
+  if (typeof s !== "string") return "";
+  return s
+    .replace(/\x00/g, "")
+    .replace(/<[^>]*>/g, "")
+    .replace(/javascript:/gi, "")
+    .trim()
+    .slice(0, maxLen);
+}
+
 const COINS_PER_BOT = 10;
 
 async function getBalance(userId: string): Promise<number> {
@@ -332,6 +350,7 @@ export async function registerRoutes(
   app.get("/api/coins/:userId", async (req, res) => {
     try {
       const uid = req.params.userId;
+      if (!isValidUUID(uid)) return res.status(400).json({ error: "Invalid user ID" });
 
       // Check trial state and possibly expire it
       const trialRows = await db.select().from(userTrials).where(eq(userTrials.userId, uid));
@@ -506,6 +525,7 @@ export async function registerRoutes(
   app.delete("/api/admin/users/:userId", async (req, res) => {
     if (!(await requireAdmin(req, res))) return;
     const { userId } = req.params;
+    if (!isValidUUID(userId)) return res.status(400).json({ error: "Invalid user ID" });
     try {
       // Stop all their deployments
       const allDeployments = await storage.getAllDeployments();
@@ -755,14 +775,14 @@ export async function registerRoutes(
     const rewardExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const [reg] = await db.insert(botRegistrations).values({
       userId: uid,
-      developerName: developerName?.trim().slice(0, 100) || null,
-      pairSiteUrl: pairSiteUrl?.trim().slice(0, 500) || null,
-      name: name.trim().slice(0, 100),
-      description: description.trim().slice(0, 1000),
-      repository: repository.trim().slice(0, 500),
-      logo: logo?.trim().slice(0, 500) || null,
-      keywords: Array.isArray(keywords) ? keywords.slice(0, 10).map((k: string) => String(k).slice(0, 50)) : [],
-      category: category || "WhatsApp Bot",
+      developerName: sanitize(developerName, 100) || null,
+      pairSiteUrl: sanitize(pairSiteUrl, 500) || null,
+      name: sanitize(name, 100),
+      description: sanitize(description, 1000),
+      repository: sanitize(repository, 500),
+      logo: sanitize(logo, 500) || null,
+      keywords: Array.isArray(keywords) ? keywords.slice(0, 10).map((k: string) => sanitize(k, 50)) : [],
+      category: sanitize(category, 50) || "WhatsApp Bot",
       env: env || {},
       status: "pending",
       rewardClaimed: false,
@@ -877,8 +897,8 @@ export async function registerRoutes(
 
     const [comment] = await db.insert(userComments).values({
       userId: uid,
-      subject: subject ? String(subject).trim().slice(0, 200) : null,
-      message: String(message).trim().slice(0, 2000),
+      subject: subject ? sanitize(subject, 200) : null,
+      message: sanitize(message, 2000),
     }).returning();
 
     res.status(201).json(comment);
@@ -946,8 +966,8 @@ export async function registerRoutes(
 
     const [msg] = await db.insert(chatMessages).values({
       userId: uid,
-      username: String(username || "Anonymous").trim().slice(0, 50),
-      message: String(message).trim(),
+      username: sanitize(username || "Anonymous", 50),
+      message: sanitize(message, 500),
     }).returning();
 
     res.status(201).json(msg);
