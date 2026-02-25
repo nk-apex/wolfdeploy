@@ -1,0 +1,225 @@
+:44
+[ERROR]
+Error getting chatbot settings: Error
+03:01:44
+[WARN ]
+at Query.run (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+03:01:44
+[WARN ]
+at /tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/sequelize.js:315:28
+03:01:44
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+03:01:44
+[WARN ]
+at async PostgresQueryInterface.select (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+03:01:44
+[WARN ]
+at async chatbot_settings.findAll (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/model.js:1140:21)
+03:01:44
+[WARN ]
+at async chatbot_settings.findOne (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/model.js:1240:12)
+03:01:44
+[WARN ]
+at async chatbot_settings.findOrCreate (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/sequelize/lib/model.js:1411:21)
+03:01:44
+[WARN ]
+at async getChatbotSettings (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/database/chatbot.js:182:37)
+03:01:44
+[WARN ]
+at async handleChatbot (eval at fetchAlphaUrl (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/index.js:5:2686), <anonymous>:370:26)
+03:01:44
+[WARN ]
+at async EventEmitter.eval (eval at fetchAlphaUrl (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/index.js:5:2686), <anonymous>:2222:5) {
+03:01:44
+[ERROR]
+name: 'SequelizeDatabaseError',
+03:01:44
+[ERROR]
+parent: error: column "chat_jid" does not exist
+03:01:44
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:305:11)
+03:01:44
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:143:27)
+03:01:44
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:37:38)
+03:01:44
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/index.js:11:42)
+03:01:44
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+03:01:44
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+03:01:44
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+03:01:44
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+03:01:44
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+03:01:44
+[WARN ]
+length: 108,
+03:01:44
+[ERROR]
+severity: 'ERROR',
+03:01:44
+[WARN ]
+code: '42703',
+03:01:44
+[WARN ]
+detail: undefined,
+03:01:44
+[WARN ]
+hint: undefined,
+03:01:44
+[WARN ]
+position: '14',
+03:01:44
+[WARN ]
+internalPosition: undefined,
+03:01:44
+[WARN ]
+internalQuery: undefined,
+03:01:44
+[WARN ]
+where: undefined,
+03:01:44
+[WARN ]
+schema: undefined,
+03:01:44
+[WARN ]
+table: undefined,
+03:01:44
+[WARN ]
+column: undefined,
+03:01:44
+[WARN ]
+dataType: undefined,
+03:01:44
+[WARN ]
+constraint: undefined,
+03:01:44
+[WARN ]
+file: 'parse_relation.c',
+03:01:44
+[WARN ]
+line: '3716',
+03:01:44
+[ERROR]
+routine: 'errorMissingColumn',
+03:01:44
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+03:01:44
+[WARN ]
+parameters: undefined
+03:01:44
+[WARN ]
+},
+03:01:44
+[ERROR]
+original: error: column "chat_jid" does not exist
+03:01:44
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:305:11)
+03:01:44
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:143:27)
+03:01:44
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/parser.js:37:38)
+03:01:44
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/f49adcd0-7ee4-406b-8362-50b5bbb4b7a1/node_modules/pg-protocol/dist/index.js:11:42)
+03:01:44
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+03:01:44
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+03:01:44
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+03:01:44
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+03:01:44
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+03:01:44
+[WARN ]
+length: 108,
+03:01:44
+[ERROR]
+severity: 'ERROR',
+03:01:44
+[WARN ]
+code: '42703',
+03:01:44
+[WARN ]
+detail: undefined,
+03:01:44
+[WARN ]
+hint: undefined,
+03:01:44
+[WARN ]
+position: '14',
+03:01:44
+[WARN ]
+internalPosition: undefined,
+03:01:44
+[WARN ]
+internalQuery: undefined,
+03:01:44
+[WARN ]
+where: undefined,
+03:01:44
+[WARN ]
+schema: undefined,
+03:01:44
+[WARN ]
+table: undefined,
+03:01:44
+[WARN ]
+column: undefined,
+03:01:44
+[WARN ]
+dataType: undefined,
+03:01:44
+[WARN ]
+constraint: undefined,
+03:01:44
+[WARN ]
+file: 'parse_relation.c',
+03:01:44
+[WARN ]
+line: '3716',
+03:01:44
+[ERROR]
+routine: 'errorMissingColumn',
+03:01:44
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+03:01:44
+[WARN ]
+parameters: undefined
+03:01:44
+[WARN ]
+},
+03:01:44
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+03:01:44
+[WARN ]
+parameters: {}
+03:01:44
+[WARN ]
+}
