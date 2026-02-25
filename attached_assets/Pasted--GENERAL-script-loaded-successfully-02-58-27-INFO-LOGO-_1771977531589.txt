@@ -1,0 +1,497 @@
+ ]
+GENERAL script loaded successfully✅
+02:58:27
+[INFO ]
+LOGO URL fetched successfully☑️:
+02:58:27
+[INFO ]
+LOGO script loaded successfully✅
+02:58:27
+[ERROR]
+Error loading styles: Request failed with status code 404
+02:58:27
+[INFO ]
+LOGO2 URL fetched successfully☑️:
+02:58:27
+[INFO ]
+LOGO2 script loaded successfully✅
+02:58:27
+[INFO ]
+DOWNLOAD URL fetched successfully☑️:
+02:58:27
+[INFO ]
+DOWNLOAD script loaded successfully✅
+02:58:27
+[INFO ]
+DOWNLOAD2 URL fetched successfully☑️:
+02:58:27
+[INFO ]
+DOWNLOAD2 script loaded successfully✅
+02:58:27
+[INFO ]
+CONVACORD URL fetched successfully☑️:
+02:58:27
+[INFO ]
+CONVACORD script loaded successfully✅
+02:58:27
+[INFO ]
+CONVERT URL fetched successfully☑️:
+02:58:27
+[INFO ]
+CONVERT script loaded successfully✅
+02:58:27
+[INFO ]
+EVENTS URL fetched successfully☑️:
+02:58:27
+[INFO ]
+EVENTS script loaded successfully✅
+02:58:27
+[INFO ]
+LIST URL fetched successfully☑️:
+02:58:27
+[INFO ]
+LIST script loaded successfully✅
+02:58:27
+[INFO ]
+MODS URL fetched successfully☑️:
+02:58:28
+[INFO ]
+MODS script loaded successfully✅
+02:58:28
+[INFO ]
+RANK URL fetched successfully☑️:
+02:58:28
+[INFO ]
+RANK script loaded successfully✅
+02:58:28
+[INFO ]
+REACTION URL fetched successfully☑️:
+02:58:28
+[INFO ]
+REACTION script loaded successfully✅
+02:58:28
+[INFO ]
+AUDIOEDIT URL fetched successfully☑️:
+02:58:28
+[INFO ]
+AUDIOEDIT script loaded successfully✅
+02:58:28
+[ERROR]
+Error reading jids.json: Error: ENOENT: no such file or directory, open '/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/jids.json'
+02:58:28
+[WARN ]
+at Object.readFileSync (node:fs:440:20)
+02:58:28
+[WARN ]
+at eval (eval at fetchScriptUrl (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/Cmds/Remote.js:4:5822), <anonymous>:178:33)
+02:58:28
+[WARN ]
+at fetchScriptUrl (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/Cmds/Remote.js:4:5822)
+02:58:28
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+02:58:28
+[WARN ]
+at async loadScripts (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/Cmds/Remote.js:4:6810) {
+02:58:28
+[WARN ]
+errno: -2,
+02:58:28
+[WARN ]
+code: 'ENOENT',
+02:58:28
+[WARN ]
+syscall: 'open',
+02:58:28
+[WARN ]
+path: '/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/jids.json'
+02:58:28
+[WARN ]
+}
+02:58:28
+[INFO ]
+WARN URL fetched successfully☑️:
+02:58:28
+[INFO ]
+WARN script loaded successfully✅
+02:58:28
+[INFO ]
+MENU URL fetched successfully☑️:
+02:58:28
+[INFO ]
+MENU script loaded successfully✅
+02:58:28
+[INFO ]
+STALK URL fetched successfully☑️:
+02:58:28
+[INFO ]
+STALK script loaded successfully✅
+02:58:28
+[INFO ]
+SYSTEM URL fetched successfully☑️:
+02:58:28
+[INFO ]
+SYSTEM script loaded successfully✅
+02:58:28
+[INFO ]
+SETTINGS URL fetched successfully☑️:
+02:58:28
+[INFO ]
+SETTINGS script loaded successfully✅
+02:58:28
+[INFO ]
+TTS URL fetched successfully☑️:
+02:58:28
+[INFO ]
+TTS script loaded successfully✅
+02:58:28
+[INFO ]
+TESTING URL fetched successfully☑️:
+02:58:28
+[INFO ]
+TESTING script loaded successfully✅
+02:58:28
+[INFO ]
+STICKER URL fetched successfully☑️:
+02:58:28
+[INFO ]
+STICKER script loaded successfully✅
+02:58:28
+[INFO ]
+GAMES URL fetched successfully☑️:
+02:58:28
+[INFO ]
+GAMES script loaded successfully✅
+02:58:28
+[INFO ]
+BUGMENU URL fetched successfully☑️:
+02:58:28
+[INFO ]
+BUGMENU script loaded successfully✅
+02:58:28
+[INFO ]
+Notes table ready
+02:58:28
+[INFO ]
+Warn database tables ready
+02:58:28
+[INFO ]
+✅ Loaded 0 warns into cache
+02:58:28
+[INFO ]
+[INFO] Already in group - skipping
+02:58:28
+[INFO ]
+██╗ ██╗ ███████╗ ██╗ ████████╗ ██╗ ██╗
+02:58:28
+[INFO ]
+██║ ██╔╝ ██╔════╝ ██║ ╚══██╔══╝ ██║ ██║
+02:58:28
+[INFO ]
+█████╔╝ █████╗ ██║ ██║ ███████║
+02:58:28
+[INFO ]
+██╔═██╗ ██╔══╝ ██║ ██║ ██╔══██║
+02:58:28
+[INFO ]
+██║ ██╗ ███████╗ ██║ ██║ ██║ ██║
+02:58:28
+[INFO ]
+╚═╝ ╚═╝ ╚══════╝ ╚═╝ ╚═╝ ╚═╝ ╚═╝
+02:58:28
+[INFO ]
+✨ KEITH MD ✨ is now active and connected!
+02:58:28
+[INFO ]
+✅ [SUCCESS] ✅ keith md is active , enjoy 😀
+02:58:28
+[INFO ]
+Target date 1 has already passed!
+02:58:28
+[INFO ]
+❌ Target date 2 has already passed!
+02:58:33
+[INFO ]
+✅ [SUCCESS] 🗿Keith Md is connected to Whatsapp and active💥
+02:58:34
+[INFO ]
+[INFO] Startup message sent successfully
+02:58:34
+[INFO ]
+✦ ✦ ✦ { K E I T H - M D } ✦ ✦ ✦
+02:58:34
+[INFO ]
+╔════════════════════════════╗
+02:58:34
+[INFO ]
+║ ✉ N E W M E S S A G E ✉ ║
+02:58:34
+[INFO ]
+╚════════════════════════════╝
+02:58:34
+[INFO ]
+👤 Private Chat with: [Unknown User] (254703397679:5)
+02:58:34
+[INFO ]
+📋 Message Type: extendedTextMessage
+02:58:34
+[INFO ]
+┌────────────────────────────┐
+02:58:34
+[INFO ]
+📝 Content:
+02:58:34
+[INFO ]
+├────────────────────────────┤
+02:58:34
+[INFO ]
+╭═『 BWM XMD══⊷
+02:58:34
+[INFO ]
+║ ᴍᴏᴅᴇ public
+02:58:34
+[INFO ]
+║
+02:58:34
+[INFO ]
+ᴘʀᴇғɪx [ . ]
+02:58:34
+[INFO ]
+║ join here👇
+02:58:34
+[INFO ]
+║
+02:58:34
+[INFO ]
+t.me/keithmd
+02:58:34
+[INFO ]
+╰═════════════⊷
+02:58:34
+[INFO ]
+└────────────────────────────┘
+02:58:34
+[ERROR]
+Error getting chatbot settings: Error
+02:58:34
+[WARN ]
+at Query.run (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+02:58:34
+[WARN ]
+at /tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/sequelize.js:315:28
+02:58:34
+[WARN ]
+at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+02:58:34
+[WARN ]
+at async PostgresQueryInterface.select (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
+02:58:34
+[WARN ]
+at async chatbot_settings.findAll (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/model.js:1140:21)
+02:58:34
+[WARN ]
+at async chatbot_settings.findOne (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/model.js:1240:12)
+02:58:34
+[WARN ]
+at async chatbot_settings.findOrCreate (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/sequelize/lib/model.js:1411:21)
+02:58:34
+[WARN ]
+at async getChatbotSettings (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/database/chatbot.js:182:37)
+02:58:34
+[WARN ]
+at async handleChatbot (eval at fetchAlphaUrl (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/index.js:5:2686), <anonymous>:370:26)
+02:58:34
+[WARN ]
+at async EventEmitter.eval (eval at fetchAlphaUrl (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/index.js:5:2686), <anonymous>:2222:5) {
+02:58:34
+[ERROR]
+name: 'SequelizeDatabaseError',
+02:58:34
+[ERROR]
+parent: error: column "chat_jid" does not exist
+02:58:34
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:305:11)
+02:58:34
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:143:27)
+02:58:34
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:37:38)
+02:58:34
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/index.js:11:42)
+02:58:34
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+02:58:34
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+02:58:34
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+02:58:34
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+02:58:34
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+02:58:34
+[WARN ]
+length: 108,
+02:58:34
+[ERROR]
+severity: 'ERROR',
+02:58:34
+[WARN ]
+code: '42703',
+02:58:34
+[WARN ]
+detail: undefined,
+02:58:34
+[WARN ]
+hint: undefined,
+02:58:34
+[WARN ]
+position: '14',
+02:58:34
+[WARN ]
+internalPosition: undefined,
+02:58:34
+[WARN ]
+internalQuery: undefined,
+02:58:34
+[WARN ]
+where: undefined,
+02:58:34
+[WARN ]
+schema: undefined,
+02:58:34
+[WARN ]
+table: undefined,
+02:58:34
+[WARN ]
+column: undefined,
+02:58:34
+[WARN ]
+dataType: undefined,
+02:58:34
+[WARN ]
+constraint: undefined,
+02:58:34
+[WARN ]
+file: 'parse_relation.c',
+02:58:34
+[WARN ]
+line: '3716',
+02:58:34
+[ERROR]
+routine: 'errorMissingColumn',
+02:58:34
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:58:34
+[WARN ]
+parameters: undefined
+02:58:34
+[WARN ]
+},
+02:58:34
+[ERROR]
+original: error: column "chat_jid" does not exist
+02:58:34
+[ERROR]
+at parseErrorMessage (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:305:11)
+02:58:34
+[WARN ]
+at Parser.handlePacket (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:143:27)
+02:58:34
+[WARN ]
+at Parser.parse (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/parser.js:37:38)
+02:58:34
+[WARN ]
+at TLSSocket.<anonymous> (/tmp/botforge-deployments/0abf674d-5fd5-4022-a7af-524ca4526e4a/node_modules/pg-protocol/dist/index.js:11:42)
+02:58:34
+[WARN ]
+at TLSSocket.emit (node:events:519:28)
+02:58:34
+[WARN ]
+at addChunk (node:internal/streams/readable:561:12)
+02:58:34
+[WARN ]
+at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+02:58:34
+[WARN ]
+at Readable.push (node:internal/streams/readable:392:5)
+02:58:34
+[WARN ]
+at TLSWrap.onStreamRead (node:internal/stream_base_commons:189:23) {
+02:58:34
+[WARN ]
+length: 108,
+02:58:34
+[ERROR]
+severity: 'ERROR',
+02:58:34
+[WARN ]
+code: '42703',
+02:58:34
+[WARN ]
+detail: undefined,
+02:58:34
+[WARN ]
+hint: undefined,
+02:58:34
+[WARN ]
+position: '14',
+02:58:34
+[WARN ]
+internalPosition: undefined,
+02:58:34
+[WARN ]
+internalQuery: undefined,
+02:58:34
+[WARN ]
+where: undefined,
+02:58:34
+[WARN ]
+schema: undefined,
+02:58:34
+[WARN ]
+table: undefined,
+02:58:34
+[WARN ]
+column: undefined,
+02:58:34
+[WARN ]
+dataType: undefined,
+02:58:34
+[WARN ]
+constraint: undefined,
+02:58:34
+[WARN ]
+file: 'parse_relation.c',
+02:58:34
+[WARN ]
+line: '3716',
+02:58:34
+[ERROR]
+routine: 'errorMissingColumn',
+02:58:34
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:58:34
+[WARN ]
+parameters: undefined
+02:58:34
+[WARN ]
+},
+02:58:34
+[WARN ]
+sql: `SELECT "id", "chat_jid", "chat_name", "chat_type", "status", "trigger", "default_response", "voice", "createdAt", "updatedAt" FROM "chatbot_settings" AS "chatbot_settings" WHERE "chatbot_settings"."chat_jid" = '254703397679@s.whatsapp.net';`,
+02:58:34
+[WARN ]
+parameters: {}
+02:58:34
+[WARN ]
+}
